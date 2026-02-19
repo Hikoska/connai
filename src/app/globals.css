@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --teal: #00727A;
+  --teal-medium: #66A5AD;
+  --teal-light: #B2D8D8;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #f8fafa;
+  color: #1a2e2f;
+}
+
+.btn-primary {
+  @apply bg-teal-500 hover:bg-teal-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors;
+}
+
+.btn-secondary {
+  @apply border-2 border-teal-500 text-teal-500 hover:bg-teal-50 font-semibold px-6 py-3 rounded-lg transition-colors;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
+}
