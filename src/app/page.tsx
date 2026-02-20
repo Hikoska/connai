@@ -15,10 +15,10 @@ const SUBS = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full overflow-x-hidden">
       {/* Nav */}
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🔭</span>
             <span className="font-bold text-teal-500 text-xl">Connai</span>
@@ -38,10 +38,10 @@ export default function LandingPage() {
           </div>
           <h1 className="text-5xl font-bold mb-6 leading-tight">
             Get a $10,000 digital maturity audit<br />
-            <span className="text-teal-light">in days, not months</span>
+            <span className="text-teal-200">in days, not months</span>
           </h1>
           <p className="text-xl text-teal-100 mb-8 max-w-2xl mx-auto">
-            Traditional consultants charge $200–$450 per interview. Lense does it at 42% of that cost — 
+            Traditional consultants charge $200–$450 per interview. Connai does it at 42% of that cost — 
             with 100% transcript fidelity, simultaneous interviews across your entire org, and reports in days.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
@@ -61,7 +61,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-4">How it works</h2>
           <p className="text-gray-500 text-center mb-12">From briefing to report in days, not months</p>
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
               { step: '1', icon: '🎯', title: 'Brief the AI', desc: 'C-suite sets context, departments, and interview scope in minutes' },
               { step: '2', icon: '📅', title: 'AI schedules', desc: 'Automated calendar invites sent to employees across hierarchy' },
@@ -89,10 +89,10 @@ export default function LandingPage() {
               <div className="text-4xl font-bold text-red-500 mb-2">$200–$450</div>
               <div className="text-gray-500 text-sm mb-4">per interview (2–3hr consultant time)</div>
               <ul className="text-sm text-gray-600 space-y-1 text-left">
-                <li>❌ 30% recall accuracy on notes</li>
-                <li>❌ Sequential interviews — weeks of elapsed time</li>
-                <li>❌ 4–8 weeks for final report</li>
-                <li>❌ Consultant fatigue and bias accumulate</li>
+                <li>✗ 30% recall accuracy on notes</li>
+                <li>✗ Sequential interviews — weeks of elapsed time</li>
+                <li>✗ 4–8 weeks for final report</li>
+                <li>✗ Consultant fatigue and bias accumulate</li>
               </ul>
             </div>
             <div className="bg-white rounded-xl p-6 border border-teal-200">
@@ -118,7 +118,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-2">Interview Packs</h2>
           <p className="text-gray-500 text-center mb-12">One-off audits. Credits valid 12 months.</p>
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {PACKS.map(pack => (
               <div key={pack.name} className={`rounded-xl p-6 border-2 ${pack.popular ? 'border-teal-500 shadow-lg relative' : 'border-gray-100'}`}>
                 {pack.popular && (
@@ -139,7 +139,7 @@ export default function LandingPage() {
           <div className="mt-12">
             <h2 className="text-3xl font-bold text-center mb-2">Subscriptions</h2>
             <p className="text-gray-500 text-center mb-12">Ongoing intelligence. Monthly interview refresh.</p>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {SUBS.map(sub => (
                 <div key={sub.name} className="rounded-xl p-6 border-2 border-gray-100">
                   <div className="font-bold text-lg mb-1">{sub.name}</div>
