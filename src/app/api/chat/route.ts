@@ -53,13 +53,9 @@ export async function POST(req: Request) {
     const openrouter = createOpenAI({
       baseURL: 'https://openrouter.ai/api/v1',
       apiKey,
-      headers: {
-        'HTTP-Referer': 'https://connai.linkgrow.io',
-        'X-Title': 'Connai',
-      },
     })
 
-    const result = await streamText({
+    const result = streamText({
       model: openrouter('google/gemini-2.0-flash-exp:free'),
       system: SYSTEM_PROMPTS[mode] || SYSTEM_PROMPTS.brief,
       messages,

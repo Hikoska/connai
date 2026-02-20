@@ -15,8 +15,8 @@
     "lucide-react": "^0.400.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.3.0",
-    "ai": "^3.4.0",
-    "@ai-sdk/openai": "^0.0.66"
+    "ai": "^4.1.0",
+    "@ai-sdk/openai": "^1.1.0"
   },
   "devDependencies": {
     "typescript": "^5",
