@@ -35,6 +35,10 @@ Rules:
 - Maintain a neutral, unbiased tone throughout.`,
 }
 
+// Pinned to llama-3.3-70b for consistent latency on free tier.
+// Fallback option: qwen/qwen-2.5-72b-instruct:free
+const MODEL = 'meta-llama/llama-3.3-70b-instruct:free'
+
 export const maxDuration = 60
 
 export async function POST(req: Request) {
@@ -56,7 +60,7 @@ export async function POST(req: Request) {
     })
 
     const result = streamText({
-      model: openrouter('openrouter/auto'),
+      model: openrouter(MODEL),
       system: SYSTEM_PROMPTS[mode] || SYSTEM_PROMPTS.brief,
       messages,
       maxTokens: 512,
