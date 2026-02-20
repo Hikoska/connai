@@ -5,12 +5,12 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Linkgrow Lense — AI Digital Maturity Audits',
+  title: 'Connai — AI Digital Maturity Audits',
   description: 'Get a $10,000 digital maturity audit in days, not months. AI-powered interviews, structured reports, actionable insights.',
   openGraph: {
-    title: 'Linkgrow Lense',
+    title: 'Connai',
     description: 'AI-powered digital maturity audits at 42% of consultant cost.',
-    url: 'https://lense.linkgrow.io',
+    url: 'https://connai.linkgrow.io',
   }
 }
 

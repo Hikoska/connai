@@ -1,8 +1,8 @@
-# 🔭 Linkgrow Lense
+# 🔭 Connai
 
 > AI-powered digital maturity audits — at 42% of consultant cost.
 
-**URL:** lense.linkgrow.io  
+**URL:** connai.linkgrow.io  
 **Stack:** Next.js 14 + Supabase + Vercel + Gemini 2.0 Flash + Stripe
 
 ---
@@ -20,7 +20,7 @@
    - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
    - `STRIPE_WEBHOOK_SECRET`
    - `NEXT_PUBLIC_APP_URL`
-4. Deploy — done. Set `lense.linkgrow.io` CNAME to your Vercel deployment URL.
+4. Deploy — done. Set `connai.linkgrow.io` CNAME to your Vercel deployment URL.
 
 ---
 
@@ -84,6 +84,6 @@ Free tier: 1 interview + watermarked report (conversion hook).
 
 ## 🌐 Branching
 
-- `main` — production (lense.linkgrow.io)
+- `main` — production (connai.linkgrow.io)
 - `dev` — staging (Vercel preview URL)
 - `feature/*` — feature work → PR into dev

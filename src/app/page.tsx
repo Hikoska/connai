@@ -21,7 +21,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🔭</span>
-            <span className="font-bold text-teal-500 text-xl">Linkgrow Lense</span>
+            <span className="font-bold text-teal-500 text-xl">Connai</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/auth/login" className="text-gray-600 hover:text-teal-500 font-medium">Log in</Link>
@@ -96,7 +96,7 @@ export default function LandingPage() {
               </ul>
             </div>
             <div className="bg-white rounded-xl p-6 border border-teal-200">
-              <div className="text-teal-500 font-bold text-lg mb-3">Linkgrow Lense</div>
+              <div className="text-teal-500 font-bold text-lg mb-3">Connai</div>
               <div className="text-4xl font-bold text-teal-500 mb-2">$60–$100</div>
               <div className="text-gray-500 text-sm mb-4">per interview (AI-powered)</div>
               <ul className="text-sm text-gray-600 space-y-1 text-left">
@@ -172,9 +172,9 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">🔭</span>
-            <span className="font-bold text-white">Linkgrow Lense</span>
+            <span className="font-bold text-white">Connai</span>
           </div>
-          <div className="text-sm">© 2026 Linkgrow Ltd · lense.linkgrow.io</div>
+          <div className="text-sm">© 2026 Linkgrow Ltd · connai.linkgrow.io</div>
         </div>
       </footer>
     </div>

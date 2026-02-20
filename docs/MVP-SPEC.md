@@ -1,9 +1,9 @@
-# Linkgrow Lense — MVP Spec v1.2 (Definitive)
+# Connai — MVP Spec v1.2 (Definitive)
 *Feb 20, 2026 — Hybrid: v1.0 framework + Sofap practical elements*
 
 ## Product Summary
 
-**Linkgrow Lense** is a conversational AI platform that interviews employees across your organization, assesses digital maturity across 8 dimensions, identifies transformation opportunities, and delivers a prioritized action plan.
+**Connai** is a conversational AI platform that interviews employees across your organization, assesses digital maturity across 8 dimensions, identifies transformation opportunities, and delivers a prioritized action plan.
 
 **One-liner:** *"An AI consultant that interviews your team and tells you exactly what to fix first."*
 
@@ -59,7 +59,7 @@ AI maps conversation signals to: (a) dimension scores, (b) specific opportunitie
 
 **Format:** 16:9 landscape PDF, visual-first
 
-1. **Title Page** — dual branding (Linkgrow Lense + client logo)
+1. **Title Page** — dual branding (Connai + client logo)
 2. **Executive Summary** — spider chart (8 dimensions), overall maturity score, key headline findings
 3. **Dimension Deep-Dives** (1-2 slides each) — current state, maturity level, key evidence from interviews
 4. **Opportunity Grid** — all opportunities with ★ ratings, sorted by priority
