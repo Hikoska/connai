@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     })
 
     const result = streamText({
-      model: openrouter('google/gemini-2.0-flash-exp:free'),
+      model: openrouter('openrouter/auto'),
       system: SYSTEM_PROMPTS[mode] || SYSTEM_PROMPTS.brief,
       messages,
       maxTokens: 512,
