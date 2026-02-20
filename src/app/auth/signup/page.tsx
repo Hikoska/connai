@@ -1,4 +1,5 @@
-// Phase 1 stub — auth added in Phase 2
+import { redirect } from 'next/navigation'
+
 export default function SignupPage() {
-  return <main><p>Signup coming in Phase 2</p></main>
+  redirect('/onboarding')
 }
