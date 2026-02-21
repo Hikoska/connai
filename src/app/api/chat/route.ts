@@ -1,12 +1,15 @@
 import { createOpenAI } from '@ai-sdk/openai'
-import { streamText, tool } from 'ai'
-import { z } from 'zod'
+import { streamText } from 'ai'
 
-const SYSTEM_PROMPT = `You are Connai.`
+const SYSTEM_PROMPT = `You are Connai, an AI assistant helping organisations understand their digital maturity.`
 
 const openrouter = createOpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY,
+  headers: {
+    'HTTP-Referer': 'https://connai.linkgrow.io',
+    'X-Title': 'Connai',
+  },
 })
 
 const MODEL = openrouter('mistralai/mistral-small-3.1-24b-instruct:free')
@@ -26,9 +29,9 @@ export async function POST(req: Request) {
     return result.toDataStreamResponse()
   } catch (error: any) {
     console.error('Chat error:', error)
-    return Response.json({ 
+    return Response.json({
       error: error?.message || String(error),
-      stack: error?.stack?.split('\n').slice(0, 5)
+      cause: error?.cause?.message,
     }, { status: 500 })
   }
 }
