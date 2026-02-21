@@ -1,13 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChatInterface } from './ChatInterface'
 
 export const FloatingAIWidget = () => {
-  const [isExpanded, setIsExpanded] = useState(true) // Expanded by default on page load
+  const [isExpanded, setIsExpanded] = useState(true)
 
-  // Placeholder for scroll logic
-  // useEffect(() => { ... handle scroll to collapse ... }, [])
+  useEffect(() => {
+    const handleScroll = () => {
+      // Collapse when user scrolls past 75% of the viewport height
+      if (window.scrollY > window.innerHeight * 0.75) {
+        setIsExpanded(false)
+      } else {
+        setIsExpanded(true)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    // Initial check
+    handleScroll()
+
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   if (!isExpanded) {
     return (
