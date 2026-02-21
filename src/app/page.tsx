@@ -53,8 +53,8 @@ const Hero = () => (
 // Placeholder components for other sections
 import { SocialProof } from '@/components/SocialProof'
 import { HowItWorks } from '@/components/HowItWorks'
-const WhatYouGet = () => <section className="py-20 bg-white flex items-center justify-center"><h2 className="text-2xl">4. What You Get</h2></section>
-const WhoItsFor = () => <section className="py-20 flex items-center justify-center"><h2 className="text-2xl">5. Who It's For</h2></section>
+import { WhatYouGet } from '@/components/WhatYouGet'
+import { WhoItsFor } from '@/components/WhoItsFor'
 const ProductScreenshot = () => <section className="py-20 bg-white flex items-center justify-center"><h2 className="text-2xl">6. Product Screenshot</h2></section>
 const Testimonials = () => <section className="py-20 flex items-center justify-center"><h2 className="text-2xl">7. Testimonials</h2></section>
 const FAQ = () => <section className="py-20 bg-white flex items-center justify-center"><h2 className="text-2xl">8. FAQ</h2></section>
