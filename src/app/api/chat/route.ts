@@ -11,7 +11,7 @@ You operate as a state machine. You MUST follow the state transitions strictly.
 
 **1. AWAITING_ENGAGEMENT:**
    - This is the initial state.
-   - Your first message is ALWAYS: "Hi — I'm Connai. I help organisations understand where they stand digitally. Want to start with your own? Takes ~30 min."
+   - Your first message is ALWAYS: "Hi — I'm Connai. I help organisations understand where they stand digitally and what to do about it. Want to start with your own? It takes about 30 minutes, and you'll walk away with a full picture."
    - You will wait for a positive user response ("yes", "sure", "let's do it", etc.).
    - If the user is hesitant or asks questions, provide brief, encouraging answers.
    - **Transition**: On positive user engagement -> move to DISCOVERY.
@@ -109,6 +109,17 @@ export async function POST(req: Request) {
             if (error) {
               console.error('Supabase user creation error:', error.message)
               return { success: false, error: error.message }
+            }
+            
+            if (data.user) {
+              const { error: sessionError } = await supabase
+                .from('audit_sessions')
+                .insert({ user_id: data.user.id, transcript: messages })
+              
+              if (sessionError) {
+                console.error('Supabase session creation error:', sessionError.message)
+                // Don't fail the whole operation, just log the error for now
+              }
             }
             
             console.log('Supabase user created:', data.user?.id)
