@@ -1,4 +1,4 @@
-import { google } from '@ai-sdk/google'
+import { createOpenAI } from '@ai-sdk/openai'
 import { streamText, tool } from 'ai'
 import { z } from 'zod'
 
@@ -64,19 +64,24 @@ You operate as a state machine. You MUST follow the state transitions strictly.
 - Do not ask for information not specified in the current state's goal.
 `
 
-const MODEL = 'gemini-2.0-flash'
+const openrouter = createOpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
+})
+
+// mistral-7b-instruct:free — reliable, not Venice-routed
+const MODEL = openrouter('mistralai/mistral-7b-instruct:free')
 
 export const maxDuration = 60
 
 export async function POST(req: Request) {
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return Response.json({ error: 'AI service not configured.' }, { status: 503 })
   }
 
   try {
     const { messages } = await req.json()
 
-    // Lazy init to avoid module-level errors during build
     const { createClient } = await import('@supabase/supabase-js')
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,7 +89,7 @@ export async function POST(req: Request) {
     )
 
     const result = await streamText({
-      model: google(MODEL),
+      model: MODEL,
       system: SYSTEM_PROMPT,
       messages,
       tools: {
@@ -94,28 +99,16 @@ export async function POST(req: Request) {
             email: z.string().email().describe('The email address for the new user.'),
           }),
           execute: async ({ email }) => {
-            console.log(`Creating Supabase user for: ${email}`)
             const { data, error } = await supabase.auth.admin.createUser({
-              email: email,
+              email,
               email_confirm: true,
             })
-
-            if (error) {
-              console.error('Supabase user creation error:', error.message)
-              return { success: false, error: error.message }
-            }
-
+            if (error) return { success: false, error: error.message }
             if (data.user) {
-              const { error: sessionError } = await supabase
+              await supabase
                 .from('audit_sessions')
                 .insert({ user_id: data.user.id, transcript: messages })
-
-              if (sessionError) {
-                console.error('Supabase session creation error:', sessionError.message)
-              }
             }
-
-            console.log('Supabase user created:', data.user?.id)
             return { success: true, userId: data.user?.id }
           },
         }),
