@@ -69,8 +69,8 @@ const openrouter = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
 })
 
-// mistral-7b-instruct:free — reliable, not Venice-routed
-const MODEL = openrouter('mistralai/mistral-7b-instruct:free')
+// openrouter/free = meta-router, auto-picks best available free model
+const MODEL = openrouter('openrouter/free')
 
 export const maxDuration = 60
 
