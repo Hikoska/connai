@@ -12,7 +12,9 @@ const openrouter = createOpenAI({
   },
 })
 
-const MODEL = openrouter('mistralai/mistral-small-3.1-24b-instruct:free')
+// Use openrouter/free meta-router: auto-routes to best available free model,
+// avoids provider-specific rate limits (e.g. Venice).
+const MODEL = openrouter('openrouter/free')
 
 export const maxDuration = 60
 
