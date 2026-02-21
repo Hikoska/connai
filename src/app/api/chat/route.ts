@@ -35,7 +35,7 @@ const groq = createOpenAI({
   apiKey: process.env.GROQ_API_KEY,
 })
 
-// Fallback: Cerebras — OpenAI-compatible, llama-3.3-70b, separate free quota
+// Fallback: Cerebras — OpenAI-compatible, llama3.1-8b (~2200 tok/s), 14.4K RPD free tier
 const cerebras = createOpenAI({
   baseURL: 'https://api.cerebras.ai/v1',
   apiKey: process.env.CEREBRAS_API_KEY ?? '',
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   if (process.env.CEREBRAS_API_KEY) {
     try {
       const result = await streamText({
-        model: cerebras('llama-3.3-70b'),
+        model: cerebras('llama3.1-8b'),
         system: SYSTEM_PROMPT,
         messages,
       })
