@@ -2,15 +2,9 @@
 
 export const dynamic = 'force-dynamic'
 
-import { createClient } from '@supabase/supabase-js'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-
-// Create a single supabase client for client-side use
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 type Session = {
   id: string
@@ -22,9 +16,20 @@ export default function DashboardPage() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const supabaseRef = useRef<SupabaseClient | null>(null)
 
   useEffect(() => {
-    const checkUserAndFetchSessions = async () => {
+    const init = async () => {
+      // Lazy init inside component to avoid module-level evaluation during build
+      const { createClient } = await import('@supabase/supabase-js')
+      if (!supabaseRef.current) {
+        supabaseRef.current = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+      }
+      const supabase = supabaseRef.current
+
       const { data: { session } } = await supabase.auth.getSession()
 
       if (session?.user) {
@@ -44,13 +49,14 @@ export default function DashboardPage() {
       setLoading(false)
     }
 
-    checkUserAndFetchSessions()
+    init()
   }, [])
-  
+
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    if (supabaseRef.current) {
+      await supabaseRef.current.auth.signOut()
+    }
     setUser(null)
-    // You might want to redirect the user to the homepage after logout
     window.location.href = '/'
   }
 
