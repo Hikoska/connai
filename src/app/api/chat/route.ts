@@ -1,4 +1,4 @@
-import { createOpenAI } from '@ai-sdk/openai'
+import { google } from '@ai-sdk/google'
 import { streamText, tool } from 'ai'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
@@ -65,7 +65,7 @@ You operate as a state machine. You MUST follow the state transitions strictly.
 - Do not ask for information not specified in the current state's goal.
 `
 
-const MODEL = 'meta-llama/llama-3.3-70b-instruct:free'
+const MODEL = 'models/gemini-2.0-flash'
 
 export const maxDuration = 60
 
@@ -75,22 +75,16 @@ const supabase = createClient(
 )
 
 export async function POST(req: Request) {
-  const apiKey = process.env.OPENROUTER_API_KEY
-
-  if (!apiKey) {
+  // The GOOGLE_GENERATIVE_AI_API_KEY is read automatically by the AI SDK
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return Response.json({ error: 'AI service not configured.' }, { status: 503 })
   }
 
   try {
     const { messages } = await req.json()
 
-    const openrouter = createOpenAI({
-      baseURL: 'https://openrouter.ai/api/v1',
-      apiKey,
-    })
-
     const result = await streamText({
-      model: openrouter(MODEL),
+      model: google(MODEL),
       system: SYSTEM_PROMPT,
       messages,
       tools: {
@@ -118,7 +112,6 @@ export async function POST(req: Request) {
               
               if (sessionError) {
                 console.error('Supabase session creation error:', sessionError.message)
-                // Don't fail the whole operation, just log the error for now
               }
             }
             
