@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
-  weight: ['400', '700'],
+  weight: '400',
   variable: '--font-instrument-serif',
 })
 
@@ -13,7 +13,7 @@ const Hero = () => (
     <div className="grid md:grid-cols-2 gap-8 items-center max-w-6xl mx-auto px-4">
       <div className="text-left">
         <h1 className={`${instrumentSerif.variable} font-serif text-5xl md:text-6xl font-bold leading-tight mb-6`}>
-          Get an honest picture of your organisation's digital health.
+          Get an honest picture of your organisation’s digital health.
         </h1>
         <p className="text-lg text-gray-600 mb-8">
           Connai conducts an AI-powered digital maturity audit in minutes, not months. 
@@ -30,15 +30,15 @@ const Hero = () => (
       <div className="hidden md:block">
         {/* This is a static placeholder that visually represents the widget in the hero */}
         <div className="w-[400px] h-[500px] bg-white rounded-lg shadow-2xl flex flex-col mx-auto">
-           <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
+          <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
               <div className="flex items-center gap-2">
-                <span className="text-xl">🔭</span>
+                <span className="text-xl">🤕</span>
                 <span className="font-bold text-teal-500">Connai</span>
               </div>
             </div>
             <div className="p-4 flex-1">
               <div className="bg-gray-100 p-3 rounded-lg">
-                <p className="text-sm">When did you last get an honest picture of your organisation's digital health?</p>
+                <p className="text-sm">When did you last get an honest picture of your organisation’s digital health?</p>
               </div>
             </div>
             <div className="border-t p-4 bg-white rounded-b-lg">
@@ -74,7 +74,7 @@ const Footer = () => (
   <footer className="bg-gray-900 text-gray-400 py-8 px-4">
     <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div className="flex items-center gap-2">
-        <span className="text-xl">🔭</span>
+        <span className="text-xl">🤕</span>
         <span className="font-bold text-white">Connai</span>
       </div>
       <div className="text-sm">
