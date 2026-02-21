@@ -55,11 +55,35 @@ import { SocialProof } from '@/components/SocialProof'
 import { HowItWorks } from '@/components/HowItWorks'
 import { WhatYouGet } from '@/components/WhatYouGet'
 import { WhoItsFor } from '@/components/WhoItsFor'
-const ProductScreenshot = () => <section className="py-20 bg-white flex items-center justify-center"><h2 className="text-2xl">6. Product Screenshot</h2></section>
-const Testimonials = () => <section className="py-20 flex items-center justify-center"><h2 className="text-2xl">7. Testimonials</h2></section>
-const FAQ = () => <section className="py-20 bg-white flex items-center justify-center"><h2 className="text-2xl">8. FAQ</h2></section>
-const FinalCTA = () => <section className="py-20 bg-[#0E1117] text-white flex items-center justify-center"><h2 className="text-2xl">9. Final CTA</h2></section>
-const Footer = () => <footer className="py-10 bg-gray-900 text-white flex items-center justify-center"><h2 className="text-xl">10. Footer</h2></footer>
+import { ProductScreenshot } from '@/components/ProductScreenshot'
+import { Testimonials } from '@/components/Testimonials'
+import { FAQ } from '@/components/FAQ'
+const FinalCTA = () => (
+  <section className="py-20 bg-[#0E1117] text-white">
+    <div className="max-w-3xl mx-auto px-4 text-center">
+      <h2 className="text-4xl font-bold font-serif mb-4">Ready to see where you stand?</h2>
+      <p className="text-gray-300 text-lg mb-8">30 minutes. Full picture.</p>
+      <button className="bg-teal-500 text-white font-bold px-8 py-4 rounded-lg hover:bg-teal-400 transition-colors text-lg">
+        Start my free audit →
+      </button>
+    </div>
+  </section>
+)
+
+const Footer = () => (
+  <footer className="bg-gray-900 text-gray-400 py-8 px-4">
+    <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="flex items-center gap-2">
+        <span className="text-xl">🔭</span>
+        <span className="font-bold text-white">Connai</span>
+      </div>
+      <div className="text-sm">
+        <Link href="/privacy" className="hover:text-white">Privacy</Link> · <Link href="/terms" className="hover:text-white">Terms</Link>
+      </div>
+      <div className="text-sm">© 2026 Linkgrow Ltd</div>
+    </div>
+  </footer>
+)
 
 export default function LandingPage() {
   return (
