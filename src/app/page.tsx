@@ -1,5 +1,7 @@
 import Link from 'next/link'
-import { ChatInterface } from './components/ChatInterface'
+import { ChatInterface } from '@/components/ChatInterface'
+
+const OPENING_MESSAGE = `When did you last get an honest picture of your organisation's digital health?`
 
 export default function HomePage() {
   return (
@@ -26,8 +28,11 @@ export default function HomePage() {
         </div>
         
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm w-full flex-1 flex flex-col">
-          {/* The ChatInterface will now fill the available space */}
-          <ChatInterface />
+          <ChatInterface
+            mode="brief"
+            initialMessage={OPENING_MESSAGE}
+            placeholder="Type your answer…"
+          />
         </div>
       </main>
     </div>
