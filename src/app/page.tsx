@@ -1,57 +1,82 @@
+import { Instrument_Serif } from 'next/font/google'
+import { FloatingAIWidget } from '@/components/FloatingAIWidget'
 import Link from 'next/link'
-import { ChatInterface } from '@/components/ChatInterface'
 
-// force-dynamic: server renders fresh on every request
-// Math.random() runs server-side each load → different question each refresh
-// Future: replace with weighted A/B selection from Supabase once visit tracking is live
-export const dynamic = 'force-dynamic'
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-instrument-serif',
+})
 
-const OPENING_QUESTIONS = [
-  "When did you last get an honest picture of your organisation's digital health?",
-  "How confident are you that your team is using technology as well as your top competitors?",
-  "On a scale of 1\u201310 \u2014 how would you rate your organisation's digital maturity right now?",
-  "If a client asked how digitally advanced your organisation is \u2014 what would you say?",
-  "What\u2019s the one area where digital could have the biggest impact in your organisation?",
-  "Is your organisation\u2019s tech keeping up with how your customers behave today?",
-  "Where do you think you\u2019re losing the most ground digitally \u2014 operations, customers, or team?",
-  "How much of your organisation\u2019s potential are you actually unlocking through technology?",
-]
+const Hero = () => (
+  <section className="min-h-screen flex items-center justify-center">
+    <div className="grid md:grid-cols-2 gap-8 items-center max-w-6xl mx-auto px-4">
+      <div className="text-left">
+        <h1 className={`${instrumentSerif.variable} font-serif text-5xl md:text-6xl font-bold leading-tight mb-6`}>
+          Get an honest picture of your organisation's digital health.
+        </h1>
+        <p className="text-lg text-gray-600 mb-8">
+          Connai conducts an AI-powered digital maturity audit in minutes, not months. 
+          Understand your gaps, benchmark against competitors, and get a clear action plan.
+        </p>
+        <button className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-lg hover:opacity-90 transition-opacity text-lg">
+          Start my free audit →
+        </button>
+        {/* Placeholder for trust signals */}
+        <div className="mt-12 text-sm text-gray-500">
+          Trusted by leading teams in Mauritius
+        </div>
+      </div>
+      <div className="hidden md:block">
+        {/* This is a static placeholder that visually represents the widget in the hero */}
+        <div className="w-[400px] h-[500px] bg-white rounded-lg shadow-2xl flex flex-col mx-auto">
+           <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🔭</span>
+                <span className="font-bold text-teal-500">Connai</span>
+              </div>
+            </div>
+            <div className="p-4 flex-1">
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <p className="text-sm">When did you last get an honest picture of your organisation's digital health?</p>
+              </div>
+            </div>
+            <div className="border-t p-4 bg-white rounded-b-lg">
+              <div className="border rounded-lg px-4 py-2 text-gray-400 text-sm">Type your message...</div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </section>
+)
 
-export default function HomePage() {
-  // Server-side pick: fresh on every request (force-dynamic ensures no caching)
-  const openingQuestion = OPENING_QUESTIONS[Math.floor(Math.random() * OPENING_QUESTIONS.length)]
+// Placeholder components for other sections
+import { SocialProof } from '@/components/SocialProof'
+import { HowItWorks } from '@/components/HowItWorks'
+const WhatYouGet = () => <section className="py-20 bg-white flex items-center justify-center"><h2 className="text-2xl">4. What You Get</h2></section>
+const WhoItsFor = () => <section className="py-20 flex items-center justify-center"><h2 className="text-2xl">5. Who It's For</h2></section>
+const ProductScreenshot = () => <section className="py-20 bg-white flex items-center justify-center"><h2 className="text-2xl">6. Product Screenshot</h2></section>
+const Testimonials = () => <section className="py-20 flex items-center justify-center"><h2 className="text-2xl">7. Testimonials</h2></section>
+const FAQ = () => <section className="py-20 bg-white flex items-center justify-center"><h2 className="text-2xl">8. FAQ</h2></section>
+const FinalCTA = () => <section className="py-20 bg-[#0E1117] text-white flex items-center justify-center"><h2 className="text-2xl">9. Final CTA</h2></section>
+const Footer = () => <footer className="py-10 bg-gray-900 text-white flex items-center justify-center"><h2 className="text-xl">10. Footer</h2></footer>
 
+export default function LandingPage() {
   return (
-    <div className="min-h-screen w-full flex flex-col bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">\uD83D\uDD2D</span>
-            <span className="font-bold text-teal-500 text-xl">Connai</span>
-          </div>
-          <div className="flex items-center">
-            <Link href="/auth/login" className="text-gray-600 hover:text-teal-500 font-medium">
-              Log in
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 flex flex-col items-center w-full max-w-3xl mx-auto py-8 px-4">
-        <div className="w-full text-center mb-6">
-          <h1 className="text-xl font-semibold text-gray-700">
-            Understand where your organisation stands digitally \u2014 in 30 minutes.
-          </h1>
-        </div>
-
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm w-full flex-1 flex flex-col">
-          <ChatInterface
-            mode="brief"
-            initialMessage={openingQuestion}
-            placeholder="Type your answer\u2026"
-          />
-        </div>
+    <div className="bg-[#F8F6F2] text-gray-800">
+      <main>
+        <Hero />
+        <SocialProof />
+        <HowItWorks />
+        <WhatYouGet />
+        <WhoItsFor />
+        <ProductScreenshot />
+        <Testimonials />
+        <FAQ />
+        <FinalCTA />
+        <Footer />
       </main>
+      <FloatingAIWidget />
     </div>
   )
 }
