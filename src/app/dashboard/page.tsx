@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { createClient } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -86,31 +88,31 @@ export default function DashboardPage() {
           <div className="divide-y">
             {sessions.length > 0 ? sessions.map(session => (
               <div key={session.id} className="p-4 flex justify-between items-center hover:bg-gray-50">
-                <div className="flex items-center gap-4">
-                  <FileText className="text-gray-400" />
-                  <div>
-                    <h2 className="font-semibold">Digital Maturity Audit</h2>
-                    <p className="text-sm text-gray-500">
-                      Started: {new Date(session.started_at).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColors[session.status] || 'bg-gray-100 text-gray-800'}`}>
-                    {session.status.replace('_', ' ')}
-                  </span>
-                  <button className="flex items-center gap-1.5 text-sm bg-white border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-100">
-                    <PlayCircle size={16} />
-                    Resume
-                  </button>
+              <div className="flex items-center gap-4">
+                <FileText className="text-gray-400" />
+                <div>
+                  <h2 className="font-semibold">Digital Maturity Audit</h2>
+                  <p className="text-sm text-gray-500">
+                    Started: {new Date(session.started_at).toLocaleString()}
+                  </p>
                 </div>
               </div>
+              <div className="flex items-center gap-4">
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColors[session.status] || 'bg-gray-100 text-gray-800'}`}>
+                  {session.status.replace('_', ' ')}
+                </span>
+                <button className="flex items-center gap-1.5 text-sm bg-white border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-100">
+                  <PlayCircle size={16} />
+                  Resume
+                </button>
+              </div>
+            </div>
             )) : (
               <div className="p-8 text-center text-gray-500">
                 <p>You have no audit sessions yet.</p>
                 <Link href="/" className="text-teal-500 font-semibold mt-2 inline-block">Start your first audit →</Link>
               </div>
-            )}
+            )
           </div>
         </div>
       </main>
