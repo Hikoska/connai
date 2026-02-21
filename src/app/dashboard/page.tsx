@@ -2,15 +2,10 @@
 
 export const dynamic = 'force-dynamic'
 
-import { createClient } from '@supabase/supabase-js'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { FileText, PlayCircle } from 'lucide-react'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 type Session = {
   id: string
@@ -27,10 +22,22 @@ export default function DashboardPage() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const supabaseRef = useRef<SupabaseClient | null>(null)
 
   useEffect(() => {
-    const checkUserAndFetchSessions = async () => {
+    const init = async () => {
+      // Lazy init inside component to avoid module-level evaluation during build
+      const { createClient } = await import('@supabase/supabase-js')
+      if (!supabaseRef.current) {
+        supabaseRef.current = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+      }
+      const supabase = supabaseRef.current
+
       const { data: { session } } = await supabase.auth.getSession()
+
       if (session?.user) {
         setUser(session.user)
         const { data, error } = await supabase
@@ -38,20 +45,30 @@ export default function DashboardPage() {
           .select('id, started_at, status')
           .eq('user_id', session.user.id)
           .order('started_at', { ascending: false })
-        if (error) console.error('Error fetching sessions:', error)
-        else setSessions(data || [])
+
+        if (error) {
+          console.error('Error fetching sessions:', error)
+        } else {
+          setSessions(data || [])
+        }
       }
       setLoading(false)
     }
-    checkUserAndFetchSessions()
+
+    init()
   }, [])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    if (supabaseRef.current) {
+      await supabaseRef.current.auth.signOut()
+    }
+    setUser(null)
     window.location.href = '/'
   }
 
-  if (loading) return <div className="p-8 text-center">Loading dashboard...</div>
+  if (loading) {
+    return <div className="p-8 text-center">Loading dashboard...</div>
+  }
 
   if (!user) {
     return (
@@ -72,7 +89,7 @@ export default function DashboardPage() {
       <header className="bg-white border-b">
         <div className="max-w-5xl mx-auto px-4 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">🔭</span>
+            <span className="text-2xl">📋</span>
             <span className="font-bold text-teal-500 text-xl">Connai Dashboard</span>
           </div>
           <button onClick={handleLogout} className="text-sm font-medium text-gray-600 hover:text-teal-500">
@@ -88,31 +105,31 @@ export default function DashboardPage() {
           <div className="divide-y">
             {sessions.length > 0 ? sessions.map(session => (
               <div key={session.id} className="p-4 flex justify-between items-center hover:bg-gray-50">
-              <div className="flex items-center gap-4">
-                <FileText className="text-gray-400" />
-                <div>
-                  <h2 className="font-semibold">Digital Maturity Audit</h2>
-                  <p className="text-sm text-gray-500">
-                    Started: {new Date(session.started_at).toLocaleString()}
-                  </p>
+                <div className="flex items-center gap-4">
+                  <FileText className="text-gray-400" />
+                  <div>
+                    <h2 className="font-semibold">Digital Maturity Audit</h2>
+                    <p className="text-sm text-gray-500">
+                      Started: {new Date(session.started_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColors[session.status] || 'bg-gray-100 text-gray-800'}`}>
+                    {session.status.replace('_', ' ')}
+                  </span>
+                  <button className="flex items-center gap-1.5 text-sm bg-white border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-100">
+                    <PlayCircle size={16} />
+                    Resume
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColors[session.status] || 'bg-gray-100 text-gray-800'}`}>
-                  {session.status.replace('_', ' ')}
-                </span>
-                <button className="flex items-center gap-1.5 text-sm bg-white border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-100">
-                  <PlayCircle size={16} />
-                  Resume
-                </button>
-              </div>
-            </div>
             )) : (
               <div className="p-8 text-center text-gray-500">
                 <p>You have no audit sessions yet.</p>
-                <Link href="/" className="text-teal-500 font-semibold mt-2 inline-block">Start your first audit →</Link>
+                <Link href="/" className="text-teal-500 font-semibold mt-2 inline-block">Start your first audit &#8594;</Link>
               </div>
-            )
+            )}
           </div>
         </div>
       </main>
