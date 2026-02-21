@@ -1,7 +1,6 @@
 import { google } from '@ai-sdk/google'
 import { streamText, tool } from 'ai'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
 
 const SYSTEM_PROMPT = `You are Connai, an AI assistant who helps organisations understand their digital maturity. Your goal is to guide a user through a single, seamless conversation that covers discovery, scoping, account creation, a brief interview, and finally, directs them to their report.
 
@@ -11,7 +10,7 @@ You operate as a state machine. You MUST follow the state transitions strictly.
 
 **1. AWAITING_ENGAGEMENT:**
    - This is the initial state.
-   - Your first message is ALWAYS: "Hi — I'm Connai. I help organisations understand where they stand digitally and what to do about it. Want to start with your own? It takes about 30 minutes, and you'll walk away with a full picture."
+   - Your first message is ALWAYS: "Hi \u2014 I'm Connai. I help organisations understand where they stand digitally and what to do about it. Want to start with your own? It takes about 30 minutes, and you'll walk away with a full picture."
    - You will wait for a positive user response ("yes", "sure", "let's do it", etc.).
    - If the user is hesitant or asks questions, provide brief, encouraging answers.
    - **Transition**: On positive user engagement -> move to DISCOVERY.
@@ -65,23 +64,24 @@ You operate as a state machine. You MUST follow the state transitions strictly.
 - Do not ask for information not specified in the current state's goal.
 `
 
-const MODEL = 'models/gemini-2.0-flash'
+const MODEL = 'gemini-2.0-flash'
 
 export const maxDuration = 60
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function POST(req: Request) {
-  // The GOOGLE_GENERATIVE_AI_API_KEY is read automatically by the AI SDK
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return Response.json({ error: 'AI service not configured.' }, { status: 503 })
   }
 
   try {
     const { messages } = await req.json()
+
+    // Lazy init to avoid module-level errors during build
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
 
     const result = await streamText({
       model: google(MODEL),
@@ -97,24 +97,24 @@ export async function POST(req: Request) {
             console.log(`Creating Supabase user for: ${email}`)
             const { data, error } = await supabase.auth.admin.createUser({
               email: email,
-              email_confirm: true, // Set to true to send a magic link
+              email_confirm: true,
             })
 
             if (error) {
               console.error('Supabase user creation error:', error.message)
               return { success: false, error: error.message }
             }
-            
+
             if (data.user) {
               const { error: sessionError } = await supabase
                 .from('audit_sessions')
                 .insert({ user_id: data.user.id, transcript: messages })
-              
+
               if (sessionError) {
                 console.error('Supabase session creation error:', sessionError.message)
               }
             }
-            
+
             console.log('Supabase user created:', data.user?.id)
             return { success: true, userId: data.user?.id }
           },
