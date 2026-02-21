@@ -3,36 +3,23 @@
 import { useChat } from 'ai/react'
 import { useEffect, useRef, useState } from 'react'
 
-// Opening question pool — randomised on each page load.
-// Future: log shown question + conversion to Supabase for weighted A/B routing.
-const OPENING_QUESTIONS = [
-  "When did you last get an honest picture of your organisation's digital health?",
-  "How confident are you that your team is using technology as well as your top competitors?",
-  "On a scale of 1–10 — how would you rate your organisation's digital maturity right now?",
-  "If a client asked how digitally advanced your organisation is — what would you say?",
-  "What’s the one area where digital could have the biggest impact in your organisation?",
-  "Is your organisation’s tech keeping up with how your customers behave today?",
-  "Where do you think you’re losing the most ground digitally — operations, customers, or team?",
-  "How much of your organisation’s potential are you actually unlocking through technology?",
-]
+// Question pool lives in page.tsx (server component, force-dynamic).
+// ChatInterface just receives the pre-selected question as a prop.
+// This eliminates the hydration mismatch from client-side Math.random().
+// Future A/B tracking: log initialMessage + engagement to Supabase on first user reply.
 
 interface ChatInterfaceProps {
   mode: 'brief' | 'interview'
-  initialMessage?: string
+  initialMessage: string
   placeholder?: string
 }
 
 export function ChatInterface({ mode, initialMessage, placeholder }: ChatInterfaceProps) {
-  // Pick once on mount — stays stable across re-renders, changes on full page refresh
-  const [openingQuestion] = useState<string>(
-    () => initialMessage ?? OPENING_QUESTIONS[Math.floor(Math.random() * OPENING_QUESTIONS.length)]
-  )
-
   const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
     api: '/api/chat',
     body: { mode },
     initialMessages: [
-      { id: 'init', role: 'assistant', content: openingQuestion },
+      { id: 'init', role: 'assistant', content: initialMessage },
     ],
   })
 
@@ -53,7 +40,7 @@ export function ChatInterface({ mode, initialMessage, placeholder }: ChatInterfa
       {/* Header bar */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-50 bg-gradient-to-r from-teal-500 to-teal-600">
         <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
-          <span className="text-white text-lg">🔭</span>
+          <span className="text-white text-lg">\uD83D\uDD2D</span>
         </div>
         <div>
           <div className="text-white font-semibold text-sm">Connai AI</div>
@@ -105,7 +92,7 @@ export function ChatInterface({ mode, initialMessage, placeholder }: ChatInterfa
         {error && (
           <div className="text-center">
             <span className="text-xs text-red-400 bg-red-50 px-3 py-1.5 rounded-full">
-              Connection issue — please try again
+              Connection issue \u2014 please try again
             </span>
           </div>
         )}
@@ -123,7 +110,7 @@ export function ChatInterface({ mode, initialMessage, placeholder }: ChatInterfa
             ref={inputRef}
             value={input}
             onChange={handleInputChange}
-            placeholder={placeholder || 'Type your answer…'}
+            placeholder={placeholder || 'Type your answer\u2026'}
             className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent placeholder-gray-400 transition"
             disabled={isLoading}
             autoComplete="off"
