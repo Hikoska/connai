@@ -25,32 +25,71 @@ Critical style rules for ALL modes:
 - Always end with exactly one question.
 `
 
-// Groq: 300+ tokens/sec, llama-3.3-70b-versatile, 1K req/day free tier
+// LLM cascade: Groq (primary) → Cerebras (fallback on 429)
+// Both are OpenAI-compatible APIs on free tiers.
+// Strategy: work continues at lower latency rather than stopping cold.
+
+// Primary: Groq — 300+ tok/s, llama-3.3-70b-versatile, 1K RPD free
 const groq = createOpenAI({
   baseURL: 'https://api.groq.com/openai/v1',
   apiKey: process.env.GROQ_API_KEY,
 })
 
-const MODEL = groq('llama-3.3-70b-versatile')
+// Fallback: Cerebras — OpenAI-compatible, llama-3.3-70b, separate free quota
+const cerebras = createOpenAI({
+  baseURL: 'https://api.cerebras.ai/v1',
+  apiKey: process.env.CEREBRAS_API_KEY ?? '',
+})
 
 export const maxDuration = 60
 
+function isRateLimit(error: any): boolean {
+  if (!error) return false
+  const msg = String(error?.message ?? error).toLowerCase()
+  const status = error?.status ?? error?.cause?.status ?? error?.cause?.response?.status
+  return status === 429 || msg.includes('rate limit') || msg.includes('429')
+}
+
 export async function POST(req: Request) {
-  try {
-    const { messages } = await req.json()
+  const { messages } = await req.json()
 
-    const result = await streamText({
-      model: MODEL,
-      system: SYSTEM_PROMPT,
-      messages,
-    })
-
-    return result.toDataStreamResponse()
-  } catch (error: any) {
-    console.error('Chat error:', error)
-    return Response.json({
-      error: error?.message || String(error),
-      cause: error?.cause?.message,
-    }, { status: 500 })
+  // Try Groq first
+  if (process.env.GROQ_API_KEY) {
+    try {
+      const result = await streamText({
+        model: groq('llama-3.3-70b-versatile'),
+        system: SYSTEM_PROMPT,
+        messages,
+      })
+      return result.toDataStreamResponse()
+    } catch (error: any) {
+      if (!isRateLimit(error)) {
+        console.error('Groq error (non-429):', error)
+        throw error
+      }
+      console.warn('Groq RPD exhausted — cascading to Cerebras')
+    }
   }
+
+  // Fallback: Cerebras
+  if (process.env.CEREBRAS_API_KEY) {
+    try {
+      const result = await streamText({
+        model: cerebras('llama-3.3-70b'),
+        system: SYSTEM_PROMPT,
+        messages,
+      })
+      return result.toDataStreamResponse()
+    } catch (error: any) {
+      console.error('Cerebras error:', error)
+      throw error
+    }
+  }
+
+  // Both exhausted or not configured
+  console.error('All LLM providers unavailable')
+  return Response.json(
+    { error: 'Service temporarily at capacity. Please try again in a few minutes.' },
+    { status: 503 }
+  )
 }
