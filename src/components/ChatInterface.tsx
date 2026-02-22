@@ -14,10 +14,25 @@ interface ChatInterfaceProps {
   placeholder?: string
 }
 
+// Stable session ID — persists across widget open/close within the same tab
+function getSessionId(): string {
+  if (typeof window === 'undefined') return 'ssr'
+  const key = 'connai_session_id'
+  let id = sessionStorage.getItem(key)
+  if (!id) {
+    id = crypto.randomUUID()
+    sessionStorage.setItem(key, id)
+  }
+  return id
+}
+
 export function ChatInterface({ mode, initialMessage, placeholder }: ChatInterfaceProps) {
+  const sessionId = getSessionId()
+
   const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
     api: '/api/chat',
     body: { mode },
+    headers: { 'x-session-id': sessionId },
     initialMessages: [
       { id: 'init', role: 'assistant', content: initialMessage },
     ],
@@ -40,7 +55,7 @@ export function ChatInterface({ mode, initialMessage, placeholder }: ChatInterfa
       {/* Header bar */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-50 bg-gradient-to-r from-teal-500 to-teal-600">
         <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
-          <span className="text-white text-lg">\uD83D\uDD2D</span>
+          <span className="text-white text-lg">🤕</span>
         </div>
         <div>
           <div className="text-white font-semibold text-sm">Connai AI</div>
@@ -92,7 +107,7 @@ export function ChatInterface({ mode, initialMessage, placeholder }: ChatInterfa
         {error && (
           <div className="text-center">
             <span className="text-xs text-red-400 bg-red-50 px-3 py-1.5 rounded-full">
-              Connection issue \u2014 please try again
+              Connection issue — please try again
             </span>
           </div>
         )}
@@ -110,7 +125,7 @@ export function ChatInterface({ mode, initialMessage, placeholder }: ChatInterfa
             ref={inputRef}
             value={input}
             onChange={handleInputChange}
-            placeholder={placeholder || 'Type your answer\u2026'}
+            placeholder={placeholder || 'Type your answer…'}
             className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent placeholder-gray-400 transition"
             disabled={isLoading}
             autoComplete="off"
