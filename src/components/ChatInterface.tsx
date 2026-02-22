@@ -9,18 +9,27 @@ import { useEffect, useRef, useState } from 'react'
 // A/B tracking: log initialMessage + engagement to Supabase on first user reply.
 
 interface ChatInterfaceProps {
-  mode: 'brief' | 'interview'
-  initialMessage: string
+  mode?: 'brief' | 'interview'
+  initialMessage?: string
   placeholder?: string
 }
 
-const CAPTURE_TAG_RE = /<CONNAI_CAPTURE>([\s\S]*?)<\/CONNAI_CAPTURE>/
+const CAPTURE_TAG_RE = /<CONNAI_CAPTURE>[\s\S]*?<\/CONNAI_CAPTURE>/g
 
-function stripCaptureTag(content: string): string {
-  return content.replace(CAPTURE_TAG_RE, '').trim()
+// Null-safe: content may be undefined on initial SSR render if FloatingAIWidget
+// doesn't pass a prop. Never throw — render empty string instead.
+function stripCaptureTag(content: string | undefined): string {
+  return content?.replace(CAPTURE_TAG_RE, '').trim() ?? ''
 }
 
-export function ChatInterface({ mode, initialMessage, placeholder }: ChatInterfaceProps) {
+const DEFAULT_INITIAL_MESSAGE =
+  "Hi! I'm Connai — your digital maturity audit assistant. Ready to see where your organisation stands? Ask me anything, or say \"Let's start\" whenever you're ready."
+
+export function ChatInterface({
+  mode = 'interview',
+  initialMessage = DEFAULT_INITIAL_MESSAGE,
+  placeholder,
+}: ChatInterfaceProps) {
   const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
     api: '/api/chat',
     body: { mode },
@@ -49,7 +58,7 @@ export function ChatInterface({ mode, initialMessage, placeholder }: ChatInterfa
     if (isLoading || captureAttempted.current || mode !== 'interview') return
     const lastMsg = messages[messages.length - 1]
     if (!lastMsg || lastMsg.role !== 'assistant') return
-    const match = lastMsg.content.match(CAPTURE_TAG_RE)
+    const match = lastMsg.content?.match(/<CONNAI_CAPTURE>([\s\S]*?)<\/CONNAI_CAPTURE>/)
     if (!match) return
 
     captureAttempted.current = true
