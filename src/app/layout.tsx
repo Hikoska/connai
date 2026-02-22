@@ -17,7 +17,7 @@ const siteUrl = 'https://connai.linkgrow.io'
 const siteTitle = 'Connai — AI Digital Maturity Audits'
 const siteDescription =
   'Get a $10,000 digital maturity audit in days, not months. AI-powered interviews, structured reports, actionable insights.'
-const ogImage = `${siteUrl}/og-image.png`
+const ogImage = `${siteUrl}/api/og`
 
 export const metadata: Metadata = {
   title: siteTitle,
