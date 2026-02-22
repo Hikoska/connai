@@ -16,11 +16,22 @@ export const FloatingAIWidget = () => {
       }
     }
 
+    // Listen for CTA button events to force-open the widget
+    const handleOpenChat = () => {
+      setIsExpanded(true)
+      // Scroll to bottom-right so widget is visible
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+    }
+
     window.addEventListener('scroll', handleScroll)
+    window.addEventListener('connai:open-chat', handleOpenChat)
     // Initial check
     handleScroll()
 
-    return () => window.removeEventListener('scroll', handleScroll)
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('connai:open-chat', handleOpenChat)
+    }
   }, [])
 
   if (!isExpanded) {
@@ -30,7 +41,7 @@ export const FloatingAIWidget = () => {
         className="fixed bottom-6 right-6 flex items-center gap-3 bg-white rounded-full shadow-lg p-3 z-50 hover:shadow-xl transition-shadow"
       >
         <div className="relative">
-          <span className="text-2xl">🔭</span>
+          <span className="text-2xl">🤕</span>
           <span className="absolute top-0 right-0 block h-3 w-3 rounded-full bg-teal-500 ring-2 ring-white" />
         </div>
         <span className="font-semibold text-gray-700 pr-2">Ask Connai</span>
@@ -42,7 +53,7 @@ export const FloatingAIWidget = () => {
     <div className="fixed bottom-6 right-6 w-[400px] h-[500px] bg-white rounded-lg shadow-2xl z-50 flex flex-col slide-up-anim">
       <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
         <div className="flex items-center gap-2">
-          <span className="text-xl">🔭</span>
+          <span className="text-xl">🩕</span>
           <span className="font-bold text-teal-500">Connai</span>
         </div>
         <button onClick={() => setIsExpanded(false)} className="text-gray-400 hover:text-gray-600">

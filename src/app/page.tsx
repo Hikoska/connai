@@ -8,20 +8,32 @@ const instrumentSerif = Instrument_Serif({
   variable: '--font-instrument-serif',
 })
 
+// Shared CTA button — dispatches event to open FloatingAIWidget
+const CTAButton = ({ className }: { className?: string }) => (
+  <button
+    className={className}
+    onClick={() => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('connai:open-chat'))
+      }
+    }}
+  >
+    Start my free audit →
+  </button>
+)
+
 const Hero = () => (
   <section className="min-h-screen flex items-center justify-center">
     <div className="grid md:grid-cols-2 gap-8 items-center max-w-6xl mx-auto px-4">
       <div className="text-left">
         <h1 className={`${instrumentSerif.variable} font-serif text-5xl md:text-6xl font-bold leading-tight mb-6`}>
-          Get an honest picture of your organisation’s digital health.
+          Get an honest picture of your organisation&#39;s digital health.
         </h1>
         <p className="text-lg text-gray-600 mb-8">
           Connai conducts an AI-powered digital maturity audit in minutes, not months. 
           Understand your gaps, benchmark against competitors, and get a clear action plan.
         </p>
-        <button className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-lg hover:opacity-90 transition-opacity text-lg">
-          Start my free audit →
-        </button>
+        <CTAButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-lg hover:opacity-90 transition-opacity text-lg" />
         {/* Placeholder for trust signals */}
         <div className="mt-12 text-sm text-gray-500">
           Trusted by leading teams in Mauritius
@@ -32,13 +44,13 @@ const Hero = () => (
         <div className="w-[400px] h-[500px] bg-white rounded-lg shadow-2xl flex flex-col mx-auto">
           <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
               <div className="flex items-center gap-2">
-                <span className="text-xl">🤕</span>
+                <span className="text-xl">🩕</span>
                 <span className="font-bold text-teal-500">Connai</span>
               </div>
             </div>
             <div className="p-4 flex-1">
               <div className="bg-gray-100 p-3 rounded-lg">
-                <p className="text-sm">When did you last get an honest picture of your organisation’s digital health?</p>
+                <p className="text-sm">When did you last get an honest picture of your organisation&#39;s digital health?</p>
               </div>
             </div>
             <div className="border-t p-4 bg-white rounded-b-lg">
@@ -63,9 +75,7 @@ const FinalCTA = () => (
     <div className="max-w-3xl mx-auto px-4 text-center">
       <h2 className="text-4xl font-bold font-serif mb-4">Ready to see where you stand?</h2>
       <p className="text-gray-300 text-lg mb-8">30 minutes. Full picture.</p>
-      <button className="bg-teal-500 text-white font-bold px-8 py-4 rounded-lg hover:bg-teal-400 transition-colors text-lg">
-        Start my free audit →
-      </button>
+      <CTAButton className="bg-teal-500 text-white font-bold px-8 py-4 rounded-lg hover:bg-teal-400 transition-colors text-lg" />
     </div>
   </section>
 )
@@ -74,7 +84,7 @@ const Footer = () => (
   <footer className="bg-gray-900 text-gray-400 py-8 px-4">
     <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div className="flex items-center gap-2">
-        <span className="text-xl">🤕</span>
+        <span className="text-xl">🩕</span>
         <span className="font-bold text-white">Connai</span>
       </div>
       <div className="text-sm">
