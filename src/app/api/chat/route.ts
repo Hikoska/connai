@@ -1,6 +1,5 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { streamText } from 'ai'
-import { createClient } from '@supabase/supabase-js'
 
 // Connai conversation design:
 // - Short responses, 1-2 sentences max
@@ -16,14 +15,15 @@ const SYSTEM_PROMPT = `You are Connai, an AI assistant for a digital maturity au
 
 **MODE 2: Audit Onboarding**
 - If the user expresses clear intent to start ("let's start", "I'm ready", "Start my audit"), you transition to this mode.
-- Once in this mode, you follow a simple conversational flow to gather initial info.
 - Step 1: Ask for their organisation name and industry.
 - Step 2: Ask for their role.
-- Step 3 (LATER): Hand off to a different tool for the full interview. For now, just say "Thank you. The next step would be the full interview, which is coming in a future version."
+- Step 3: Ask: "What's the best email address to send your interview link to?"
+- Step 4: Respond with exactly ONE warm confirmation sentence (e.g. "Perfect — your audit is being set up now, you'll receive your interview link at [email] shortly."). Then on the very next line, emit this tag EXACTLY with real values substituted — the user will not see it rendered:
+<CONNAI_CAPTURE>{"org":"ORGNAME","industry":"INDUSTRY","role":"ROLE","email":"EMAIL"}</CONNAI_CAPTURE>
 
 Critical style rules for ALL modes:
-- Keep every response to 1–2 sentences.
-- Always end with exactly one question.
+- Keep every response to 1–2 sentences (except Step 4 which follows its own format).
+- Always end Steps 1-3 and Mode 1 responses with exactly one question.
 `
 
 // LLM cascade: Groq (primary) → Cerebras (fallback on 429)
@@ -51,79 +51,8 @@ function isRateLimit(error: any): boolean {
   return status === 429 || msg.includes('rate limit') || msg.includes('429')
 }
 
-// Lightweight Supabase client for server-side writes (service role)
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) return null
-  return createClient(url, key, { auth: { persistSession: false } })
-}
-
-// Extract structured fields from messages collected so far
-function extractLeadFields(messages: { role: string; content: string }[]) {
-  const fullText = messages.map(m => m.content).join(' ').toLowerCase()
-  // Heuristic: org_name captured when assistant asks about role (step 2)
-  // We store the raw last user message before the role question as org_name
-  // This is a best-effort parse; full NER can come later.
-  let status = 'chatting'
-  let org_name: string | undefined
-  let industry: string | undefined
-  let role: string | undefined
-
-  // Count user turns to gauge onboarding progress
-  const userMsgs = messages.filter(m => m.role === 'user')
-  if (userMsgs.length >= 1) status = 'onboarding'
-  if (userMsgs.length >= 2) status = 'qualified'
-
-  // Soft extract: if assistant mentioned "organisation name" and user replied
-  for (let i = 0; i < messages.length - 1; i++) {
-    const asst = messages[i]
-    const usr = messages[i + 1]
-    if (asst.role === 'assistant' && usr.role === 'user') {
-      const aLower = asst.content.toLowerCase()
-      if (aLower.includes('organisation') && aLower.includes('industry') && !org_name) {
-        // User replied with org + industry — take full reply as org_name, parse industry if comma
-        const parts = usr.content.split(',')
-        org_name = parts[0].trim().slice(0, 200)
-        if (parts[1]) industry = parts[1].trim().slice(0, 100)
-      }
-      if ((aLower.includes('role') || aLower.includes('position')) && !role) {
-        role = usr.content.trim().slice(0, 100)
-      }
-    }
-  }
-
-  return { status, org_name, industry, role }
-}
-
 export async function POST(req: Request) {
-  const sessionId = req.headers.get('x-session-id') ?? 'anon-' + Date.now()
-  const { messages, mode } = await req.json()
-
-  // Persist incoming user message to chat_messages (fire-and-forget)
-  const sb = getSupabase()
-  if (sb && messages?.length > 0) {
-    const lastMsg = messages[messages.length - 1]
-    if (lastMsg.role === 'user') {
-      sb.from('chat_messages').insert({
-        session_id: sessionId,
-        role: 'user',
-        content: lastMsg.content,
-      }).then(() => {}).catch(() => {})
-
-      // Upsert lead row
-      const { status, org_name, industry, role } = extractLeadFields(messages)
-      sb.from('leads').upsert({
-        session_id: sessionId,
-        message_count: messages.filter((m: any) => m.role === 'user').length,
-        last_message_at: new Date().toISOString(),
-        status,
-        ...(org_name && { org_name }),
-        ...(industry && { industry }),
-        ...(role && { role }),
-      }, { onConflict: 'session_id', ignoreDuplicates: false }).then(() => {}).catch(() => {})
-    }
-  }
+  const { messages } = await req.json()
 
   // Try Groq first
   if (process.env.GROQ_API_KEY) {
@@ -132,16 +61,6 @@ export async function POST(req: Request) {
         model: groq('llama-3.3-70b-versatile'),
         system: SYSTEM_PROMPT,
         messages,
-        onFinish: async ({ text }) => {
-          // Persist assistant reply
-          if (sb) {
-            await sb.from('chat_messages').insert({
-              session_id: sessionId,
-              role: 'assistant',
-              content: text,
-            }).then(() => {}).catch(() => {})
-          }
-        },
       })
       return result.toDataStreamResponse()
     } catch (error: any) {
@@ -160,15 +79,6 @@ export async function POST(req: Request) {
         model: cerebras('llama3.1-8b'),
         system: SYSTEM_PROMPT,
         messages,
-        onFinish: async ({ text }) => {
-          if (sb) {
-            await sb.from('chat_messages').insert({
-              session_id: sessionId,
-              role: 'assistant',
-              content: text,
-            }).then(() => {}).catch(() => {})
-          }
-        },
       })
       return result.toDataStreamResponse()
     } catch (error: any) {
