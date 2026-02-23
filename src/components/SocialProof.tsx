@@ -1,36 +1,40 @@
 'use client'
-import CountUp from 'react-countup'
 
 type Stat = {
-  value?: number
-  display?: string
+  display: string
   label: string
-  sublabel?: string
+  sublabel: string
 }
 
 const stats: Stat[] = [
-  { value: 1200, label: 'Organisations onboarded' },
-  { value: 100, label: 'Transcript fidelity', sublabel: 'Every word captured, verbatim' },
-  { display: '<10%', label: 'Of traditional consulting cost', sublabel: 'vs. McKinsey or Deloitte' },
+  {
+    display: '70%',
+    label: 'Of digital transformations fail to meet their goals',
+    sublabel: 'McKinsey Global Survey'
+  },
+  {
+    display: '17%',
+    label: 'Of large IT projects threaten the company's existence',
+    sublabel: 'via budget overruns — McKinsey'
+  },
+  {
+    display: '215%',
+    label: 'Average cost overrun on large IT projects',
+    sublabel: 'Gartner Research'
+  },
 ]
 
 export const SocialProof = () => (
-  <section className="bg-[#0E1117] text-white py-12">
+  <section className="bg-[#0E1117] text-white py-16">
     <div className="max-w-6xl mx-auto px-4">
-      <div className="grid grid-cols-3 gap-8 text-center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
         {stats.map((stat, index) => (
           <div key={index}>
-            <div className="text-4xl md:text-5xl font-mono font-bold text-teal-400">
-              {stat.display ? (
-                stat.display
-              ) : (
-                <><CountUp end={stat.value!} duration={3} enableScrollSpy />{stat.value === 100 ? '%' : '+'}</>
-              )}
+            <div className="text-5xl md:text-6xl font-mono font-bold text-teal-400">
+              {stat.display}
             </div>
-            <div className="text-sm text-gray-400 mt-2">{stat.label}</div>
-            {stat.sublabel && (
-              <div className="text-xs text-gray-500 mt-1">{stat.sublabel}</div>
-            )}
+            <div className="text-sm text-gray-300 mt-3 font-medium">{stat.label}</div>
+            <div className="text-xs text-gray-500 mt-1">{stat.sublabel}</div>
           </div>
         ))}
       </div>

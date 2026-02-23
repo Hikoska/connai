@@ -3,6 +3,13 @@ import { FloatingAIWidget } from '@/components/FloatingAIWidget'
 import { CTAButton } from '@/components/CTAButton'
 import Link from 'next/link'
 import Image from 'next/image'
+import { SocialProof } from '@/components/SocialProof'
+import { HowItWorks } from '@/components/HowItWorks'
+import { WhatYouGet } from '@/components/WhatYouGet'
+import { WhoItsFor } from '@/components/WhoItsFor'
+import { ProductScreenshot } from '@/components/ProductScreenshot'
+import { Testimonials } from '@/components/Testimonials'
+import { FAQ } from '@/components/FAQ'
 
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
@@ -12,49 +19,21 @@ const instrumentSerif = Instrument_Serif({
 
 const Hero = () => (
   <section className="min-h-screen flex items-center justify-center">
-    <div className="grid md:grid-cols-2 gap-8 items-center max-w-6xl mx-auto px-4">
-      <div className="text-left">
-        <h1 className={`${instrumentSerif.variable} font-serif text-5xl md:text-6xl font-bold leading-tight mb-6`}>
-          Get an honest picture of your organisation&#39;s digital health.
-        </h1>
-        <p className="text-lg text-gray-600 mb-8">
-          Connai conducts an AI-powered digital maturity audit in minutes, not months.
-          Understand your gaps, benchmark against competitors, and get a clear action plan.
-        </p>
-        <CTAButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-lg hover:opacity-90 transition-opacity text-lg" />
-        <div className="mt-12 text-sm text-gray-500">
-          Trusted by leading teams in Mauritius
-        </div>
-      </div>
-      <div className="hidden md:block">
-        <div className="w-[400px] h-[500px] bg-white rounded-lg shadow-2xl flex flex-col mx-auto">
-          <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">&#x1F9E0;</span>
-              <span className="font-bold text-teal-500">Connai</span>
-            </div>
-          </div>
-          <div className="p-4 flex-1">
-            <div className="bg-gray-100 p-3 rounded-lg">
-              <p className="text-sm">When did you last get an honest picture of your organisation&#39;s digital health?</p>
-            </div>
-          </div>
-          <div className="border-t p-4 bg-white rounded-b-lg">
-            <div className="border rounded-lg px-4 py-2 text-gray-400 text-sm">Type your message...</div>
-          </div>
-        </div>
-      </div>
+    <div className="max-w-3xl mx-auto px-4 text-center">
+      <h1 className={`${instrumentSerif.variable} font-serif text-5xl md:text-7xl font-bold leading-tight mb-8`}>
+        Get an honest picture of your organisation&apos;s digital health.
+      </h1>
+      <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+        Connai conducts an AI-powered digital maturity audit in 30 minutes, not months.
+        Understand your gaps, benchmark against competitors, and get a clear action plan.
+      </p>
+      <CTAButton className="bg-[#0D5C63] text-white font-bold px-10 py-4 rounded-lg hover:opacity-90 transition-opacity text-lg" />
+      <p className="mt-10 text-sm text-gray-500">
+        Trusted by leading teams in Mauritius
+      </p>
     </div>
   </section>
 )
-
-import { SocialProof } from '@/components/SocialProof'
-import { HowItWorks } from '@/components/HowItWorks'
-import { WhatYouGet } from '@/components/WhatYouGet'
-import { WhoItsFor } from '@/components/WhoItsFor'
-import { ProductScreenshot } from '@/components/ProductScreenshot'
-import { Testimonials } from '@/components/Testimonials'
-import { FAQ } from '@/components/FAQ'
 
 const FinalCTA = () => (
   <section className="py-20 bg-[#0E1117] text-white">
@@ -92,16 +71,16 @@ const Footer = () => (
   <footer className="bg-[#0E1117] text-gray-400 py-8 px-4 border-t border-gray-800">
     <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div className="flex items-center gap-2">
-        <span className="text-xl">&#x1F9E0;</span>
+        <span className="text-xl" aria-label="brain">🧠</span>
         <span className="font-bold text-white">Connai</span>
       </div>
       <LinkgrowMark />
       <div className="flex items-center gap-4 text-sm">
         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-        <span className="text-gray-700">·</span>
+        <span className="text-gray-700">&middot;</span>
         <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-        <span className="text-gray-700">·</span>
-        <span>© 2026 Linkgrow Ltd</span>
+        <span className="text-gray-700">&middot;</span>
+        <span>&copy; 2026 Linkgrow Ltd</span>
       </div>
     </div>
   </footer>
