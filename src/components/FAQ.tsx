@@ -3,28 +3,24 @@ import { useState } from 'react'
 
 const faqItems = [
   {
-    q: "Is my data secure?",
-    a: "Yes. All data is encrypted in transit and at rest. We are GDPR compliant and your audit data is never used for training AI models.",
+    q: "What is a digital maturity assessment?",
+    a: "It's a 'health check' for your business. We analyse how well you're using digital tools and technology to meet your goals, showing you what's working, what's not, and how you compare to others in our region.",
   },
   {
-    q: "How long does it take?",
-    a: "The initial conversation with Connai takes about 30 minutes. You'll receive your full, comprehensive report within 2-3 business days.",
+    q: "How is Connai different from other tools?",
+    a: "Many tools are generic questionnaires built for large corporations. Connai is a quick, AI-powered conversational interview designed for the reality of SMEs in Mauritius and Africa. It's faster, more personal, and gives you more relevant insights.",
   },
   {
-    q: "What do I get at the end?",
-    a: "You receive a multi-page digital maturity report that includes your overall score, industry benchmarks, a detailed gap analysis, and a prioritized action plan.",
+    q: "How long does the interview take?",
+    a: "The main interview takes about 30 minutes. It's fast and can be done right from your phone or computer at a time that suits you.",
   },
   {
-    q: "Is it free?",
-    a: "Starting the conversation and receiving your initial maturity score is completely free, with no credit card required. Deeper sections of the report are part of our paid packages.",
+    q: "What do I get in the report?",
+    a: "You get a clear, easy-to-understand report showing your digital maturity score, where your biggest gaps are, and a simple, prioritised action plan with steps you can take immediately to improve.",
   },
   {
-    q: "How is this different from a consultant?",
-    a: "Connai is faster, more affordable, and provides 100% data fidelity. We can interview 100 people in the time a consultant interviews 5, giving you a much broader and more accurate picture of your organisation.",
-  },
-  {
-    q: "Can my whole team take it?",
-    a: "Yes. Our paid packages allow you to run audits across specific departments or your entire organisation to get a complete 360-degree view.",
+    q: "What does it cost?",
+    a: "Your first assessment and initial report are completely free. We want you to see the value first. We offer more detailed analysis and team-wide assessments as an affordable paid service, designed for SME budgets.",
   },
 ]
 
@@ -38,7 +34,7 @@ export const FAQ = () => {
           <h2 className="text-4xl font-bold font-serif">Frequently Asked Questions</h2>
         </div>
         <div className="space-y-4">
-          {faqItems.map((item, index) => (
+          {(faqItems ?? []).map((item, index) => (
             <div key={index} className="border-b border-gray-200 pb-4">
               <button 
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
