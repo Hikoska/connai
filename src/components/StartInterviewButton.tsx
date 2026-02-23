@@ -18,8 +18,8 @@ export const StartInterviewButton = ({ className, children }: StartInterviewButt
     setError(null)
 
     const interviewDetails = {
-      stakeholder_email: 'test@example.com',
-      organisation: 'Test Corp',
+      stakeholder_email: 'test@example.com', // Placeholder
+      organisation: 'Test Corp', // Placeholder
       country: 'MU',
       industry: 'Tech',
     }
@@ -29,7 +29,7 @@ export const StartInterviewButton = ({ className, children }: StartInterviewButt
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(interviewDetails),
-      });
+      })
 
       const data = await response.json()
 
@@ -37,7 +37,7 @@ export const StartInterviewButton = ({ className, children }: StartInterviewButt
         throw new Error(data.error || 'Failed to start interview')
       }
 
-      const interviewToken = data.interview_token;
+      const interviewToken = data.interview_token
       if (interviewToken) {
         router.push(`/interview/${interviewToken}`)
       } else {

@@ -1,13 +1,6 @@
 import { Instrument_Serif } from 'next/font/google'
 import { FloatingAIWidget } from '@/components/FloatingAIWidget'
 import { StartInterviewButton } from '@/components/StartInterviewButton'
-import { SocialProof } from '@/components/SocialProof'
-import { HowItWorks } from '@/components/HowItWorks'
-import { WhatYouGet } from '@/components/WhatYouGet'
-import { WhoItsFor } from '@/components/WhoItsFor'
-import { ProductScreenshot } from '@/components/ProductScreenshot'
-import { Testimonials } from '@/components/Testimonials'
-import { FAQ } from '@/components/FAQ'
 import Link from 'next/link'
 
 const instrumentSerif = Instrument_Serif({
@@ -34,11 +27,19 @@ const Hero = () => (
         </div>
       </div>
       <div className="hidden md:block">
-        {/* The static placeholder has been removed as per QA feedback */}
+        {/* Static placeholder removed per QA feedback */}
       </div>
     </div>
   </section>
 )
+
+import { SocialProof } from '@/components/SocialProof'
+import { HowItWorks } from '@/components/HowItWorks'
+import { WhatYouGet } from '@/components/WhatYouGet'
+import { WhoItsFor } from '@/components/WhoItsFor'
+import { ProductScreenshot } from '@/components/ProductScreenshot'
+import { Testimonials } from '@/components/Testimonials'
+import { FAQ } from '@/components/FAQ'
 
 const FinalCTA = () => (
   <section className="py-20 bg-[#0E1117] text-white">
