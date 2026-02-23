@@ -2,6 +2,7 @@ import { Instrument_Serif } from 'next/font/google'
 import { FloatingAIWidget } from '@/components/FloatingAIWidget'
 import { CTAButton } from '@/components/CTAButton'
 import Link from 'next/link'
+import Image from 'next/image'
 
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
@@ -70,32 +71,16 @@ const LinkgrowMark = () => (
     href="https://linkgrow.io"
     target="_blank"
     rel="noopener noreferrer"
-    className="flex items-center gap-1.5 text-gray-500 hover:text-gray-300 transition-colors group"
+    className="flex items-center gap-2 text-gray-500 hover:text-gray-300 transition-colors group"
     title="Powered by Linkgrow"
   >
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="text-teal-500 group-hover:text-teal-400 transition-colors"
-    >
-      <path
-        d="M2 11L5.5 7.5L7.5 9.5L12 4"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9 4H12V7"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Image
+      src="/linkgrow-logo.png"
+      alt="Linkgrow"
+      width={20}
+      height={20}
+      className="opacity-60 group-hover:opacity-100 transition-opacity"
+    />
     <span className="text-xs">
       Powered by{' '}
       <span className="font-semibold text-gray-300 group-hover:text-white transition-colors">Linkgrow</span>
