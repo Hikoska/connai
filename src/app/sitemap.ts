@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
  
 export default function sitemap(): MetadataRoute.Sitemap {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://connai.linkgrow.io'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://connai.linkgrow.io';
   return [
     {
       url: appUrl,
