@@ -1,103 +1,59 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'
 
-function scoreFromTranscript(
-  transcript: Array<{ role: string; content: string }>,
-  keyword: string
-): number {
-  if (!transcript.length) return 0;
-  const text = transcript.map((m) => m.content || '').join(' ').toLowerCase();
-  const hits = (text.match(new RegExp(keyword, 'gi')) || []).length;
-  return Math.min(100, Math.round((hits / transcript.length) * 25));
-}
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://mhuofnkbjbanrdvvktps.supabase.co'
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { token, transcript } = body;
+  const { interview_id } = await request.json()
 
-    if (!token) {
-      return NextResponse.json({ error: 'token is required' }, { status: 400 });
-    }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceKey) {
-      return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
-    }
-
-    const authHeaders: Record<string, string> = {
-      Authorization: `Bearer ${serviceKey}`,
-      apikey: serviceKey,
-    };
-
-    const interviewRes = await fetch(
-      `${supabaseUrl}/rest/v1/interviews?token=eq.${token}&select=*`,
-      { headers: authHeaders }
-    );
-    const interviews = await interviewRes.json();
-
-    if (!interviews.length) {
-      return NextResponse.json({ error: 'Interview not found' }, { status: 404 });
-    }
-
-    const interview = interviews[0];
-
-    if (transcript !== undefined) {
-      await fetch(`${supabaseUrl}/rest/v1/interviews?id=eq.${interview.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({
-          transcript,
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-        }),
-      });
-    }
-
-    const t = Array.isArray(transcript) ? transcript : [];
-    const dimensions = {
-      digital_strategy: scoreFromTranscript(t, 'strategy'),
-      data_management: scoreFromTranscript(t, 'data'),
-      customer_experience: scoreFromTranscript(t, 'customer'),
-      operations_automation: scoreFromTranscript(t, 'operations'),
-      culture_skills: scoreFromTranscript(t, 'skills'),
-      computed_at: new Date().toISOString(),
-      transcript_length: t.length,
-    };
-
-    const reportRes = await fetch(`${supabaseUrl}/rest/v1/reports`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders,
-        Prefer: 'return=representation',
-      },
-      body: JSON.stringify({
-        interview_id: interview.id,
-        dimensions,
-        pack_type: 'starter',
-        credits_used: 1,
-      }),
-    });
-
-    if (!reportRes.ok) {
-      const err = await reportRes.text();
-      console.error('[/api/report] Supabase error:', err);
-      return NextResponse.json({ error: 'Failed to create report' }, { status: 500 });
-    }
-
-    const [report] = await reportRes.json();
-
-    return NextResponse.json({
-      report_id: report.id,
-      interview_id: interview.id,
-      dimensions: report.dimensions,
-    });
-  } catch (err) {
-    console.error('[/api/report] Unhandled error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  if (!interview_id) {
+    return NextResponse.json({ error: 'interview_id is required' }, { status: 400 })
   }
+
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('Supabase service role key is not configured.')
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+  }
+
+  // Step 1: Fetch the interview transcript
+  const { data: interview, error } = await fetch(`${SUPABASE_URL}/rest/v1/interviews?id=eq.${interview_id}&select=transcript`, {
+    headers: {
+      'apikey': SUPABASE_SERVICE_ROLE_KEY,
+      'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      'Content-Type': 'application/json',
+    },
+  }).then(res => res.json())
+
+  if (error || !interview || interview.length === 0) {
+    console.error('Error fetching interview or interview not found:', error)
+    return NextResponse.json({ error: 'Failed to fetch interview transcript' }, { status: 500 })
+  }
+
+  const transcript = interview[0].transcript
+
+  // Step 2: Placeholder for LLM-based report generation logic
+  console.log('Successfully fetched transcript. Placeholder for report generation.')
+
+  const reportDimensions = {
+    strategy: Math.floor(Math.random() * 101),
+    technology: Math.floor(Math.random() * 101),
+    data: Math.floor(Math.random() * 101),
+    operations: Math.floor(Math.random() * 101),
+    customer: Math.floor(Math.random() * 101),
+    culture: Math.floor(Math.random() * 101),
+  }
+
+  // Step 3: Placeholder for saving the report back to Supabase
+  console.log('Placeholder for saving report to Supabase.')
+
+  // Step 4: Placeholder for PDF generation and upload
+  const pdf_url = `https://example.com/reports/${interview_id}.pdf`
+
+  return NextResponse.json({
+    message: 'Report generation placeholder complete.',
+    pdf_url: pdf_url,
+    dimensions: reportDimensions,
+  })
 }
