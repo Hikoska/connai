@@ -29,7 +29,7 @@ const Hero = () => (
         <div className="w-[400px] h-[500px] bg-white rounded-lg shadow-2xl flex flex-col mx-auto">
           <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🩕</span>
+              <span className="text-xl">&#x1F9E0;</span>
               <span className="font-bold text-teal-500">Connai</span>
             </div>
           </div>
@@ -65,17 +65,59 @@ const FinalCTA = () => (
   </section>
 )
 
+const LinkgrowMark = () => (
+  <a
+    href="https://linkgrow.io"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center gap-1.5 text-gray-500 hover:text-gray-300 transition-colors group"
+    title="Powered by Linkgrow"
+  >
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="text-teal-500 group-hover:text-teal-400 transition-colors"
+    >
+      <path
+        d="M2 11L5.5 7.5L7.5 9.5L12 4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 4H12V7"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+    <span className="text-xs">
+      Powered by{' '}
+      <span className="font-semibold text-gray-300 group-hover:text-white transition-colors">Linkgrow</span>
+    </span>
+  </a>
+)
+
 const Footer = () => (
-  <footer className="bg-gray-900 text-gray-400 py-8 px-4">
+  <footer className="bg-[#0E1117] text-gray-400 py-8 px-4 border-t border-gray-800">
     <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div className="flex items-center gap-2">
-        <span className="text-xl">🩕</span>
+        <span className="text-xl">&#x1F9E0;</span>
         <span className="font-bold text-white">Connai</span>
       </div>
-      <div className="text-sm">
-        <Link href="/privacy" className="hover:text-white">Privacy</Link> · <Link href="/terms" className="hover:text-white">Terms</Link>
+      <LinkgrowMark />
+      <div className="flex items-center gap-4 text-sm">
+        <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+        <span className="text-gray-700">·</span>
+        <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+        <span className="text-gray-700">·</span>
+        <span>© 2026 Linkgrow Ltd</span>
       </div>
-      <div className="text-sm">© 2026 Linkgrow Ltd</div>
     </div>
   </footer>
 )
