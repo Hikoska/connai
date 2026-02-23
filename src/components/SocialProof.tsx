@@ -1,6 +1,3 @@
-'use client'
-import CountUp from 'react-countup'
-
 const stats = [
   { value: 70, label: 'Faster decisions (McKinsey)', unit: '%' },
   { value: 17, label: 'Higher profitability (McKinsey)', unit: '%' },
@@ -14,7 +11,7 @@ export const SocialProof = () => (
         {stats.map((stat, index) => (
           <div key={index}>
             <div className="text-4xl md:text-5xl font-mono font-bold text-teal-400">
-              <CountUp start={0} end={stat.value} duration={2.5} suffix={stat.unit} />
+              {stat.value}{stat.unit}
             </div>
             <p className="text-gray-400 mt-2 text-sm">{stat.label}</p>
           </div>

@@ -1,6 +1,13 @@
 import { Instrument_Serif } from 'next/font/google'
 import { FloatingAIWidget } from '@/components/FloatingAIWidget'
 import { StartInterviewButton } from '@/components/StartInterviewButton'
+import { SocialProof } from '@/components/SocialProof'
+import { HowItWorks } from '@/components/HowItWorks'
+import { WhatYouGet } from '@/components/WhatYouGet'
+import { WhoItsFor } from '@/components/WhoItsFor'
+import { ProductScreenshot } from '@/components/ProductScreenshot'
+import { Testimonials } from '@/components/Testimonials'
+import { FAQ } from '@/components/FAQ'
 import Link from 'next/link'
 
 const instrumentSerif = Instrument_Serif({
@@ -14,7 +21,7 @@ const Hero = () => (
     <div className="grid md:grid-cols-2 gap-8 items-center max-w-6xl mx-auto px-4">
       <div className="text-left">
         <h1 className={`${instrumentSerif.variable} font-serif text-5xl md:text-6xl font-bold leading-tight mb-6`}>
-          Get an honest picture of your organisation's digital health.
+          Get an honest picture of your organisation&apos;s digital health.
         </h1>
         <p className="text-lg text-gray-600 mb-8">
           Connai conducts an AI-powered digital maturity audit in minutes, not months.
@@ -33,14 +40,6 @@ const Hero = () => (
   </section>
 )
 
-import { SocialProof } from '@/components/SocialProof'
-import { HowItWorks } from '@/components/HowItWorks'
-import { WhatYouGet } from '@/components/WhatYouGet'
-import { WhoItsFor } from '@/components/WhoItsFor'
-import { ProductScreenshot } from '@/components/ProductScreenshot'
-import { Testimonials } from '@/components/Testimonials'
-import { FAQ } from '@/components/FAQ'
-
 const FinalCTA = () => (
   <section className="py-20 bg-[#0E1117] text-white">
     <div className="max-w-3xl mx-auto px-4 text-center">
@@ -54,10 +53,9 @@ const FinalCTA = () => (
 )
 
 const Footer = () => (
-  <footer className="bg-gray-900 text-gray-400 py-8 px-4">
+  <footer className="bg-[#0E1117] text-gray-400 py-8 px-4">
     <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div className="flex items-center gap-2">
-        <span className="text-xl">🤕</span>
         <span className="font-bold text-white">Connai</span>
       </div>
       <div className="text-sm">
