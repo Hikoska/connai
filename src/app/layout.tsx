@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter, Instrument_Serif } from 'next/font/google'
 import './globals.css'
+import { AlphaBanner } from '@/components/AlphaBanner'
+import { FeedbackWidget } from '@/components/FeedbackWidget'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -74,11 +76,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${instrumentSerif.variable} font-sans bg-[#F8F6F2]`}>
+        <AlphaBanner />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {children}
+        <FeedbackWidget />
       </body>
     </html>
   )
