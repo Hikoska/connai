@@ -1,51 +1,52 @@
-import { NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
+import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic'
-
-// IMPORTANT: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in Vercel environment variables
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://mhuofnkbjbanrdvvktps.supabase.co'
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-  const { stakeholder_email, organisation, country, industry } = await request.json()
+  try {
+    const body = await request.json();
+    const { stakeholder_email, organisation, country = 'MU', industry } = body;
 
-  if (!stakeholder_email || !organisation) {
-    return NextResponse.json({ error: 'stakeholder_email and organisation are required' }, { status: 400 })
+    if (!stakeholder_email || !organisation) {
+      return NextResponse.json(
+        { error: 'stakeholder_email and organisation are required' },
+        { status: 400 }
+      );
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
+    }
+
+    const res = await fetch(`${supabaseUrl}/rest/v1/interviews`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${serviceKey}`,
+        apikey: serviceKey,
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify({ stakeholder_email, organisation, country, industry, status: 'pending' }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('[/api/interview] Supabase error:', err);
+      return NextResponse.json({ error: 'Failed to create interview' }, { status: 500 });
+    }
+
+    const [interview] = await res.json();
+
+    return NextResponse.json({
+      id: interview.id,
+      token: interview.token,
+      interview_url: `/interview/${interview.token}`,
+    });
+  } catch (err) {
+    console.error('[/api/interview] Unhandled error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-
-  if (!SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('Supabase service role key is not configured.')
-    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-  }
-
-  const interview_token = uuidv4()
-
-  const { data, error } = await fetch(`${SUPABASE_URL}/rest/v1/interviews`, {
-    method: 'POST',
-    headers: {
-      'apikey': SUPABASE_SERVICE_ROLE_KEY,
-      'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal',
-    },
-    body: JSON.stringify({
-      token: interview_token,
-      stakeholder_email,
-      organisation,
-      country: country || 'MU',
-      industry,
-      status: 'pending',
-    }),
-  }).then(res => res.ok ? { data: true, error: null } : { data: null, error: res.statusText })
-
-  if (error) {
-    console.error('Error creating interview in Supabase:', error)
-    return NextResponse.json({ error: 'Failed to create interview' }, { status: 500 })
-  }
-
-  return NextResponse.json({
-    message: 'Interview created successfully',
-    interview_token: interview_token,
-  })
 }
