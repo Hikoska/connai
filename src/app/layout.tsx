@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Instrument_Serif } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
 })
@@ -53,21 +53,6 @@ export const metadata: Metadata = {
   },
 }
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'Connai',
-  operatingSystem: 'Web',
-  applicationCategory: 'BusinessApplication',
-  description: "AI-powered digital maturity audits for SMEs. Get a clear picture of your organisation's digital health in minutes, not months.",
-  url: 'https://connai.linkgrow.io',
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
-}
-
 export default function RootLayout({
   children,
 }: {
@@ -78,7 +63,20 @@ export default function RootLayout({
       <body className={`${inter.variable} ${instrumentSerif.variable} font-sans bg-[#F8F6F2]`}>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Connai",
+            "operatingSystem": "Web",
+            "applicationCategory": "BusinessApplication",
+            "description": "AI-powered digital maturity audits for SMEs. Get a clear picture of your organisation's digital health in minutes, not months.",
+            "url": "https://connai.linkgrow.io",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          }) }}
         />
         {children}
       </body>
