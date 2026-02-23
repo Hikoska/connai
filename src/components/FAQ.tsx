@@ -36,7 +36,7 @@ export const FAQ = () => {
         <div className="space-y-4">
           {(faqItems ?? []).map((item, index) => (
             <div key={index} className="border-b border-gray-200 pb-4">
-              <button
+              <button 
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
                 className="w-full flex justify-between items-center text-lg font-semibold text-gray-800 text-left"
               >

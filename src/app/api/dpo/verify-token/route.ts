@@ -5,9 +5,8 @@ export const dynamic = 'force-dynamic'
 const DPO_COMPANY_TOKEN = process.env.DPO_COMPANY_TOKEN
 const DPO_API_URL = 'https://secure.3gdirectpay.com/dpopay.php'
 
-// Helper to extract value from XML response
 const getXmlValue = (xml: string, tag: string): string => {
-  const match = xml.match(new RegExp(`<${tag}>(.*?)<\/${tag}>`))
+  const match = xml.match(new RegExp(`<${tag}>(.*?)</${tag}>`))
   return match ? match[1] : ''
 }
 
@@ -53,11 +52,11 @@ export async function POST(request: Request) {
     const customerName = `${getXmlValue(responseText, 'CustomerFirstName')} ${getXmlValue(responseText, 'CustomerLastName')}`
     const customerEmail = getXmlValue(responseText, 'CustomerEmail')
 
-    return NextResponse.json({
-      success: true,
-      transRef,
-      customerName,
-      customerEmail
+    return NextResponse.json({ 
+      success: true, 
+      transRef, 
+      customerName, 
+      customerEmail 
     })
 
   } catch (error) {

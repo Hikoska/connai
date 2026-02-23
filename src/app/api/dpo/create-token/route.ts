@@ -6,9 +6,8 @@ const DPO_COMPANY_TOKEN = process.env.DPO_COMPANY_TOKEN
 const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 const DPO_API_URL = 'https://secure.3gdirectpay.com/dpopay.php'
 
-// Helper to extract value from XML response
 const getXmlValue = (xml: string, tag: string): string => {
-  const match = xml.match(new RegExp(`<${tag}>(.*?)<\/${tag}>`))
+  const match = xml.match(new RegExp(`<${tag}>(.*?)</${tag}>`))
   return match ? match[1] : ''
 }
 

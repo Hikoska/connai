@@ -1,5 +1,13 @@
 import { Instrument_Serif } from 'next/font/google'
 import { FloatingAIWidget } from '@/components/FloatingAIWidget'
+import { StartInterviewButton } from '@/components/StartInterviewButton'
+import { SocialProof } from '@/components/SocialProof'
+import { HowItWorks } from '@/components/HowItWorks'
+import { WhatYouGet } from '@/components/WhatYouGet'
+import { WhoItsFor } from '@/components/WhoItsFor'
+import { ProductScreenshot } from '@/components/ProductScreenshot'
+import { Testimonials } from '@/components/Testimonials'
+import { FAQ } from '@/components/FAQ'
 import Link from 'next/link'
 
 const instrumentSerif = Instrument_Serif({
@@ -18,6 +26,9 @@ const Hero = () => (
         <p className="text-lg text-gray-600 mb-8">
           Connai conducts an AI-powered digital maturity audit in minutes, not months.
         </p>
+        <StartInterviewButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-lg hover:opacity-90 transition-opacity text-lg">
+          Start my free audit →
+        </StartInterviewButton>
         <div className="mt-12 text-sm text-gray-500">
           Trusted by leading teams in Mauritius
         </div>
@@ -29,22 +40,14 @@ const Hero = () => (
   </section>
 )
 
-import { SocialProof } from '@/components/SocialProof'
-import { HowItWorks } from '@/components/HowItWorks'
-import { WhatYouGet } from '@/components/WhatYouGet'
-import { WhoItsFor } from '@/components/WhoItsFor'
-import { ProductScreenshot } from '@/components/ProductScreenshot'
-import { Testimonials } from '@/components/Testimonials'
-import { FAQ } from '@/components/FAQ'
-
 const FinalCTA = () => (
   <section className="py-20 bg-[#0E1117] text-white">
     <div className="max-w-3xl mx-auto px-4 text-center">
       <h2 className="text-4xl font-bold font-serif mb-4">Ready to see where you stand?</h2>
       <p className="text-gray-300 text-lg mb-8">30 minutes. Full picture.</p>
-      <button className="bg-teal-500 hover:bg-teal-400 text-white font-bold py-4 px-10 rounded-full text-lg transition-colors">
+      <StartInterviewButton className="bg-teal-500 hover:bg-teal-400 text-white font-bold py-4 px-10 rounded-full text-lg transition-colors">
         Start Your Free Assessment
-      </button>
+      </StartInterviewButton>
     </div>
   </section>
 )
