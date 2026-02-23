@@ -14,8 +14,8 @@ const stats: Stat[] = [
   },
   {
     display: '17%',
-    label: 'Of large IT projects threaten the company's existence',
-    sublabel: 'via budget overruns — McKinsey'
+    label: "Of large IT projects threaten the company's existence",
+    sublabel: 'via budget overruns \u2014 McKinsey'
   },
   {
     display: '215%',
