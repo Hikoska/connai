@@ -18,23 +18,40 @@ const instrumentSerif = Instrument_Serif({
 })
 
 const Hero = () => (
-  <section className="pt-32 pb-20 bg-[#F8F6F2]">
+  <section className="pt-32 pb-24 bg-[#F8F6F2]">
     <div className="max-w-4xl mx-auto px-6 text-center">
-      <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 text-sm font-medium px-3 py-1 rounded-full mb-6 border border-teal-100">
-        <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-        Beta &middot; Mauritius
+      <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 text-sm font-medium px-3 py-1 rounded-full mb-8 border border-teal-100">
+        <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+        Beta &middot; Built for Mauritius
       </div>
-      <h1 className={`${instrumentSerif.variable} font-serif text-6xl md:text-7xl font-bold leading-[1.1] mb-6 text-gray-900`}>
-        Get an honest picture of your organisation&apos;s digital health.
+      <h1 className={`${instrumentSerif.variable} font-serif text-5xl md:text-7xl font-bold leading-[1.1] mb-6 text-gray-900`}>
+        Know exactly where your organisation stands &mdash; in 30 minutes.
       </h1>
-      <p className="text-lg text-gray-500 mb-8 leading-relaxed max-w-xl mx-auto">
-        Connai conducts an AI-powered digital maturity audit in minutes, not months.
+      <p className="text-xl text-gray-500 mb-10 leading-relaxed max-w-2xl mx-auto">
+        Connai runs an AI-powered digital maturity audit and delivers a scored report your leadership team can act on.
       </p>
-      <StartInterviewButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-full hover:bg-[#0a4a50] transition-colors text-lg inline-flex items-center gap-2">
-        Start my free audit &#8594;
-      </StartInterviewButton>
-      <div className="mt-8 text-sm text-gray-400">
-        Trusted by leading teams in Mauritius
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+        <StartInterviewButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-full hover:bg-[#0a4a50] transition-colors text-lg inline-flex items-center gap-2 shadow-lg shadow-teal-900/20">
+          Start my free audit &rarr;
+        </StartInterviewButton>
+        <span className="text-sm text-gray-400">No consultant required. Free.</span>
+      </div>
+      {/* Visual: 3 trust signals */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-500 border-t border-gray-200 pt-8">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-bold text-gray-900 font-mono">47</span>
+          <span>audits completed</span>
+        </div>
+        <div className="hidden sm:block w-px h-6 bg-gray-200" />
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-bold text-gray-900 font-mono">30&thinsp;min</span>
+          <span>average completion</span>
+        </div>
+        <div className="hidden sm:block w-px h-6 bg-gray-200" />
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-bold text-gray-900 font-mono">5</span>
+          <span>dimensions scored</span>
+        </div>
       </div>
     </div>
   </section>
@@ -43,10 +60,10 @@ const Hero = () => (
 const FinalCTA = () => (
   <section className="py-20 bg-[#0E1117] text-white">
     <div className="max-w-3xl mx-auto px-6 text-center">
-      <h2 className="text-4xl md:text-5xl font-bold font-serif mb-4">Ready to see where you stand?</h2>
-      <p className="text-gray-300 text-lg mb-8">30 minutes. Full picture.</p>
-      <StartInterviewButton className="bg-teal-500 hover:bg-teal-400 text-white font-bold py-4 px-10 rounded-full text-lg transition-colors">
-        Start Your Free Assessment
+      <h2 className={`${instrumentSerif.variable} font-serif text-4xl md:text-5xl font-bold mb-4`}>Ready to see where you stand?</h2>
+      <p className="text-gray-400 text-lg mb-8">Free. 30 minutes. No consultant required.</p>
+      <StartInterviewButton className="bg-teal-500 hover:bg-teal-400 text-white font-bold py-4 px-10 rounded-full text-lg transition-colors shadow-lg shadow-teal-900/30">
+        Start my free audit &rarr;
       </StartInterviewButton>
     </div>
   </section>
@@ -65,30 +82,29 @@ const Footer = () => (
         />
         <span className="text-gray-400 text-sm border-l border-gray-700 pl-3">Powered by Linkgrow</span>
       </div>
-      <div className="text-sm flex items-center gap-4">
+      <div className="flex gap-6 text-sm">
         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
         <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+        <a href="mailto:hello@connai.io" className="hover:text-white transition-colors">Contact</a>
       </div>
     </div>
   </footer>
 )
 
-export default function LandingPage() {
+export default function Home() {
   return (
-    <div className="bg-[#F8F6F2] text-gray-800">
-      <main>
-        <Hero />
-        <SocialProof />
-        <HowItWorks />
-        <WhatYouGet />
-        <WhoItsFor />
-        <ProductScreenshot />
-        <Testimonials />
-        <FAQ />
-        <FinalCTA />
-        <Footer />
-      </main>
+    <main className="min-h-screen">
+      <Hero />
+      <SocialProof />
+      <HowItWorks />
+      <ProductScreenshot />
+      <WhatYouGet />
+      <WhoItsFor />
+      <Testimonials />
+      <FAQ />
+      <FinalCTA />
+      <Footer />
       <FloatingAIWidget />
-    </div>
+    </main>
   )
 }
