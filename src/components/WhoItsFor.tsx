@@ -4,7 +4,7 @@ import { useScrollReveal } from '@/lib/useScrollReveal'
 const personas = [
   {
     title: "I'm a Business Owner",
-    description: "Get a clear, top-down view of your entire organisation's digital health without the cost and time of a traditional consultancy.",
+    description: "Get a CEO's-eye view of your entire organisation's digital health, at a fraction of the cost and time of traditional consultants.",
     painPoint: "Struggling to connect digital spend to real business outcomes.",
   },
   {
@@ -14,7 +14,7 @@ const personas = [
   },
   {
     title: "I Work in Digital",
-    description: "Benchmark your operations against the industry and identify the highest-impact projects to drive your digital strategy forward.",
+    description: "Benchmark your operations against the industry and identify the highest-impact projects to work on next.",
     painPoint: "Unsure where to focus your efforts for the biggest wins.",
   },
 ]
