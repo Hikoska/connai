@@ -25,9 +25,9 @@ export function Navbar() {
           <Image
             src="/linkgrow-logo.png"
             alt="Linkgrow"
-            width={120}
-            height={32}
-            className="h-8 w-auto"
+            width={160}
+            height={44}
+            className="h-11 w-auto object-contain mix-blend-multiply"
             priority
           />
         </Link>
