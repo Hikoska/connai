@@ -59,14 +59,15 @@ const Footer = () => (
         <Image
           src="/linkgrow-logo.png"
           alt="Linkgrow"
-          width={100}
-          height={28}
-          className="h-7 w-auto brightness-0 invert opacity-70"
+          width={140}
+          height={40}
+          className="h-9 w-auto object-contain mix-blend-screen opacity-90"
         />
-        <span className="text-gray-600 text-xs">Powered by Linkgrow</span>
+        <span className="text-gray-400 text-sm border-l border-gray-700 pl-3">Powered by Linkgrow</span>
       </div>
-      <div className="text-sm">
-        <Link href="/privacy" className="hover:text-white">Privacy</Link> &middot; <Link href="/terms" className="hover:text-white">Terms</Link>
+      <div className="text-sm flex items-center gap-4">
+        <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+        <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
       </div>
     </div>
   </footer>
