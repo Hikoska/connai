@@ -1,34 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import { useChat } from 'ai';
+'use client';
+
+import React, { useState } from 'react';
+import { useChat } from 'ai/react';
 
 const FloatingAIWidget = () => {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const { sendMessage, messages: chatMessages } = useChat();
-
-  useEffect(() => {
-    setMessages(chatMessages);
-  }, [chatMessages]);
-
-  const handleSendMessage = async () => {
-    await sendMessage(input);
-    setInput('');
-  };
+  const [isOpen, setIsOpen] = useState(false);
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+    api: '/api/chat',
+  });
 
   return (
-    <div className='floating-ai-widget'>
-      <div className='chat-log'>
-        {messages.map((message, index) => (
-          <p key={index}>{message}</p>
-        ))}
-      </div>
-      <input
-        type='text'
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder='Type a message...'
-      />
-      <button onClick={handleSendMessage}>Send</button>
+    <div className="fixed bottom-6 right-6 z-50">
+      {isOpen ? (
+        <div className="flex flex-col bg-white rounded-2xl shadow-2xl w-80 h-96 border border-gray-200">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <span className="font-semibold text-gray-800">Connai</span>
+            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {messages.length === 0 && (
+              <p className="text-sm text-gray-400">Ask me anything about your digital maturity...</p>
+            )}
+            {messages.map((m) => (
+              <div key={m.id} className={`text-sm ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
+                <span className={`inline-block px-3 py-2 rounded-xl max-w-[90%] ${
+                  m.role === 'user' ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-800'
+                }`}>{m.content}</span>
+              </div>
+            ))}
+            {isLoading && <p className="text-xs text-gray-400">Thinking...</p>}
+          </div>
+          <form onSubmit={handleSubmit} className="p-3 border-t border-gray-100 flex gap-2">
+            <input
+              value={input}
+              onChange={handleInputChange}
+              placeholder="Type a message..."
+              className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+            <button type="submit" disabled={isLoading} className="bg-teal-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-teal-700 disabled:opacity-50">
+              →
+            </button>
+          </form>
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="bg-teal-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-teal-700 transition-colors"
+        >
+          💬
+        </button>
+      )}
     </div>
   );
 };
