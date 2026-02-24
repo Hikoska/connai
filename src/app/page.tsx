@@ -36,7 +36,7 @@ const Hero = () => (
         </StartInterviewButton>
         <span className="text-sm text-gray-400">No consultant required. Free.</span>
       </div>
-      {/* Visual: 3 trust signals */}
+      {/* Trust signals */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-500 border-t border-gray-200 pt-8">
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-gray-900 font-mono">47</span>
@@ -70,17 +70,16 @@ const FinalCTA = () => (
 )
 
 const Footer = () => (
-  <footer className="bg-[#0E1117] text-gray-400 py-8 px-6">
-    <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+  <footer className="bg-[#0E1117] text-gray-400 py-10 px-6">
+    <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
       <div className="flex items-center gap-3">
         <Image
           src="/linkgrow-logo.png"
           alt="Linkgrow"
-          width={180}
-          height={52}
-          className="h-14 w-auto object-contain brightness-0 invert opacity-80"
+          width={280}
+          height={80}
+          className="h-24 w-auto object-contain brightness-0 invert"
         />
-        <span className="text-gray-400 text-sm border-l border-gray-700 pl-3">Powered by Linkgrow</span>
       </div>
       <div className="flex gap-6 text-sm">
         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
