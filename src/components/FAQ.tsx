@@ -27,6 +27,10 @@ const faqItems = [
 export const FAQ = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
+  const openChat = () => {
+    window.dispatchEvent(new CustomEvent('connai:open-chat'))
+  }
+
   return (
     <section className="py-20 bg-white">
       <div className="max-w-3xl mx-auto px-4">
@@ -36,12 +40,12 @@ export const FAQ = () => {
         <div className="space-y-4">
           {(faqItems ?? []).map((item, index) => (
             <div key={index} className="border-b border-gray-200 pb-4">
-              <button 
+              <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
                 className="w-full flex justify-between items-center text-lg font-semibold text-gray-800 text-left"
               >
                 <span>{item.q}</span>
-                <span className="text-2xl text-teal-500">{openIndex === index ? '−' : '+'}</span>
+                <span className="text-2xl text-teal-500">{openIndex === index ? '\u2212' : '+'}</span>
               </button>
               <div className={`overflow-hidden transition-all duration-300 ${openIndex === index ? 'max-h-40 mt-4' : 'max-h-0'}`}>
                 <p className="text-gray-600">{item.a}</p>
@@ -50,7 +54,13 @@ export const FAQ = () => {
           ))}
         </div>
         <p className="text-center mt-8 text-gray-500">
-          Have a different question? <button className="font-semibold text-teal-600">Ask Connai →</button>
+          Have a different question?{' '}
+          <button
+            onClick={openChat}
+            className="font-semibold text-teal-600 hover:text-teal-500 underline underline-offset-2 transition-colors"
+          >
+            Ask Connai →
+          </button>
         </p>
       </div>
     </section>

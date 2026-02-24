@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useChat } from 'ai/react';
 
 export function FloatingAIWidget() {
@@ -8,6 +8,13 @@ export function FloatingAIWidget() {
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/chat',
   });
+
+  // Listen for external open trigger (e.g. from FAQ "Ask Connai" button)
+  useEffect(() => {
+    const handler = () => setIsOpen(true);
+    window.addEventListener('connai:open-chat', handler);
+    return () => window.removeEventListener('connai:open-chat', handler);
+  }, []);
 
   return (
     <div className={`fixed bottom-4 right-4 ${isOpen ? 'z-[70]' : 'z-50'}`}>
