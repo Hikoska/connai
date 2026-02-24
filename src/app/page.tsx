@@ -8,6 +8,7 @@ import { WhoItsFor } from '@/components/WhoItsFor'
 import { ProductScreenshot } from '@/components/ProductScreenshot'
 import { Testimonials } from '@/components/Testimonials'
 import { FAQ } from '@/components/FAQ'
+import Image from 'next/image'
 import Link from 'next/link'
 
 const instrumentSerif = Instrument_Serif({
@@ -16,84 +17,24 @@ const instrumentSerif = Instrument_Serif({
   variable: '--font-instrument-serif',
 })
 
-/* Canonical report dimensions — matches ProductScreenshot exactly */
-const heroDimensions = [
-  { label: 'Technology Infrastructure', score: 64, color: 'bg-teal-500' },
-  { label: 'Data & Analytics',          score: 71, color: 'bg-teal-400' },
-  { label: 'Process Automation',        score: 58, color: 'bg-teal-600' },
-  { label: 'Customer Experience',       score: 76, color: 'bg-teal-500' },
-  { label: 'Digital Culture',           score: 79, color: 'bg-teal-300' },
-]
-
-const HeroMockup = () => (
-  <div className="relative">
-    <div className="bg-[#0E1117] rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
-      {/* Header */}
-      <div className="px-5 py-4 flex items-center justify-between border-b border-gray-800">
-        <div>
-          <p className="text-gray-400 text-xs uppercase tracking-widest mb-0.5">Digital Maturity Report</p>
-          <p className="text-white font-semibold text-sm">Acme Corp &mdash; Feb 2026</p>
-        </div>
-        <div className="text-right">
-          <div className="text-3xl font-bold text-white">68</div>
-          <div className="text-teal-400 text-xs">/100 overall</div>
-          <div className="text-teal-400 text-xs mt-0.5">&#8679; +9 vs Mauritius median</div>
-        </div>
-      </div>
-      {/* Score bar */}
-      <div className="px-5 pt-4 pb-2">
-        <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-teal-600 to-teal-400 rounded-full" style={{width: '68%'}} />
-        </div>
-      </div>
-      {/* Dimensions */}
-      <div className="px-5 pb-4 space-y-2.5 mt-2">
-        {heroDimensions.map(d => (
-          <div key={d.label}>
-            <div className="flex justify-between mb-1">
-              <span className="text-gray-400 text-xs">{d.label}</span>
-              <span className="text-white text-xs font-medium">{d.score}</span>
-            </div>
-            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-              <div className={`h-full ${d.color} rounded-full`} style={{width: `${d.score}%`}} />
-            </div>
-          </div>
-        ))}
-      </div>
-      {/* Footer */}
-      <div className="px-5 py-3 border-t border-gray-800 flex items-center justify-between">
-        <span className="text-gray-600 text-xs">Powered by Connai</span>
-        <span className="text-teal-500 text-xs font-medium">View full report &#8594;</span>
-      </div>
-    </div>
-    {/* Glow */}
-    <div className="absolute inset-0 rounded-2xl bg-teal-500/5 blur-xl -z-10" />
-  </div>
-)
-
 const Hero = () => (
   <section className="pt-32 pb-20 bg-[#F8F6F2]">
-    <div className="grid md:grid-cols-2 gap-12 items-center max-w-7xl mx-auto px-6">
-      <div className="text-left">
-        <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 text-sm font-medium px-3 py-1 rounded-full mb-6 border border-teal-100">
-          <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-          Beta &middot; Mauritius
-        </div>
-        <h1 className={`${instrumentSerif.variable} font-serif text-6xl md:text-7xl font-bold leading-[1.1] mb-6 text-gray-900`}>
-          Get an honest picture of your organisation&apos;s digital health.
-        </h1>
-        <p className="text-lg text-gray-500 mb-8 leading-relaxed max-w-lg">
-          Connai conducts an AI-powered digital maturity audit in minutes, not months.
-        </p>
-        <StartInterviewButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-full hover:bg-[#0a4a50] transition-colors text-lg inline-flex items-center gap-2">
-          Start my free audit &#8594;
-        </StartInterviewButton>
-        <div className="mt-8 text-sm text-gray-400">
-          Trusted by leading teams in Mauritius
-        </div>
+    <div className="max-w-4xl mx-auto px-6 text-center">
+      <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 text-sm font-medium px-3 py-1 rounded-full mb-6 border border-teal-100">
+        <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+        Beta &middot; Mauritius
       </div>
-      <div className="hidden md:block">
-        <HeroMockup />
+      <h1 className={`${instrumentSerif.variable} font-serif text-6xl md:text-7xl font-bold leading-[1.1] mb-6 text-gray-900`}>
+        Get an honest picture of your organisation&apos;s digital health.
+      </h1>
+      <p className="text-lg text-gray-500 mb-8 leading-relaxed max-w-xl mx-auto">
+        Connai conducts an AI-powered digital maturity audit in minutes, not months.
+      </p>
+      <StartInterviewButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-full hover:bg-[#0a4a50] transition-colors text-lg inline-flex items-center gap-2">
+        Start my free audit &#8594;
+      </StartInterviewButton>
+      <div className="mt-8 text-sm text-gray-400">
+        Trusted by leading teams in Mauritius
       </div>
     </div>
   </section>
@@ -114,8 +55,15 @@ const FinalCTA = () => (
 const Footer = () => (
   <footer className="bg-[#0E1117] text-gray-400 py-8 px-6">
     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-      <div className="flex items-center gap-2">
-        <span className="font-bold text-white">Connai</span>
+      <div className="flex items-center gap-3">
+        <Image
+          src="/linkgrow-logo.png"
+          alt="Linkgrow"
+          width={100}
+          height={28}
+          className="h-7 w-auto brightness-0 invert opacity-70"
+        />
+        <span className="text-gray-600 text-xs">Powered by Linkgrow</span>
       </div>
       <div className="text-sm">
         <Link href="/privacy" className="hover:text-white">Privacy</Link> &middot; <Link href="/terms" className="hover:text-white">Terms</Link>
