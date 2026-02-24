@@ -10,7 +10,7 @@ export function FloatingAIWidget() {
   });
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 z-50">
       {isOpen ? (
         <div className="flex flex-col bg-white rounded-2xl shadow-2xl w-80 h-96 border border-gray-200">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
@@ -45,10 +45,12 @@ export function FloatingAIWidget() {
       ) : (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-[#0D5C63] text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-[#0a4a50] transition-colors"
+          className="bg-[#0D5C63] text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-[#0a4a50] transition-colors"
           aria-label="Open chat"
         >
-          &#128172;
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
         </button>
       )}
     </div>
