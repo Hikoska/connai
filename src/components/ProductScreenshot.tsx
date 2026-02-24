@@ -42,7 +42,7 @@ export const ProductScreenshot = () => (
           <div className="text-right">
             <div className="text-4xl font-mono font-bold text-teal-400">68</div>
             <div className="text-xs text-gray-400">/100 overall score</div>
-            <div className="text-xs text-teal-400 mt-1">&#8679; +9 vs Mauritius median</div>
+            <div className="text-xs text-teal-400 mt-1">&#8679; Top 35% globally</div>
           </div>
         </div>
 

@@ -22,7 +22,7 @@ const Hero = () => (
     <div className="max-w-4xl mx-auto px-6 text-center">
       <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 text-sm font-medium px-3 py-1 rounded-full mb-8 border border-teal-100">
         <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-        Beta &middot; Built for Mauritius
+        Beta &middot; Free
       </div>
       <h1 className={`${instrumentSerif.variable} font-serif text-5xl md:text-7xl font-bold leading-[1.1] mb-6 text-gray-900`}>
         Know exactly where your organisation stands &mdash; in 30 minutes.

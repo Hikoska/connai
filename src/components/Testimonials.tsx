@@ -4,7 +4,7 @@ export const Testimonials = () => (
       <h2 className="text-4xl font-bold font-serif mb-12">Built for honesty, not hype</h2>
       <div className="grid md:grid-cols-2 gap-8 text-left">
         <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <p className="text-gray-600 italic mb-4">&ldquo;We&rsquo;re in beta with our first wave of Mauritius-based organisations.
+          <p className="text-gray-600 italic mb-4">&ldquo;We&rsquo;re in beta with our first cohort of organisations.
           We&rsquo;re not posting testimonials until we&rsquo;ve earned them.
           If you want to be among the first &mdash; start your free audit below.&rdquo;</p>
           <div className="font-semibold text-gray-800">&mdash; The Connai Team</div>

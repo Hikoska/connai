@@ -4,11 +4,11 @@ import { useState } from 'react'
 const faqItems = [
   {
     q: "What is a digital maturity assessment?",
-    a: "It's a 'health check' for your business. We analyse how well you're using digital tools and technology to meet your goals, showing you what's working, what's not, and how you compare to others in our region.",
+    a: "It's a 'health check' for your business. We analyse how well you're using digital tools and technology to meet your goals, showing you what's working, what's not, and how you compare to others in your industry.",
   },
   {
     q: "How is Connai different from other tools?",
-    a: "Many tools are generic questionnaires built for large corporations. Connai is a quick, AI-powered conversational interview designed for the reality of SMEs in Mauritius and Africa. It's faster, more personal, and gives you more relevant insights.",
+    a: "Many tools are generic questionnaires built for large corporations. Connai is a quick, AI-powered conversational interview built for the reality of growing organisations. It's faster, more personal, and gives you more actionable insights.",
   },
   {
     q: "How long does the interview take?",
@@ -20,7 +20,7 @@ const faqItems = [
   },
   {
     q: "What does it cost?",
-    a: "Your first assessment and initial report are completely free. We want you to see the value first. We offer more detailed analysis and team-wide assessments as an affordable paid service, designed for SME budgets.",
+    a: "Your first assessment and initial report are completely free. We want you to see the value first. We offer more detailed analysis and team-wide assessments as an affordable paid service, designed for growing teams.",
   },
 ]
 
