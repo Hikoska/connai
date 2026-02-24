@@ -1,15 +1,15 @@
 const dimensions = [
-  { label: 'Data & Analytics', score: 72, color: 'bg-teal-500' },
-  { label: 'Digital Culture', score: 58, color: 'bg-teal-400' },
-  { label: 'Customer Experience', score: 81, color: 'bg-teal-600' },
-  { label: 'Technology Infrastructure', score: 64, color: 'bg-teal-400' },
-  { label: 'Operational Efficiency', score: 55, color: 'bg-teal-300' },
+  { label: 'Technology Infrastructure', score: 64, color: 'bg-teal-500' },
+  { label: 'Data & Analytics',          score: 71, color: 'bg-teal-400' },
+  { label: 'Process Automation',        score: 58, color: 'bg-teal-600' },
+  { label: 'Customer Experience',       score: 76, color: 'bg-teal-500' },
+  { label: 'Digital Culture',           score: 79, color: 'bg-teal-300' },
 ]
 
 const actions = [
-  { title: 'Unify customer data across CRM and support', effort: 'Medium', impact: 'High' },
-  { title: 'Introduce async decision-making documentation', effort: 'Low', impact: 'High' },
-  { title: 'Automate monthly operational reporting', effort: 'Medium', impact: 'Medium' },
+  { title: 'Unify customer data across CRM and support',      effort: 'Medium', impact: 'High' },
+  { title: 'Introduce async decision-making documentation',    effort: 'Low',    impact: 'High' },
+  { title: 'Automate monthly operational reporting',          effort: 'Medium', impact: 'Medium' },
 ]
 
 export const ProductScreenshot = () => (
@@ -42,7 +42,7 @@ export const ProductScreenshot = () => (
           <div className="text-right">
             <div className="text-4xl font-mono font-bold text-teal-400">68</div>
             <div className="text-xs text-gray-400">/100 overall score</div>
-            <div className="text-xs text-teal-400 mt-1">&uarr; +9 vs Mauritius median</div>
+            <div className="text-xs text-teal-400 mt-1">&#8679; +9 vs Mauritius median</div>
           </div>
         </div>
 
