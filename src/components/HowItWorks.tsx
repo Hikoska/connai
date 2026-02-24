@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useScrollReveal } from '@/lib/useScrollReveal'
 
 const steps = [
   { 
@@ -18,10 +19,11 @@ const steps = [
 
 export const HowItWorks = () => {
   const [openIndex, setOpenIndex] = useState(0)
+  const sectionRef = useScrollReveal<HTMLDivElement>()
 
   return (
     <section className="py-20 bg-[#F8F6F2]">
-      <div className="max-w-3xl mx-auto px-4 text-center">
+      <div ref={sectionRef} className="scroll-hidden max-w-3xl mx-auto px-4 text-center">
         <h2 className="text-4xl font-bold font-serif mb-4">How it works</h2>
         <p className="text-gray-500 mb-12">From briefing to a full report in three simple steps.</p>
         <div className="space-y-4 text-left">
@@ -32,7 +34,7 @@ export const HowItWorks = () => {
                 className="w-full flex justify-between items-center text-xl font-semibold text-gray-800"
               >
                 <span>{step.title}</span>
-                <span>{openIndex === index ? '−' : '+'}</span>
+                <span>{openIndex === index ? '\u2212' : '+'}</span>
               </button>
               <div className={`overflow-hidden transition-all duration-300 ${openIndex === index ? 'max-h-40 mt-4' : 'max-h-0'}`}>
                 <p className="text-gray-600">{step.description}</p>
