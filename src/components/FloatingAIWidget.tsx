@@ -12,7 +12,8 @@ export function FloatingAIWidget() {
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {isOpen ? (
-        <div className="flex flex-col bg-white rounded-2xl shadow-2xl w-80 h-96 border border-gray-200">
+        /* Chat panel sits at z-[60] — above feedback button (z-50) */
+        <div className="flex flex-col bg-white rounded-2xl shadow-2xl w-80 h-96 border border-gray-200 z-[60] relative">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="font-semibold text-gray-800">Connai</span>
             <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
