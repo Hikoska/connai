@@ -91,7 +91,7 @@ export const ProductScreenshot = () => (
 
         {/* Footer bar */}
         <div className="border-t border-gray-200 px-6 py-3 flex items-center justify-between text-xs text-gray-400">
-          <span>Powered by Connai &mdash; AI Digital Maturity Platform</span>
+          <span>Powered by Connai &mdash; Provided by Linkgrow</span>
           <span className="text-teal-500 font-medium">Full report &darr; PDF</span>
         </div>
 
