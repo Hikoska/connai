@@ -13,19 +13,22 @@ type Interview = {
   stakeholder_name: string
   stakeholder_role: string
   interview_token: string
+  status: string
 }
 
 type Lead = {
   id: string
-  created_at: string
+  org_name: string
+  email: string
   status: string
+  captured_at: string
   interviews: Interview[]
 }
 
 const statusColors: { [key: string]: string } = {
-  in_progress: 'bg-yellow-100 text-yellow-800',
-  complete: 'bg-green-100 text-green-800',
-  partial: 'bg-blue-100 text-blue-800',
+  captured: 'bg-blue-100 text-blue-800',
+  interviewed: 'bg-yellow-100 text-yellow-800',
+  reported: 'bg-green-100 text-green-800',
 }
 
 export default function DashboardPage() {
@@ -49,11 +52,13 @@ export default function DashboardPage() {
 
       if (session?.user) {
         setUser(session.user)
+        const userEmail = session.user.email?.toLowerCase()
 
         const { data: leadsData, error: leadsError } = await supabase
           .from('leads')
-          .select('id, created_at, status')
-          .order('created_at', { ascending: false })
+          .select('id, org_name, email, status, captured_at')
+          .eq('email', userEmail)
+          .order('captured_at', { ascending: false })
 
         if (leadsError) {
           console.error('Error fetching leads:', leadsError)
@@ -66,7 +71,7 @@ export default function DashboardPage() {
         if (leadIds.length > 0) {
           const { data: interviewsData } = await supabase
             .from('interviews')
-            .select('id, lead_id, stakeholder_name, stakeholder_role, interview_token')
+            .select('id, lead_id, stakeholder_name, stakeholder_role, interview_token, status')
             .in('lead_id', leadIds)
           interviews = interviewsData || []
         }
@@ -77,6 +82,9 @@ export default function DashboardPage() {
         }))
 
         setLeads(merged)
+      } else {
+        // Not logged in — show email lookup prompt
+        setUser(null)
       }
       setLoading(false)
     }
@@ -93,17 +101,20 @@ export default function DashboardPage() {
   }
 
   if (loading) {
-    return <div className="p-8 text-center">Loading dashboard...</div>
+    return <div className="p-8 text-center text-gray-500">Loading dashboard...</div>
   }
 
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-          <p className="mb-6 text-gray-600">Please log in to view your audit dashboard.</p>
-          <Link href="/auth/login" className="bg-[#0D5C63] text-white font-bold px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">
-            Go to Login
+        <div className="text-center max-w-sm">
+          <h1 className="text-2xl font-bold mb-2">Find your audit</h1>
+          <p className="mb-6 text-gray-600">Log in to view your audit dashboard.</p>
+          <Link
+            href="/auth/login"
+            className="bg-[#0D5C63] text-white font-bold px-6 py-2 rounded-lg hover:opacity-90 transition-opacity"
+          >
+            Log in
           </Link>
         </div>
       </div>
@@ -116,72 +127,58 @@ export default function DashboardPage() {
         <div className="max-w-5xl mx-auto px-4 h-16 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🧬</span>
-            <span className="font-bold text-teal-500 text-xl">Connai Dashboard</span>
+            <span className="font-bold text-teal-600 text-xl">Connai</span>
           </div>
-          <button onClick={handleLogout} className="text-sm font-medium text-gray-600 hover:text-teal-500">
+          <button onClick={handleLogout} className="text-sm font-medium text-gray-500 hover:text-teal-600">
             Log out
           </button>
         </div>
       </header>
       <main className="p-4 sm:p-8 max-w-5xl mx-auto">
         <h1 className="text-2xl font-bold mb-1">Your Audits</h1>
-        <p className="text-sm text-gray-500 mb-6">Showing all audits for {user.email}</p>
+        <p className="text-sm text-gray-500 mb-6">{user.email}</p>
 
         <div className="bg-white rounded-lg border">
           <div className="divide-y">
             {leads.length > 0 ? leads.map(lead => (
               <div key={lead.id} className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-4">
-                    <FileText className="text-gray-400 mt-1" />
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex items-start gap-4">
+                    <FileText className="text-gray-400 mt-0.5 shrink-0" size={20} />
                     <div>
-                      <h2 className="font-semibold">Digital Maturity Audit</h2>
+                      <h2 className="font-semibold">{lead.org_name}</h2>
                       <p className="text-sm text-gray-500">
-                        Started: {new Date(lead.created_at).toLocaleString()}
+                        {new Date(lead.captured_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                       </p>
                       {lead.interviews.length > 0 && (
                         <div className="flex items-center gap-1 mt-1">
-                          <Users size={14} className="text-gray-400" />
+                          <Users size={13} className="text-gray-400" />
                           <span className="text-xs text-gray-500">
-                            {lead.interviews.length} stakeholder{lead.interviews.length !== 1 ? 's' : ''}
+                            {lead.interviews.filter(i => i.status === 'complete').length}/{lead.interviews.length} interviews complete
                           </span>
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 shrink-0">
                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColors[lead.status] || 'bg-gray-100 text-gray-800'}`}>
-                      {lead.status?.replace('_', ' ')}
+                      {lead.status}
                     </span>
-                    {lead.interviews.length > 0 && (
-                      <Link
-                        href={`/audit/${lead.interviews[0].interview_token}`}
-                        className="flex items-center gap-1.5 text-sm bg-white border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-100"
-                      >
-                        <PlayCircle size={16} />
-                        Resume
-                      </Link>
-                    )}
+                    <Link
+                      href={`/audit/${lead.id}`}
+                      className="flex items-center gap-1.5 text-sm bg-white border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50"
+                    >
+                      <PlayCircle size={15} />
+                      View
+                    </Link>
                   </div>
                 </div>
-                {lead.interviews.length > 1 && (
-                  <div className="mt-3 ml-10 space-y-1">
-                    {lead.interviews.map((interview) => (
-                      <div key={interview.id} className="flex items-center justify-between text-sm text-gray-600 bg-gray-50 rounded px-3 py-2">
-                        <span>{interview.stakeholder_name} <span className="text-gray-400">·</span> {interview.stakeholder_role}</span>
-                        <Link href={`/audit/${interview.interview_token}`} className="text-teal-600 hover:underline text-xs">
-                          Open →
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             )) : (
               <div className="p-8 text-center text-gray-500">
-                <p>You have no audits yet.</p>
-                <Link href="/" className="text-teal-500 font-semibold mt-2 inline-block">
-                  Start your first audit &#8594;
+                <p className="mb-3">No audits yet.</p>
+                <Link href="/" className="text-teal-600 font-semibold hover:underline">
+                  Start your first audit →
                 </Link>
               </div>
             )}
