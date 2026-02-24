@@ -3,6 +3,7 @@ import { Inter, Instrument_Serif } from 'next/font/google'
 import './globals.css'
 import { AlphaBanner } from '@/components/AlphaBanner'
 import { FeedbackWidget } from '@/components/FeedbackWidget'
+import { Navbar } from '@/components/Navbar'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -59,7 +60,7 @@ const jsonLd = {
   '@type': 'SoftwareApplication',
   name: 'Connai',
   applicationCategory: 'BusinessApplication',
-  description: "AI-powered digital maturity audits for SMEs. Get a clear picture of your organisation's digital health in minutes, not months.",
+  description: "AI-powered digital maturity audits for SMEs. Get a clear picture of your organisation\'s digital health in minutes, not months.",
   url: 'https://connai.linkgrow.io',
   offers: {
     '@type': 'Offer',
@@ -80,6 +81,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <Navbar />
         <AlphaBanner />
         {children}
         <FeedbackWidget />
