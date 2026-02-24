@@ -59,9 +59,9 @@ const Footer = () => (
         <Image
           src="/linkgrow-logo.png"
           alt="Linkgrow"
-          width={140}
-          height={40}
-          className="h-9 w-auto object-contain mix-blend-screen opacity-90"
+          width={180}
+          height={52}
+          className="h-14 w-auto object-contain brightness-0 invert opacity-80"
         />
         <span className="text-gray-400 text-sm border-l border-gray-700 pl-3">Powered by Linkgrow</span>
       </div>
