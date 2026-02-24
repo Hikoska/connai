@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { StartInterviewButton } from '@/components/StartInterviewButton'
 
 export function Navbar() {
@@ -20,8 +21,15 @@ export function Navbar() {
     }`}>
       <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="font-semibold text-xl text-gray-900 tracking-tight">
-          Connai
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/linkgrow-logo.png"
+            alt="Linkgrow"
+            width={120}
+            height={32}
+            className="h-8 w-auto"
+            priority
+          />
         </Link>
 
         {/* Desktop nav */}
