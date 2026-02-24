@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useScrollReveal } from '@/lib/useScrollReveal';
 
 export function SocialProof() {
   const [stats, setStats] = useState({
     completedSessions: 0,
     distinctOrganisations: 0,
   });
+
+  const sectionRef = useScrollReveal<HTMLDivElement>({ threshold: 0.2 })
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -36,7 +39,7 @@ export function SocialProof() {
   return (
     <section className="py-12 bg-white">
       <div className="max-w-4xl mx-auto px-4 text-center">
-        <div className="flex flex-col sm:flex-row justify-center gap-12">
+        <div ref={sectionRef} className="scroll-stagger flex flex-col sm:flex-row justify-center gap-12">
           <div>
             <p className="text-5xl font-bold text-[#0D5C63]">{stats.completedSessions}</p>
             <p className="text-gray-600 mt-2">Assessments completed</p>
