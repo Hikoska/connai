@@ -30,7 +30,7 @@ async function getAssessments(): Promise<Assessment[]> {
       'apikey': SUPABASE_SERVICE_ROLE_KEY,
       'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
     },
-    cache: 'no-store',
+    cache: 'no-store', // Ensure fresh data on every request
   })
 
   if (!response.ok) {
@@ -39,6 +39,7 @@ async function getAssessments(): Promise<Assessment[]> {
   }
 
   const data = await response.json()
+  // The structure from Supabase with the join is a bit different
   return data.map((item: any) => ({
     ...item,
     report: item.reports.length > 0 ? item.reports[0] : null
@@ -52,6 +53,7 @@ const calculateOverallScore = (dimensions: { [key: string]: number } | null): st
     const avg = scores.reduce((a, b) => a + b, 0) / scores.length
     return avg.toFixed(1)
 }
+
 
 export default async function AdminAssessmentsPage({ searchParams }: { searchParams: { key?: string } }) {
 
