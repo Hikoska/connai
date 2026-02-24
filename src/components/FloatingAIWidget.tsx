@@ -15,7 +15,13 @@ export function FloatingAIWidget() {
         <div className="flex flex-col bg-white rounded-2xl shadow-2xl w-80 h-96 border border-gray-200">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="font-semibold text-gray-800">Connai</span>
-            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+            <button
+              onClick={() => setIsOpen(false)}
+              aria-label="Close chat"
+              className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+            >
+              &times;
+            </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 && (
@@ -37,7 +43,12 @@ export function FloatingAIWidget() {
               placeholder="Type a message..."
               className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#0D5C63]"
             />
-            <button type="submit" disabled={isLoading} className="bg-[#0D5C63] text-white px-3 py-2 rounded-lg text-sm hover:bg-[#0a4a50] disabled:opacity-50">
+            <button
+              type="submit"
+              disabled={isLoading}
+              aria-label="Send message"
+              className="bg-[#0D5C63] text-white px-3 py-2 rounded-lg text-sm hover:bg-[#0a4a50] disabled:opacity-50"
+            >
               &#8594;
             </button>
           </form>
@@ -56,5 +67,3 @@ export function FloatingAIWidget() {
     </div>
   );
 }
-
-export default FloatingAIWidget;
