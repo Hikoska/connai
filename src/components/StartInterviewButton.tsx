@@ -3,7 +3,12 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const StartInterviewButton = () => {
+interface StartInterviewButtonProps {
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export function StartInterviewButton({ className, children }: StartInterviewButtonProps) {
   const [stakeholderEmail, setStakeholderEmail] = useState('');
   const [organisation, setOrganisation] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -28,12 +33,12 @@ const StartInterviewButton = () => {
   };
 
   return (
-    <div>
+    <>
       <button
         onClick={() => setIsOpen(true)}
-        className="bg-teal-600 text-white font-semibold px-8 py-4 rounded-xl text-lg hover:bg-teal-700 transition-colors"
+        className={className}
       >
-        Start Free Assessment
+        {children ?? 'Start Free Assessment'}
       </button>
 
       {isOpen && (
@@ -41,7 +46,7 @@ const StartInterviewButton = () => {
           <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Start Your Assessment</h2>
-              <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+              <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -52,7 +57,7 @@ const StartInterviewButton = () => {
                   value={stakeholderEmail}
                   onChange={(e) => setStakeholderEmail(e.target.value)}
                   placeholder="you@company.com"
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#0D5C63]"
                 />
               </div>
               <div>
@@ -63,13 +68,13 @@ const StartInterviewButton = () => {
                   value={organisation}
                   onChange={(e) => setOrganisation(e.target.value)}
                   placeholder="Your company name"
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#0D5C63]"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-teal-600 text-white font-semibold py-3 rounded-xl hover:bg-teal-700 transition-colors disabled:opacity-50"
+                className="w-full bg-[#0D5C63] text-white font-semibold py-3 rounded-xl hover:bg-[#0a4a50] transition-colors disabled:opacity-50"
               >
                 {isLoading ? 'Starting...' : 'Begin Assessment →'}
               </button>
@@ -77,8 +82,8 @@ const StartInterviewButton = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
-};
+}
 
 export default StartInterviewButton;
