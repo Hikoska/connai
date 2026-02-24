@@ -4,7 +4,7 @@ import './globals.css'
 import { AlphaBanner } from '@/components/AlphaBanner'
 import { FeedbackWidget } from '@/components/FeedbackWidget'
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
 })
@@ -16,7 +16,7 @@ const instrumentSerif = Instrument_Serif({
 })
 
 const siteUrl = 'https://connai.linkgrow.io'
-const siteTitle = 'Connai — AI Digital Maturity Audits'
+const siteTitle = 'Connai – AI Digital Maturity Audits'
 const siteDescription =
   'Get a $10,000 digital maturity audit in days, not months. AI-powered interviews, structured reports, actionable insights.'
 const ogImage = `${siteUrl}/api/og`
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
         url: ogImage,
         width: 1200,
         height: 630,
-        alt: 'Connai — AI Digital Maturity Audits',
+        alt: 'Connai – AI Digital Maturity Audits',
       },
     ],
   },
@@ -76,11 +76,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${instrumentSerif.variable} font-sans bg-[#F8F6F2]`}>
-        <AlphaBanner />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <AlphaBanner />
         {children}
         <FeedbackWidget />
       </body>
