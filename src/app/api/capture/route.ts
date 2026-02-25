@@ -64,10 +64,31 @@ export async function POST(req: Request) {
       )
     }
 
+    // Auto-create interview session so the user lands directly in the interview
+    const interviewToken = crypto.randomUUID()
+    const { data: interview, error: ivErr } = await sbInsert('interviews', {
+      lead_id: lead.id,
+      stakeholder_name: org.trim(),
+      stakeholder_role: 'Primary Contact',
+      token: interviewToken,
+      status: 'pending',
+      stakeholder_email: email.trim().toLowerCase(),
+    })
+
+    if (ivErr || !interview) {
+      console.error('[capture] interview insert failed:', ivErr)
+      // Fallback: send to audit hub
+      return NextResponse.json({
+        success: true,
+        token: lead.id,
+        flow: 'audit',
+      })
+    }
+
     return NextResponse.json({
       success: true,
-      token: lead.id,
-      sessionId,
+      token: interviewToken,
+      flow: 'interview',
     })
   } catch (err) {
     console.error('[capture] unexpected error:', err)
