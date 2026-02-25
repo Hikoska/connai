@@ -5,7 +5,7 @@ import { generateText } from 'ai'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://mhuofnkbjbanrdvvktps.supabase.co'
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mhuofnkbjbanrdvvktps.supabase.co'
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 const groq = createOpenAI({
@@ -17,6 +17,14 @@ const cerebras = createOpenAI({
   baseURL: 'https://api.cerebras.ai/v1',
   apiKey: process.env.CEREBRAS_API_KEY ?? '',
 })
+
+const QUESTIONS = [
+  "How would you describe your organisation's current use of digital tools day-to-day?",
+  'Which business process do you think is most overdue for a digital upgrade?',
+  'Where do you feel the biggest friction or bottleneck in your current workflows?',
+  'How confident are you that your team could adopt a new digital tool within 30 days?',
+  'If you could change one thing about how your organisation uses technology, what would it be?',
+]
 
 const DIMENSIONS = [
   'IT Infrastructure & Cloud',
@@ -35,19 +43,20 @@ async function dbGet(table: string, query: string) {
       apikey: SUPABASE_KEY!,
       Authorization: `Bearer ${SUPABASE_KEY}`,
     },
+    cache: 'no-store',
   })
-  if (!res.ok) throw new Error(`DB ${table} error: ${res.status}`)
+  if (!res.ok) throw new Error(`DB ${table} error: ${res.status} ${await res.text()}`)
   return res.json()
 }
 
-async function dbPost(table: string, body: object) {
+async function dbPost(table: string, body: object): Promise<any[]> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
     method: 'POST',
     headers: {
       apikey: SUPABASE_KEY!,
       Authorization: `Bearer ${SUPABASE_KEY}`,
       'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
+      Prefer: 'return=representation',
     },
     body: JSON.stringify(body),
   })
@@ -55,6 +64,7 @@ async function dbPost(table: string, body: object) {
     const text = await res.text()
     throw new Error(`DB insert ${table} error: ${res.status} ${text}`)
   }
+  return res.json()
 }
 
 function isRateLimit(err: any): boolean {
@@ -75,54 +85,46 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { interview_token } = body
-  if (!interview_token) {
-    return NextResponse.json({ error: 'interview_token is required' }, { status: 400 })
+  // Accept 'token' (current column name). Legacy 'interview_token' also accepted.
+  const interviewToken = body.token ?? body.interview_token
+  if (!interviewToken) {
+    return NextResponse.json({ error: 'token is required' }, { status: 400 })
   }
 
-  // Fix: was using token=eq. (wrong column name), should be interview_token=eq.
-  const interviews = await dbGet('interviews', `interview_token=eq.${interview_token}&limit=1`)
+  // Fetch interview by token column
+  const interviews = await dbGet(
+    'interviews',
+    `token=eq.${interviewToken}&select=id,lead_id,transcript,stakeholder_name,stakeholder_role,status&limit=1`
+  )
   if (!interviews.length) {
     return NextResponse.json({ error: 'Interview not found' }, { status: 404 })
   }
   const interview = interviews[0]
 
-  // Fetch transcript
-  let messages: any[] = []
-  try {
-    messages = await dbGet(
-      'chat_messages',
-      `interview_id=eq.${interview.id}&order=created_at.asc`
-    )
-  } catch {
-    try {
-      messages = await dbGet(
-        'chat_messages',
-        `interview_token=eq.${interview_token}&order=created_at.asc`
-      )
-    } catch {
-      messages = []
-    }
+  if (interview.status !== 'complete') {
+    return NextResponse.json({ error: 'Interview not yet complete' }, { status: 409 })
   }
 
-  if (!messages.length) {
+  // Build transcript from interviews.transcript (JSONB string[])
+  const answers: string[] = Array.isArray(interview.transcript) ? interview.transcript : []
+  if (!answers.length) {
     return NextResponse.json({ error: 'No transcript found for this interview' }, { status: 404 })
   }
 
-  const transcript = messages
-    .map((m: any) => `${m.role === 'user' ? 'Stakeholder' : 'Connai'}: ${m.content}`)
-    .join('\n')
+  const transcriptText = QUESTIONS
+    .map((q, i) => `Q${i + 1}: ${q}\nA${i + 1}: ${answers[i] ?? '(no answer)'}`) 
+    .join('\n\n')
 
   // Score dimensions
-  const dimensionPrompt = `You are a digital maturity expert. Analyze the following interview transcript and score each of the 8 dimensions from 0 to 100.
+  const dimensionPrompt = `You are a digital maturity expert. Analyze the following stakeholder interview and score each of the 8 digital maturity dimensions from 0 to 100.
 
 Dimensions:
 ${DIMENSIONS.map((d, i) => `${i + 1}. ${d}`).join('\n')}
 
-Transcript:
-${transcript.slice(0, 8000)}
+Interview with ${interview.stakeholder_name ?? 'stakeholder'} (${interview.stakeholder_role ?? 'unknown role'}):
+${transcriptText}
 
-Respond ONLY with a valid JSON object mapping each dimension name to a score (integer 0-100). No explanation, no markdown.`
+Respond ONLY with a valid JSON object mapping each dimension name exactly as listed above to an integer score 0-100. No explanation, no markdown, no code block.`
 
   let dimensionScores: Record<string, number> = {}
 
@@ -133,7 +135,8 @@ Respond ONLY with a valid JSON object mapping each dimension name to a score (in
       maxTokens: 400,
       temperature: 0.2,
     })
-    return JSON.parse(text.trim())
+    const clean = text.trim().replace(/^```[a-z]*\n?/, '').replace(/```$/, '').trim()
+    return JSON.parse(clean)
   }
 
   try {
@@ -146,16 +149,16 @@ Respond ONLY with a valid JSON object mapping each dimension name to a score (in
         return NextResponse.json({ error: 'LLM scoring failed (rate limited)' }, { status: 429 })
       }
     } else {
-      return NextResponse.json({ error: 'LLM scoring failed' }, { status: 500 })
+      return NextResponse.json({ error: `LLM scoring failed: ${String(err)}` }, { status: 500 })
     }
   }
 
   const overallScore = Math.round(
-    Object.values(dimensionScores).reduce((a, b) => a + b, 0) / DIMENSIONS.length
+    Object.values(dimensionScores).reduce((a: number, b: number) => a + (b as number), 0) / DIMENSIONS.length
   )
 
-  // Save report
-  await dbPost('reports', {
+  // Save report — return=representation to get the inserted row ID
+  const reportRows = await dbPost('reports', {
     lead_id: interview.lead_id,
     interview_id: interview.id,
     overall_score: overallScore,
@@ -163,5 +166,13 @@ Respond ONLY with a valid JSON object mapping each dimension name to a score (in
     generated_at: new Date().toISOString(),
   })
 
-  return NextResponse.json({ ok: true, overall_score: overallScore, dimensions: dimensionScores })
+  const reportId = reportRows[0]?.id ?? interview.lead_id
+
+  return NextResponse.json({
+    ok: true,
+    lead_id: interview.lead_id,
+    report_id: reportId,
+    overall_score: overallScore,
+    dimensions: dimensionScores,
+  })
 }
