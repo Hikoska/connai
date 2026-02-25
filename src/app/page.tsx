@@ -37,11 +37,6 @@ const Hero = () => (
       </div>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-500 border-t border-gray-200 pt-8">
         <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-gray-900 font-mono">47</span>
-          <span>audits completed</span>
-        </div>
-        <div className="hidden sm:block w-px h-6 bg-gray-200" />
-        <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-gray-900 font-mono">30&thinsp;min</span>
           <span>average completion</span>
         </div>
@@ -56,7 +51,7 @@ const Hero = () => (
 )
 
 const FinalCTA = () => (
-  <section className="py-20 bg-[#0E1117] text-white">
+  <section className="py-20 bg-[#0D5C63] text-white">
     <div className="max-w-3xl mx-auto px-6 text-center">
       <h2 className={`${instrumentSerif.variable} font-serif text-4xl md:text-5xl font-bold mb-4`}>Ready to see where you stand?</h2>
       <p className="text-gray-400 text-lg mb-8">Free. 30 minutes. No consultant required.</p>
@@ -68,7 +63,7 @@ const FinalCTA = () => (
 )
 
 const Footer = () => (
-  <footer className="bg-[#0E1117] text-gray-400 py-10 px-6 border-t border-white/5">
+  <footer className="bg-[#F8F6F2] text-gray-500 py-10 px-6 border-t border-gray-200">
     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
       <div className="flex items-center gap-3">
         <span className="text-xs text-gray-600 uppercase tracking-widest font-medium">Built by</span>
