@@ -15,10 +15,16 @@ export function FloatingAIWidget() {
   const [leadId, setLeadId] = useState<string | null>(null)
   const [auditUrl, setAuditUrl] = useState<string | null>(null)
   const processedIds = useRef<Set<string>>(new Set())
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/chat',
   })
+
+  // Auto-scroll to latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isLoading])
 
   // Listen for external open trigger (e.g. from FAQ "Ask Connai" button)
   useEffect(() => {
@@ -103,10 +109,11 @@ export function FloatingAIWidget() {
               <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm">
                 <p className="font-medium text-teal-800 mb-1">Audit page ready ✓</p>
                 <a href={auditUrl} className="text-teal-600 underline break-all text-xs">
-                  {window?.location?.origin}{auditUrl}
+                  View your audit dashboard
                 </a>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
           <form onSubmit={handleSubmit} className="p-3 border-t border-gray-100 flex gap-2">
             <input
