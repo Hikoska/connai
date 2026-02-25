@@ -1,47 +1,47 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface StartInterviewButtonProps {
-  className?: string;
-  children?: React.ReactNode;
+  className?: string
+  children?: React.ReactNode
 }
 
 export function StartInterviewButton({ className, children }: StartInterviewButtonProps) {
-  const [email, setEmail] = useState('');
-  const [organisation, setOrganisation] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const router = useRouter();
+  const [email, setEmail] = useState('')
+  const [organisation, setOrganisation] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
     try {
       const response = await fetch('/api/capture', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ org: organisation, email }),
-      });
-      const data = await response.json();
+      })
+      const data = await response.json()
       if (!response.ok || !data.token) {
-        setError(data.error ?? 'Something went wrong. Please try again.');
-        setIsLoading(false);
-        return;
+        setError(data.error ?? 'Something went wrong. Please try again.')
+        setIsLoading(false)
+        return
       }
-      // Route based on flow: interview (direct) or audit (hub fallback)
-      const path = data.flow === 'audit'
-        ? `/audit/${data.token}`
-        : `/interview/${data.token}`;
-      router.push(path);
+      // Close modal before navigating so it doesn't persist across route change
+      setIsOpen(false)
+      setIsLoading(false)
+      const path = data.flow === 'audit' ? `/audit/${data.token}` : `/interview/${data.token}`
+      router.push(path)
     } catch {
-      setError('Network error. Please try again.');
-      setIsLoading(false);
+      setError('Network error. Please try again.')
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <>
@@ -95,7 +95,7 @@ export function StartInterviewButton({ className, children }: StartInterviewButt
         </div>
       )}
     </>
-  );
+  )
 }
 
-export default StartInterviewButton;
+export default StartInterviewButton
