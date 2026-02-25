@@ -69,19 +69,17 @@ const FinalCTA = () => (
 )
 
 const Footer = () => (
-  <footer className="bg-[#0E1117] text-gray-400 py-10 px-6">
+  <footer className="bg-[#0E1117] text-gray-400 py-10 px-6 border-t border-white/5">
     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-      <div className="flex items-center">
-        {/* White pill ensures logo is visible on the dark footer background */}
-        <div className="bg-white rounded-xl px-5 py-2.5">
-          <Image
-            src="/linkgrow-logo.png"
-            alt="Linkgrow"
-            width={200}
-            height={56}
-            className="h-10 w-auto object-contain"
-          />
-        </div>
+      <div className="flex items-center gap-3">
+        <span className="text-xs text-gray-600 uppercase tracking-widest">Built by</span>
+        <Image
+          src="/linkgrow-logo.png"
+          alt="Linkgrow"
+          width={100}
+          height={28}
+          className="h-6 w-auto object-contain brightness-0 invert opacity-50"
+        />
       </div>
       <div className="flex gap-6 text-sm">
         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { StartInterviewButton } from '@/components/StartInterviewButton'
 
 export function Navbar() {
@@ -20,16 +19,9 @@ export function Navbar() {
       scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100' : 'bg-transparent'
     }`}>
       <nav className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center">
-          <Image
-            src="/linkgrow-logo.png"
-            alt="Linkgrow"
-            width={240}
-            height={64}
-            className="h-20 w-auto object-contain"
-            priority
-          />
+        {/* Logo — Connai wordmark */}
+        <Link href="/" className="flex items-center gap-2">
+          <span className="text-xl font-bold text-[#0D5C63] tracking-tight">Connai</span>
         </Link>
 
         {/* Desktop nav */}
