@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(req: NextRequest) {
   const { token, answers } = await req.json();
   if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
 
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const APP_URL = process.env.NEXT_PUBLIC_URL || 'https://connai.linkgrow.io';
 
   const supaHeaders = {
     apikey: SERVICE_KEY,
@@ -78,6 +81,16 @@ export async function PATCH(req: NextRequest) {
         body: JSON.stringify({ status: newLeadStatus }),
       }
     );
+  }
+
+  // 4. Fire-and-forget report generation when all interviews complete
+  if (newLeadStatus === 'interviews_complete') {
+    // Trigger generate for this interview token (no await — background)
+    fetch(`${APP_URL}/api/report/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    }).catch(() => { /* ignore — background task */ });
   }
 
   return NextResponse.json({ ok: true, status_updated: true, lead_status: newLeadStatus });
