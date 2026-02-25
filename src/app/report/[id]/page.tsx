@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import BenchmarkingPanel from './benchmarking-panel';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -167,6 +168,9 @@ export default function ReportPage() {
             </div>
           ))}
         </div>
+
+        {/* Benchmarking Panel — How you compare */}
+        <BenchmarkingPanel dimensions={dimensions} />
 
         {/* Action Plan */}
         <div className="space-y-4">
