@@ -80,14 +80,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'interview_token is required' }, { status: 400 })
   }
 
-  // ── Fetch interview ──────────────────────────────────────────────────────
-  const interviews = await dbGet('interviews', `token=eq.${interview_token}&limit=1`)
+  // Fix: was using token=eq. (wrong column name), should be interview_token=eq.
+  const interviews = await dbGet('interviews', `interview_token=eq.${interview_token}&limit=1`)
   if (!interviews.length) {
     return NextResponse.json({ error: 'Interview not found' }, { status: 404 })
   }
   const interview = interviews[0]
 
-  // ── Fetch transcript ─────────────────────────────────────────────────────
+  // Fetch transcript
   let messages: any[] = []
   try {
     messages = await dbGet(
@@ -95,7 +95,6 @@ export async function POST(request: Request) {
       `interview_id=eq.${interview.id}&order=created_at.asc`
     )
   } catch {
-    // Fallback: some schemas use token instead of interview_id
     try {
       messages = await dbGet(
         'chat_messages',
@@ -106,91 +105,63 @@ export async function POST(request: Request) {
     }
   }
 
-  const transcript =
-    messages.length > 0
-      ? messages.map((m: any) => `${(m.role || 'unknown').toUpperCase()}: ${m.content}`).join('\n')
-      : 'No transcript — generate a baseline assessment from company profile only.'
+  if (!messages.length) {
+    return NextResponse.json({ error: 'No transcript found for this interview' }, { status: 404 })
+  }
 
-  // ── Build synthesis prompt ───────────────────────────────────────────────
-  const prompt = `You are a senior digital transformation analyst synthesising an interview transcript into a structured maturity report.
+  const transcript = messages
+    .map((m: any) => `${m.role === 'user' ? 'Stakeholder' : 'Connai'}: ${m.content}`)
+    .join('\n')
 
-Context:
-- Organisation: ${interview.organisation || 'Unknown'}
-- Industry: ${interview.industry || 'Unknown'}
-- Country: ${interview.country || 'MU'}
-- Respondent: ${interview.stakeholder_email}
+  // Score dimensions
+  const dimensionPrompt = `You are a digital maturity expert. Analyze the following interview transcript and score each of the 8 dimensions from 0 to 100.
+
+Dimensions:
+${DIMENSIONS.map((d, i) => `${i + 1}. ${d}`).join('\n')}
 
 Transcript:
-${transcript}
+${transcript.slice(0, 8000)}
 
-Return a JSON object with EXACTLY this structure (no markdown, no prose outside JSON):
-{
-  "organisation": "<string>",
-  "industry": "<string>",
-  "overall_score": <number 1.0–5.0 one decimal>,
-  "overall_label": "<Emerging|Developing|Established|Advanced|Leading>",
-  "executive_summary": "<2-3 sentences, concrete and direct>",
-  "dimensions": [
-    {
-      "name": "<one of: ${DIMENSIONS.join(', ')}>",
-      "score": <number 1.0–5.0 one decimal>,
-      "label": "<maturity label>",
-      "finding": "<1 sentence stating current state>",
-      "top_priority": "<1 concrete next action with measurable outcome>"
-    }
-  ],
-  "quick_wins": ["<action>", "<action>", "<action>"],
-  "strategic_priorities": ["<6-12 month priority>", "<priority>", "<priority>"],
-  "consulting_hook": "<1-2 sentences connecting findings to a Connai/Linkgrow advisory engagement>"
-}
+Respond ONLY with a valid JSON object mapping each dimension name to a score (integer 0-100). No explanation, no markdown.`
 
-All 8 dimensions MUST be present. Base scores on evidence in transcript; use industry benchmarks when transcript is sparse.`
+  let dimensionScores: Record<string, number> = {}
 
-  // ── LLM cascade: Groq → Cerebras ─────────────────────────────────────────
-  let reportContent: any = null
-
-  if (process.env.GROQ_API_KEY) {
-    try {
-      const { text } = await generateText({
-        model: groq('llama-3.3-70b-versatile'),
-        prompt,
-        maxTokens: 2500,
-      })
-      reportContent = JSON.parse(text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, ''))
-    } catch (err) {
-      if (!isRateLimit(err)) throw err
-      console.warn('Groq rate-limited — falling back to Cerebras')
-    }
-  }
-
-  if (!reportContent && process.env.CEREBRAS_API_KEY) {
+  const tryScore = async (model: any) => {
     const { text } = await generateText({
-      model: cerebras('llama3.1-8b'),
-      prompt,
-      maxTokens: 2500,
+      model,
+      prompt: dimensionPrompt,
+      maxTokens: 400,
+      temperature: 0.2,
     })
-    reportContent = JSON.parse(text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, ''))
+    return JSON.parse(text.trim())
   }
 
-  if (!reportContent) {
-    return NextResponse.json(
-      { error: 'Report generation failed — all LLM providers unavailable' },
-      { status: 503 }
-    )
-  }
-
-  // ── Persist ───────────────────────────────────────────────────────────────
   try {
-    await dbPost('reports', {
-      interview_id: interview.id,
-      content: reportContent,
-      status: 'complete',
-      generated_at: new Date().toISOString(),
-    })
-  } catch (saveErr) {
-    // Don't block the response — content is what matters
-    console.error('Report save failed:', saveErr)
+    dimensionScores = await tryScore(groq('llama-3.3-70b-versatile'))
+  } catch (err) {
+    if (isRateLimit(err) && process.env.CEREBRAS_API_KEY) {
+      try {
+        dimensionScores = await tryScore(cerebras('llama3.1-8b'))
+      } catch {
+        return NextResponse.json({ error: 'LLM scoring failed (rate limited)' }, { status: 429 })
+      }
+    } else {
+      return NextResponse.json({ error: 'LLM scoring failed' }, { status: 500 })
+    }
   }
 
-  return NextResponse.json({ report: reportContent })
+  const overallScore = Math.round(
+    Object.values(dimensionScores).reduce((a, b) => a + b, 0) / DIMENSIONS.length
+  )
+
+  // Save report
+  await dbPost('reports', {
+    lead_id: interview.lead_id,
+    interview_id: interview.id,
+    overall_score: overallScore,
+    dimension_scores: dimensionScores,
+    generated_at: new Date().toISOString(),
+  })
+
+  return NextResponse.json({ ok: true, overall_score: overallScore, dimensions: dimensionScores })
 }
