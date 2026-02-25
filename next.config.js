@@ -12,8 +12,9 @@ const nextConfig = {
     const stub = path.resolve(__dirname, 'src/lib/phase1-stub.js')
     config.resolve.alias = {
       ...config.resolve.alias,
-      // @supabase/supabase-js removed from stub — SDK must be real in browser
-      // @supabase/ssr removed — may be needed for server-side auth helpers
+      // @supabase/ssr is NOT installed — keep stubbed to avoid module-not-found
+      '@supabase/ssr': stub,
+      // @supabase/supabase-js is installed and real — removed from stub so SDK works in browser
       'stripe': stub,
       '@stripe/stripe-js': stub,
       '@google/generative-ai': stub,
