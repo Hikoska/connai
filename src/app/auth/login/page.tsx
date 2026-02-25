@@ -35,30 +35,25 @@ export default function LoginPage() {
     setLoading(provider)
     setError('')
     try {
-      // PKCE flow required — callback page uses exchangeCodeForSession
+      // No explicit flowType — Supabase uses its default with proper fallbacks
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        { auth: { flowType: 'pkce' } }
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
-      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          // skipBrowserRedirect: true lets us control navigation explicitly
-          // so the button never hangs if auto-redirect silently fails
-          skipBrowserRedirect: true,
           scopes: provider === 'azure' ? 'openid email profile' : undefined,
           queryParams: provider === 'azure' ? { prompt: 'select_account' } : undefined,
         },
       })
-      if (oauthError || !data?.url) {
-        setError(oauthError?.message ?? 'Sign-in configuration error. Please try again.')
+      // If error returned (config issue), show it; otherwise browser auto-redirects
+      if (oauthError) {
+        setError(oauthError.message ?? 'Sign-in error. Please try again.')
         setLoading(null)
-        return
       }
-      // Navigate — page unloads, no need to clear loading state
-      window.location.assign(data.url)
+      // On success: browser navigates away; loading state is irrelevant
     } catch {
       setError('Unexpected error. Please try again.')
       setLoading(null)
