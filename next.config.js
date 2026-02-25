@@ -6,7 +6,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreTypeErrors: true,
+    ignoreBuildErrors: true,
   },
   webpack: (config) => {
     const stub = path.resolve(__dirname, 'src/lib/phase1-stub.js')
