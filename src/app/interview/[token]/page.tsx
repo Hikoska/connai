@@ -1,238 +1,232 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react'
+import { useParams } from 'next/navigation'
 
-const QUESTIONS = [
-  'How would you describe your organisation\'s current use of digital tools day-to-day?',
-  'Which business process do you think is most overdue for a digital upgrade?',
-  'Where do you feel the biggest friction or bottleneck in your current workflows?',
-  'How confident are you that your team could adopt a new digital tool within 30 days?',
-  'If you could change one thing about how your organisation uses technology, what would it be?',
-];
-
-const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 async function sbGet(table: string, params: Record<string, string>) {
-  const url = new URL(`${SB_URL}/rest/v1/${table}`);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const url = new URL(`${SB_URL}/rest/v1/${table}`)
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
   const res = await fetch(url.toString(), {
-    headers: {
-      apikey: SB_ANON,
-      Authorization: `Bearer ${SB_ANON}`,
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-  });
-  if (!res.ok) throw new Error(`${table} fetch failed (${res.status})`);
-  const rows = await res.json();
-  return Array.isArray(rows) ? rows[0] ?? null : rows;
+    headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, Accept: 'application/json' },
+  })
+  if (!res.ok) throw new Error(`${table} fetch failed`)
+  const rows = await res.json()
+  return Array.isArray(rows) ? rows[0] ?? null : rows
 }
 
-export const dynamic = 'force-dynamic';
+type Message = { role: 'assistant' | 'user'; content: string }
+
+export const dynamic = 'force-dynamic'
 
 export default function InterviewPage() {
-  const { token } = useParams<{ token: string }>();
-
-  const [interview, setInterview] = useState<{
-    lead_id: string;
-    stakeholder_name: string;
-    stakeholder_role: string;
-    stakeholder_email: string;
-  } | null>(null);
-  const [lead, setLead] = useState<{ org_name: string; industry: string } | null>(null);
-  const [email, setEmail] = useState('');
-  const [step, setStep] = useState<'email' | 'questions' | 'done'>('email');
-  const [answers, setAnswers] = useState<string[]>(Array(QUESTIONS.length).fill(''));
-  const [currentQ, setCurrentQ] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [questionVisible, setQuestionVisible] = useState(true);
+  const { token } = useParams<{ token: string }>()
+  const [orgName, setOrgName] = useState('')
+  const [email, setEmail] = useState('')
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [thinking, setThinking] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState('')
+  const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    async function loadContext() {
+    async function init() {
       try {
-        const ivData = await sbGet('interviews', {
+        const iv = await sbGet('interviews', {
           token: `eq.${token}`,
-          select: 'lead_id,stakeholder_name,stakeholder_role,stakeholder_email',
+          select: 'lead_id,stakeholder_email',
           limit: '1',
-        });
+        })
+        if (!iv) { setError('Invalid or expired interview link.'); setLoading(false); return }
+        if (iv.stakeholder_email) setEmail(iv.stakeholder_email)
 
-        if (!ivData) { setError('Invalid or expired interview link.'); setLoading(false); return; }
-        setInterview(ivData);
-
-        if (ivData.stakeholder_email) {
-          setEmail(ivData.stakeholder_email);
-          setStep('questions');
-        }
-
-        const leadData = await sbGet('leads', {
-          id: `eq.${ivData.lead_id}`,
-          select: 'org_name,industry',
+        const lead = await sbGet('leads', {
+          id: `eq.${iv.lead_id}`,
+          select: 'org_name',
           limit: '1',
-        }).catch(() => null);
+        }).catch(() => null)
+        if (lead?.org_name) setOrgName(lead.org_name)
 
-        if (leadData) setLead(leadData);
-        setLoading(false);
+        // Get opening question
+        const res = await fetch('/api/interviews/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, messages: [] }),
+        })
+        const data = await res.json()
+        if (data.message) setMessages([{ role: 'assistant', content: data.message }])
+        setLoading(false)
       } catch {
-        setError('Failed to load interview. Please try again.');
-        setLoading(false);
+        setError('Failed to load interview. Please try again.')
+        setLoading(false)
       }
     }
-    loadContext();
-  }, [token]);
+    init()
+  }, [token])
 
-  function advanceQuestion(nextQ: number) {
-    setQuestionVisible(false);
-    setTimeout(() => {
-      setCurrentQ(nextQ);
-      setQuestionVisible(true);
-    }, 200);
-  }
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, thinking])
 
-  async function handleEmailSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setSubmitting(true);
-    await fetch('/api/interviews/email', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, email }),
-    });
-    setSubmitting(false);
-    setStep('questions');
-  }
-
-  async function handleAnswerNext() {
-    if (!answers[currentQ].trim()) return;
-    if (currentQ < QUESTIONS.length - 1) {
-      advanceQuestion(currentQ + 1);
-    } else {
-      setSubmitting(true);
-      await fetch('/api/interviews/complete', {
-        method: 'PATCH',
+  async function send() {
+    const text = input.trim()
+    if (!text || thinking || done) return
+    const updated: Message[] = [...messages, { role: 'user', content: text }]
+    setMessages(updated)
+    setInput('')
+    setThinking(true)
+    try {
+      const res = await fetch('/api/interviews/message', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, answers }),
-      });
-      setSubmitting(false);
-      setStep('done');
+        body: JSON.stringify({ token, messages: updated }),
+      })
+      const data = await res.json()
+      if (data.message) {
+        const final: Message[] = [...updated, { role: 'assistant', content: data.message }]
+        setMessages(final)
+        if (data.done) {
+          setDone(true)
+          await fetch('/api/interviews/complete', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, answers: final }),
+          })
+        }
+      }
+    } catch {
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: 'Sorry, I had a connection issue. Please try again.' },
+      ])
     }
+    setThinking(false)
   }
 
-  const progressPercent = ((currentQ + 1) / QUESTIONS.length) * 100;
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
+  }
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <p className="text-gray-500 text-sm">Loading...</p>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto" />
+          <p className="text-gray-400 text-sm">Preparing your interview...</p>
+        </div>
+      </div>
+    )
+  }
 
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <p className="text-red-500 text-sm">{error}</p>
-    </div>
-  );
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-red-500 text-sm">{error}</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="inline-block bg-teal-50 text-teal-700 text-xs font-semibold px-3 py-1 rounded-full mb-3">
-            Digital Maturity Interview
-          </div>
-          {lead && (
-            <p className="text-gray-600 text-sm leading-relaxed">
-              You&#39;ve been invited by <span className="font-semibold text-gray-800">{lead.org_name}</span> to share your perspective on their digital maturity.
-              {interview?.stakeholder_role && (
-                <> As <span className="font-medium">{interview.stakeholder_role}</span>, your input shapes their roadmap.</>
-              )}
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 flex-shrink-0">
+        <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
+          <span className="text-white text-xs font-bold">C</span>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-gray-800">Connai AI Interviewer</p>
+          {orgName && (
+            <p className="text-xs text-gray-400">
+              {orgName}
+              {' · '}
+              Digital Maturity Assessment
             </p>
           )}
-          {interview?.stakeholder_name && (
-            <p className="mt-1 text-xs text-gray-400">Hi, {interview.stakeholder_name}</p>
-          )}
         </div>
-
-        {/* Step: email */}
-        {step === 'email' && (
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Your email address</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-              <p className="text-xs text-gray-400 mt-1">Used only to send you a copy of the findings.</p>
-            </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-[#0D5C63] hover:bg-[#0a4a50] text-white font-semibold py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50"
-            >
-              {submitting ? 'Saving...' : 'Start Interview ->'}
-            </button>
-          </form>
-        )}
-
-        {/* Step: questions */}
-        {step === 'questions' && (
-          <div className="space-y-5">
-            {/* Progress bar */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-medium text-gray-500">Step {currentQ + 1} of {QUESTIONS.length}</span>
-                <span className="text-xs text-gray-400">{Math.round(progressPercent)}%</span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                <div
-                  className="h-full bg-teal-500 rounded-full"
-                  style={{ width: `${progressPercent}%`, transition: 'width 300ms ease' }}
-                />
-              </div>
-            </div>
-
-            {/* Question block with 200ms opacity fade */}
-            <div style={{ opacity: questionVisible ? 1 : 0, transition: 'opacity 200ms ease' }}>
-              <p className="text-gray-800 font-medium text-sm leading-relaxed">{QUESTIONS[currentQ]}</p>
-              <textarea
-                rows={4}
-                value={answers[currentQ]}
-                onChange={(e) => {
-                  const updated = [...answers];
-                  updated[currentQ] = e.target.value;
-                  setAnswers(updated);
-                }}
-                placeholder="Your answer..."
-                className="mt-3 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
-
-            <button
-              onClick={handleAnswerNext}
-              disabled={submitting || !answers[currentQ].trim()}
-              className="w-full bg-[#0D5C63] hover:bg-[#0a4a50] text-white font-semibold py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50"
-            >
-              {submitting ? 'Saving...' : currentQ < QUESTIONS.length - 1 ? 'Next ->' : 'Submit Interview ->'}
-            </button>
-          </div>
-        )}
-
-        {/* Step: done */}
-        {step === 'done' && (
-          <div className="text-center space-y-3 py-4">
-            <div className="text-4xl">&#10003;</div>
-            <p className="text-gray-800 font-semibold">Thank you for your input!</p>
-            <p className="text-gray-500 text-sm">Your responses have been recorded. {lead?.org_name} will use them to build their digital maturity report.</p>
-          </div>
-        )}
       </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="max-w-2xl mx-auto space-y-4">
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                  msg.role === 'user'
+                    ? 'bg-[#0D5C63] text-white rounded-br-sm'
+                    : 'bg-white text-gray-800 border border-gray-100 shadow-sm rounded-bl-sm'
+                }`}
+              >
+                {msg.content}
+              </div>
+            </div>
+          ))}
+
+          {thinking && (
+            <div className="flex justify-start">
+              <div className="bg-white border border-gray-100 shadow-sm rounded-2xl rounded-bl-sm px-4 py-3">
+                <div className="flex gap-1.5 items-center h-4">
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
+      </div>
+
+      {/* Input bar or done state */}
+      {done ? (
+        <div className="bg-white border-t border-gray-100 px-4 py-6 flex-shrink-0">
+          <div className="max-w-2xl mx-auto text-center space-y-2">
+            <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center mx-auto">
+              <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-gray-800 font-semibold">Interview complete</p>
+            {email && (
+              <p className="text-gray-500 text-sm">
+                Your report is being generated and will be sent to
+                {' '}
+                <span className="font-medium">{email}</span>.
+              </p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white border-t border-gray-100 px-4 py-3 flex-shrink-0">
+          <div className="max-w-2xl mx-auto flex gap-3 items-end">
+            <textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder="Type your answer..."
+              rows={2}
+              disabled={thinking}
+              className="flex-1 resize-none border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 max-h-32 overflow-y-auto disabled:bg-gray-50"
+            />
+            <button
+              onClick={send}
+              disabled={!input.trim() || thinking}
+              className="w-10 h-10 bg-[#0D5C63] hover:bg-[#0a4a50] text-white rounded-xl flex items-center justify-center disabled:opacity-40 transition-colors flex-shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 text-center mt-2">Enter to send &middot; Shift+Enter for new line</p>
+        </div>
+      )}
     </div>
-  );
+  )
 }
