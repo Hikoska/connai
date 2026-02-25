@@ -32,7 +32,11 @@ export function StartInterviewButton({ className, children }: StartInterviewButt
         setIsLoading(false);
         return;
       }
-      router.push(`/audit/${data.token}`);
+      // Route based on flow: interview (direct) or audit (hub fallback)
+      const path = data.flow === 'audit'
+        ? `/audit/${data.token}`
+        : `/interview/${data.token}`;
+      router.push(path);
     } catch {
       setError('Network error. Please try again.');
       setIsLoading(false);
