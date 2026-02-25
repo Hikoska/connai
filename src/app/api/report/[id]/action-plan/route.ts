@@ -44,34 +44,11 @@ export async function GET(
   const industry = lead.industry ? ` in the ${lead.industry} sector` : ''
 
   const dimensionList = Object.entries(scores)
-    .sort(([, a], [, b]) => a - b) // lowest first — prioritize gaps
+    .sort(([, a], [, b]) => a - b)
     .map(([name, score]) => `- ${name}: ${score}/100`)
     .join('\n')
 
-  const prompt = `You are a senior digital transformation consultant creating a prioritised action plan for ${orgName}${industry}.
-
-Digital Maturity scores (sorted by priority gap):
-${dimensionList}
-
-Return ONLY valid JSON, no commentary:
-{
-  "summary": "<2-3 sentence executive summary: current maturity level, biggest gap, primary priority>",
-  "quick_wins": [
-    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "Low"}
-  ],
-  "six_month": [
-    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "Medium"}
-  ],
-  "long_term": [
-    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "High"}
-  ]
-}
-
-Rules:
-- quick_wins: 3-4 items, 30-day actions, low effort high impact
-- six_month: 3-4 items, structured programmes this quarter
-- long_term: 2-3 items, strategic transformation 12-24 months
-- Be specific to the organisation's gaps, not generic advice`
+  const prompt = `You are a senior digital transformation consultant creating a prioritised action plan for ${orgName}${industry}.\n\nDigital Maturity scores (sorted by priority gap):\n${dimensionList}\n\nReturn ONLY valid JSON, no commentary:\n{\n  "summary": "<2-3 sentence executive summary: current maturity level, biggest gap, primary priority>",\n  "quick_wins": [\n    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "Low"}\n  ],\n  "six_month": [\n    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "Medium"}\n  ],\n  "long_term": [\n    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "High"}\n  ]\n}\n\nRules:\n- quick_wins: 3-4 items, 30-day actions, low effort high impact\n- six_month: 3-4 items, structured programmes this quarter\n- long_term: 2-3 items, strategic transformation 12-24 months\n- Be specific to the organisation's gaps, not generic advice`
 
   const tryAI = async (model: ReturnType<typeof groq>) => {
     const { text } = await generateText({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3 })
@@ -80,7 +57,10 @@ Rules:
 
   let raw = ''
   try { raw = await tryAI(groq('llama-3.3-70b-versatile')) }
-  catch { raw = await tryAI(cerebras('llama3.1-8b')) }
+  catch {
+    try { raw = await tryAI(cerebras('llama3.1-8b')) }
+    catch { return NextResponse.json({ error: 'AI service unavailable. Try again shortly.' }, { status: 503 }) }
+  }
 
   const match = raw.match(/\{[\s\S]*\}/)
   if (!match) return NextResponse.json({ error: 'Plan generation failed' }, { status: 500 })
