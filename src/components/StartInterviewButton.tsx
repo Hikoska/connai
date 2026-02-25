@@ -9,25 +9,32 @@ interface StartInterviewButtonProps {
 }
 
 export function StartInterviewButton({ className, children }: StartInterviewButtonProps) {
-  const [stakeholderEmail, setStakeholderEmail] = useState('');
+  const [email, setEmail] = useState('');
   const [organisation, setOrganisation] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     try {
-      const response = await fetch('/api/interview', {
+      const response = await fetch('/api/capture', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stakeholder_email: stakeholderEmail, organisation }),
+        body: JSON.stringify({ org: organisation, email }),
       });
       const data = await response.json();
-      router.push(data.interview_url);
-    } catch (error) {
-      console.error(error);
+      if (!response.ok || !data.token) {
+        setError(data.error ?? 'Something went wrong. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+      router.push(`/audit/${data.token}`);
+    } catch {
+      setError('Network error. Please try again.');
       setIsLoading(false);
     }
   };
@@ -45,7 +52,7 @@ export function StartInterviewButton({ className, children }: StartInterviewButt
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Start Your Assessment</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Start Your Free Audit</h2>
               <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -54,8 +61,8 @@ export function StartInterviewButton({ className, children }: StartInterviewButt
                 <input
                   type="email"
                   required
-                  value={stakeholderEmail}
-                  onChange={(e) => setStakeholderEmail(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@company.com"
                   className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#0D5C63]"
                 />
@@ -71,12 +78,13 @@ export function StartInterviewButton({ className, children }: StartInterviewButt
                   className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#0D5C63]"
                 />
               </div>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
               <button
                 type="submit"
                 disabled={isLoading}
                 className="w-full bg-[#0D5C63] text-white font-semibold py-3 rounded-xl hover:bg-[#0a4a50] transition-colors disabled:opacity-50"
               >
-                {isLoading ? 'Starting...' : 'Begin Assessment →'}
+                {isLoading ? 'Starting...' : 'Begin Audit →'}
               </button>
             </form>
           </div>
