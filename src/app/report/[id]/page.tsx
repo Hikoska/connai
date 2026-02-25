@@ -156,7 +156,7 @@ export default function ReportPage() {
         {/* Overall Score */}
         <div className="bg-white/5 rounded-2xl p-6 text-center print:border print:border-gray-200">
           <p className="text-white/40 text-xs uppercase tracking-widest mb-2 print:text-gray-400">Overall Score</p>
-          <p className="text-6xl font-bold text-teal-400">{overallScore}</p>
+          <p className="text-6xl font-bold text-teal-400" data-testid="score">{overallScore}</p>
           <p className="text-white/30 text-sm mt-1 print:text-gray-400">out of 100</p>
           {partial && totalCount > 0 && (
             <div className="mt-4">
