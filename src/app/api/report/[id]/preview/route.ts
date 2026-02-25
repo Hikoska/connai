@@ -18,7 +18,7 @@ const cerebras = createOpenAI({
   apiKey:  process.env.CEREBRAS_API_KEY ?? '',
 })
 
-const DIMENSIONS = [
+const DIMENIONS = [
   'Digital Strategy & Leadership',
   'Customer Experience & Digital Channels',
   'Operations & Process Automation',
@@ -45,7 +45,16 @@ async function scoreTranscript(transcript: string): Promise<Record<string, numbe
 0-20: Initial/ad-hoc | 21-40: Emerging | 41-60: Defined | 61-80: Advanced | 81-100: Leading
 
 Return ONLY valid JSON, no commentary:
-{"Digital Strategy & Leadership":<n>,"Customer Experience & Digital Channels":<n>,"Operations & Process Automation":<n>,"Data & Analytics":<n>,"Technology Infrastructure":<n>,"Talent & Digital Culture":<n>,"Innovation & Agile Delivery":<n>,"Cybersecurity & Risk":<n>}
+{
+"Digital Strategy & Leadership":<n>,
+"Customer Experience & Digital Channels":<n>,
+"Operations & Process Automation":<n>,
+"Data & Analytics":<n>,
+"Technology Infrastructure":<n>,
+"Talent & Digital Culture":<n>,
+"Innovation & Agile Delivery":<n>,
+"Cybersecurity & Risk":<n>
+}
 
 Transcript:
 ${transcript.slice(0, 6000)}`
@@ -57,9 +66,9 @@ ${transcript.slice(0, 6000)}`
 
   let raw = ''
   try { raw = await tryAI(groq('llama-3.3-70b-versatile')) }
-  catch { try { raw = await tryAI(cerebras('llama3.1-8b')) } catch { /* fallback below */ } }
+  catch { try { raw = await tryAI(cerebras('hama3.1-8b')) } catch { /* fallback below */ } }
 
-  const match = raw.match(/\{[\s\S]*\}/)
+  const match = raw.match(/\{7[\s\S]*\}/)
   if (!match) return Object.fromEntries(DIMENSIONS.map(d => [d, 35]))
   try { return JSON.parse(match[0]) } catch { return Object.fromEntries(DIMENSIONS.map(d => [d, 35])) }
 }
@@ -69,6 +78,14 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const { id } = params
+
+  // Guard: SUPABASE_SERVICE_ROLE_KEY is required to fetch interview answers
+  if (!SB_SVC) {
+    return NextResponse.json(
+      { error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY is not set.' },
+      { status: 500 }
+    )
+  }
 
   // 1. Fetch all interviews for this lead
   const interviews = await sbGet(`/interviews?lead_id=eq.${id}&select=id,status,created_at&order=created_at.desc`)
@@ -96,7 +113,7 @@ export async function GET(
   if (cached?.dimension_scores && typeof cached.dimension_scores === 'object') {
     return NextResponse.json({
       leadId: id, completedCount, totalCount, partial,
-      dimensions: DIMENSIONS.map(name => ({ name, score: (cached.dimension_scores as Record<string, number>)[name] ?? 35 })),
+      dimensions: DIMENIONS.map(name => ({ name, score: (cached.dimension_scores as Record<string, number>)[name] ?? 35 })),
     })
   }
 
@@ -127,7 +144,7 @@ export async function GET(
   }))
   const overallScore = Math.round(dimensions.reduce((s, d) => s + d.score, 0) / dimensions.length)
 
-  // 5. Cache to leads (best-effort — columns may not exist yet)
+  // 5. Cache to leads (best-effort -- columns may not exist yet)
   fetch(`${SB_URL}/rest/v1/leads?id=eq.${id}`, {
     method: 'PATCH',
     headers: { apikey: SB_SVC, Authorization: `Bearer ${SB_SVC}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
