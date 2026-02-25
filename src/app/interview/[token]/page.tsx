@@ -30,10 +30,11 @@ export default function InterviewPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [questionVisible, setQuestionVisible] = useState(true);
 
   useEffect(() => {
     async function loadContext() {
-      // createClient inside effect — never at module level (gate rule #2)
+      // createClient inside effect only — never at module level (gate rule)
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -60,6 +61,14 @@ export default function InterviewPage() {
     loadContext();
   }, [token]);
 
+  function advanceQuestion(nextQ: number) {
+    setQuestionVisible(false);
+    setTimeout(() => {
+      setCurrentQ(nextQ);
+      setQuestionVisible(true);
+    }, 200);
+  }
+
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim()) return;
@@ -76,7 +85,7 @@ export default function InterviewPage() {
   async function handleAnswerNext() {
     if (!answers[currentQ].trim()) return;
     if (currentQ < QUESTIONS.length - 1) {
-      setCurrentQ((q) => q + 1);
+      advanceQuestion(currentQ + 1);
     } else {
       setSubmitting(true);
       await fetch('/api/interviews/complete', {
@@ -88,6 +97,8 @@ export default function InterviewPage() {
       setStep('done');
     }
   }
+
+  const progressPercent = ((currentQ + 1) / QUESTIONS.length) * 100;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -150,26 +161,36 @@ export default function InterviewPage() {
         {/* Step: questions */}
         {step === 'questions' && (
           <div className="space-y-5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-gray-400">Question {currentQ + 1} of {QUESTIONS.length}</span>
-              <div className="flex gap-1">
-                {QUESTIONS.map((_, i) => (
-                  <div key={i} className={`h-1.5 w-6 rounded-full ${i <= currentQ ? 'bg-teal-500' : 'bg-gray-200'}`} />
-                ))}
+            {/* Progress bar — Step X of Y + teal fill */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-medium text-gray-500">Step {currentQ + 1} of {QUESTIONS.length}</span>
+                <span className="text-xs text-gray-400">{Math.round(progressPercent)}%</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="h-full bg-teal-500 rounded-full"
+                  style={{ width: `${progressPercent}%`, transition: 'width 300ms ease' }}
+                />
               </div>
             </div>
-            <p className="text-gray-800 font-medium text-sm leading-relaxed">{QUESTIONS[currentQ]}</p>
-            <textarea
-              rows={4}
-              value={answers[currentQ]}
-              onChange={(e) => {
-                const updated = [...answers];
-                updated[currentQ] = e.target.value;
-                setAnswers(updated);
-              }}
-              placeholder="Your answer…"
-              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
+
+            {/* Question block with 200ms opacity fade */}
+            <div style={{ opacity: questionVisible ? 1 : 0, transition: 'opacity 200ms ease' }}>
+              <p className="text-gray-800 font-medium text-sm leading-relaxed">{QUESTIONS[currentQ]}</p>
+              <textarea
+                rows={4}
+                value={answers[currentQ]}
+                onChange={(e) => {
+                  const updated = [...answers];
+                  updated[currentQ] = e.target.value;
+                  setAnswers(updated);
+                }}
+                placeholder="Your answer…"
+                className="mt-3 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+
             <button
               onClick={handleAnswerNext}
               disabled={submitting || !answers[currentQ].trim()}
