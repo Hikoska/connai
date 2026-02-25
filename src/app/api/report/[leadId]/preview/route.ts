@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const DIMENSIONS = ['Strategy', 'Operations', 'People', 'Technology', 'Data'];
 
+// Returns a 0-100 score based on answer quality
 function scoreFromAnswer(answer: string): number {
-  if (!answer || answer.trim().length < 10) return 1;
-  if (answer.trim().length < 50) return 2;
-  if (answer.trim().length < 120) return 3;
-  if (answer.trim().length < 250) return 4;
-  return 5;
+  if (!answer || answer.trim().length < 10) return 10;
+  if (answer.trim().length < 50) return 30;
+  if (answer.trim().length < 120) return 55;
+  if (answer.trim().length < 250) return 75;
+  return 90;
 }
 
 export async function GET(
@@ -37,6 +38,16 @@ export async function GET(
   const complete = allInterviews.filter((i) => i.status === 'complete');
   const completedCount = complete.length;
 
+  if (completedCount === 0) {
+    return NextResponse.json({
+      leadId,
+      completedCount: 0,
+      totalCount,
+      dimensions: [],
+      partial: true,
+    });
+  }
+
   const dimensionTotals = DIMENSIONS.map(() => ({ sum: 0, count: 0 }));
 
   for (const interview of complete) {
@@ -52,7 +63,7 @@ export async function GET(
   const dimensions = DIMENSIONS.map((name, i) => ({
     name,
     score: dimensionTotals[i].count > 0
-      ? Math.round((dimensionTotals[i].sum / dimensionTotals[i].count) * 10) / 10
+      ? Math.round(dimensionTotals[i].sum / dimensionTotals[i].count)
       : 0,
   }));
 
