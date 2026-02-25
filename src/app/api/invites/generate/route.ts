@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     for (const s of stakeholders) {
       if (!s.name?.trim() || !s.role?.trim()) continue
 
-      const interview_token = crypto.randomUUID()
+      const tokenValue = crypto.randomUUID()
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/interviews`,
@@ -32,9 +32,8 @@ export async function POST(req: Request) {
             lead_id,
             stakeholder_name: s.name.trim(),
             stakeholder_role: s.role.trim(),
-            stakeholder_email: null,
             status: 'pending',
-            interview_token,
+            token: tokenValue,
           }),
         }
       )
@@ -43,7 +42,7 @@ export async function POST(req: Request) {
         created.push({
           name: s.name.trim(),
           role: s.role.trim(),
-          interview_url: `/interview/${interview_token}`,
+          interview_url: `/interview/${tokenValue}`,
         })
       } else {
         const err = await res.text().catch(() => res.statusText)
@@ -51,7 +50,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // Also update leads.stakeholders with the parsed list
+    // Update leads.stakeholders with the parsed list
     await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/leads?id=eq.${lead_id}`,
       {

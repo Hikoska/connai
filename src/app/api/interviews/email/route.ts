@@ -5,7 +5,7 @@ export async function PATCH(req: NextRequest) {
   if (!token || !email) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/interviews?interview_token=eq.${token}`,
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/interviews?token=eq.${token}`,
     {
       method: 'PATCH',
       headers: {

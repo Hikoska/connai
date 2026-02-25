@@ -1,13 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 const QUESTIONS = [
   'How would you describe your organisation\'s current use of digital tools day-to-day?',
@@ -17,9 +12,10 @@ const QUESTIONS = [
   'If you could change one thing about how your organisation uses technology, what would it be?',
 ];
 
+export const dynamic = 'force-dynamic';
+
 export default function InterviewPage() {
   const { token } = useParams<{ token: string }>();
-  const router = useRouter();
 
   const [interview, setInterview] = useState<{
     lead_id: string;
@@ -37,10 +33,16 @@ export default function InterviewPage() {
 
   useEffect(() => {
     async function loadContext() {
+      // createClient inside effect — never at module level (gate rule #2)
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
       const { data: ivData, error: ivErr } = await supabase
         .from('interviews')
         .select('lead_id, stakeholder_name, stakeholder_role')
-        .eq('interview_token', token)
+        .eq('token', token)
         .single();
 
       if (ivErr || !ivData) { setError('Invalid or expired interview link.'); setLoading(false); return; }
@@ -109,7 +111,7 @@ export default function InterviewPage() {
           </div>
           {lead && (
             <p className="text-gray-600 text-sm leading-relaxed">
-              You've been invited by <span className="font-semibold text-gray-800">{lead.org_name}</span> to share your perspective on their digital maturity.
+              You&#39;ve been invited by <span className="font-semibold text-gray-800">{lead.org_name}</span> to share your perspective on their digital maturity.
               {interview?.stakeholder_role && (
                 <> As <span className="font-medium">{interview.stakeholder_role}</span>, your input shapes their roadmap.</>
               )}

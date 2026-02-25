@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supaHeaders = {
-  apikey: SERVICE_KEY,
-  Authorization: `Bearer ${SERVICE_KEY}`,
-  'Content-Type': 'application/json',
-};
-
 export async function PATCH(req: NextRequest) {
   const { token, answers } = await req.json();
   if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
 
-  // 1. Mark interview complete and return the row to get lead_id
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  const supaHeaders = {
+    apikey: SERVICE_KEY,
+    Authorization: `Bearer ${SERVICE_KEY}`,
+    'Content-Type': 'application/json',
+  };
+
+  // 1. Mark interview complete — filter by token column
   const patchRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/interviews?interview_token=eq.${token}`,
+    `${SUPABASE_URL}/rest/v1/interviews?token=eq.${token}`,
     {
       method: 'PATCH',
       headers: {
@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest) {
       body: JSON.stringify({
         status: 'complete',
         completed_at: new Date().toISOString(),
-        answers: answers ?? null,
+        transcript: answers ?? [],
       }),
     }
   );
@@ -63,35 +63,22 @@ export async function PATCH(req: NextRequest) {
 
   // 3. Determine new leads.status
   let newLeadStatus: string | null = null;
-  if (total > 0 && completed === total) {
-    newLeadStatus = 'completed';
-  } else if (completed >= 1) {
-    newLeadStatus = 'interviewed';
+  if (completed === total && total > 0) {
+    newLeadStatus = 'interviews_complete';
+  } else if (completed > 0) {
+    newLeadStatus = 'interviews_in_progress';
   }
 
   if (newLeadStatus) {
-    await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`, {
-      method: 'PATCH',
-      headers: { ...supaHeaders, Prefer: 'return=minimal' },
-      body: JSON.stringify({ status: newLeadStatus }),
-    });
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/leads?id=eq.${leadId}`,
+      {
+        method: 'PATCH',
+        headers: supaHeaders,
+        body: JSON.stringify({ status: newLeadStatus }),
+      }
+    );
   }
 
-  // 4. If all interviews complete, fire-and-forget report generation
-  if (newLeadStatus === 'completed') {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://connai.linkgrow.io';
-    fetch(`${appUrl}/api/report/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ interview_token: token }),
-    }).catch(() => {});
-  }
-
-  return NextResponse.json({
-    ok: true,
-    status_updated: !!newLeadStatus,
-    lead_status: newLeadStatus,
-    completed_count: completed,
-    total_count: total,
-  });
+  return NextResponse.json({ ok: true, status_updated: true, lead_status: newLeadStatus });
 }
