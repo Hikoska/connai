@@ -15,16 +15,38 @@ export default function AuthCallbackPage() {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
-    supabase.auth
-      .exchangeCodeForSession(window.location.href)
-      .then(({ error }) => {
-        if (error) {
-          console.error('Auth callback error:', error.message)
-          router.replace('/auth/login?error=auth_failed')
+
+    async function handleCallback() {
+      try {
+        const url = window.location.href
+        const code = new URL(url).searchParams.get('code')
+
+        if (code) {
+          // PKCE flow: exchange code for session
+          const { error } = await supabase.auth.exchangeCodeForSession(url)
+          if (error) {
+            console.error('Auth callback error:', error.message)
+            router.replace('/auth/login')
+            return
+          }
         } else {
-          router.replace('/dashboard')
+          // Implicit flow: session already set from hash fragment on client init
+          // Give the client a moment to process the hash
+          await new Promise(resolve => setTimeout(resolve, 100))
         }
-      })
+
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          router.replace('/dashboard')
+        } else {
+          router.replace('/auth/login')
+        }
+      } catch {
+        router.replace('/auth/login')
+      }
+    }
+
+    handleCallback()
   }, [router])
 
   return (
