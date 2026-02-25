@@ -48,7 +48,7 @@ const Hero = () => (
         </div>
         <div className="hidden sm:block w-px h-6 bg-gray-200" />
         <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-gray-900 font-mono">5</span>
+          <span className="text-2xl font-bold text-gray-900 font-mono">8</span>
           <span>dimensions scored</span>
         </div>
       </div>
