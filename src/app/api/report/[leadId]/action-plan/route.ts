@@ -34,12 +34,12 @@ async function callLLM(apiKey: string, baseUrl: string, model: string, prompt: s
   return data.choices?.[0]?.message?.content as string
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params
+export async function GET(req: NextRequest, { params }: { params: { leadId: string } }) {
+  const { leadId } = params
 
   // Fetch the latest report for this lead
   const reportRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/reports?lead_id=eq.${id}&order=generated_at.desc&limit=1`,
+    `${SUPABASE_URL}/rest/v1/reports?lead_id=eq.${leadId}&order=generated_at.desc&limit=1`,
     { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
   )
 
