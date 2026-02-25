@@ -1,24 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function PATCH(req: NextRequest) {
   const { token, answers } = await req.json();
   if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
 
-  const { error } = await supabase
-    .from('interviews')
-    .update({
-      status: 'complete',
-      completed_at: new Date().toISOString(),
-      answers: answers ?? null,
-    })
-    .eq('interview_token', token);
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/interviews?interview_token=eq.${token}`,
+    {
+      method: 'PATCH',
+      headers: {
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({
+        status: 'complete',
+        completed_at: new Date().toISOString(),
+        answers: answers ?? null,
+      }),
+    }
+  );
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!res.ok) {
+    const err = await res.text().catch(() => res.statusText);
+    return NextResponse.json({ error: err }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

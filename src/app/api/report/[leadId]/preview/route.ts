@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 const DIMENSIONS = ['Strategy', 'Operations', 'People', 'Technology', 'Data'];
 
 function scoreFromAnswer(answer: string): number {
-  // Crude but functional: score by word count / sentiment length as proxy (0-5)
   if (!answer || answer.trim().length < 10) return 1;
   if (answer.trim().length < 50) return 2;
   if (answer.trim().length < 120) return 3;
@@ -23,19 +16,27 @@ export async function GET(
 ) {
   const { leadId } = params;
 
-  // Get all interviews for this lead
-  const { data: allInterviews, error: allErr } = await supabase
-    .from('interviews')
-    .select('id, status, answers')
-    .eq('lead_id', leadId);
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/interviews?lead_id=eq.${leadId}&select=id,status,answers`,
+    {
+      headers: {
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+      },
+    }
+  );
 
-  if (allErr) return NextResponse.json({ error: allErr.message }, { status: 500 });
+  if (!res.ok) {
+    const err = await res.text().catch(() => res.statusText);
+    return NextResponse.json({ error: err }, { status: 500 });
+  }
 
-  const totalCount = allInterviews?.length ?? 0;
-  const complete = (allInterviews ?? []).filter((i) => i.status === 'complete');
+  const allInterviews: { id: string; status: string; answers: string[] | null }[] = await res.json();
+
+  const totalCount = allInterviews.length;
+  const complete = allInterviews.filter((i) => i.status === 'complete');
   const completedCount = complete.length;
 
-  // Aggregate scores per dimension across completed interviews
   const dimensionTotals = DIMENSIONS.map(() => ({ sum: 0, count: 0 }));
 
   for (const interview of complete) {
