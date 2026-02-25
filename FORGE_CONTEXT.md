@@ -28,43 +28,55 @@
      }
    })
    ```
-2. `'use client'` on any component using `useState`, `useEffect`, `useParams`, `useRouter`, etc.
-3. `import { useRouter } from 'next/navigation'` — not `next/router`.
-4. Page files must export `default function` with a real name.
-5. No `pages/` directories.
+
+2. **No module-level `createClient` in ANY page** — static routes (`/auth/login`, `/auth/callback`, etc.) are pre-rendered at build time. If `createClient` runs at module level, it crashes during server-side pre-render:
+   ```
+   TypeError: createClient is not a function  ← build-time SSR crash
+   ```
+   **Correct pattern — always initialize inside the handler or useEffect:**
+   ```tsx
+   // ❌ WRONG — module level, crashes at build time
+   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, ...)
+
+   // ✅ CORRECT — inside handler or useEffect (browser-only)
+   const signIn = async () => {
+     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, ...)
+     // ...
+   }
+   ```
+   Or add `export const dynamic = 'force-dynamic'` to opt out of static generation.
+   Dynamic routes (`/report/[id]`) are exempt — they’re never statically pre-rendered.
+
+3. `'use client'` on any component using `useState`, `useEffect`, `useParams`, `useRouter`, etc.
+4. `import { useRouter } from 'next/navigation'` — not `next/router`.
+5. Page files must export `default function` with a real name.
+6. No `pages/` directories.
 
 ## Current Production State
 
 | Commit | Feature | Status |
 |--------|---------|--------|
 | dbe410c | Fix C: leads.status lifecycle + report/generate column fix | LIVE |
-| bdb4742 | Auth: Google/Microsoft OAuth login, AI action plan on report, PDF download | LIVE |
+| bdb4742 | Auth: Google/Microsoft OAuth login, AI action plan on report, PDF download | DEPLOYING |
+| 4d89f15 | Fix slug collision ([id] → [leadId] for action-plan route) | DEPLOYING |
+| 4d5ea8a | Fix auth SSR crash: createClient moved inside component scope | DEPLOYING |
 
-## Auth Setup (Supabase Dashboard — Ludovic to configure)
+## Auth Setup (Supabase Dashboard — SureThing handles via API)
 
-Code is live. Auth needs these provider configs in Supabase Dashboard:
+Supabase site_url and uri_allow_list already configured by SureThing via API.
+OAuth providers (Google, Azure) need Client IDs + Secrets — SureThing is creating these via browser automation.
 
-### Google
-1. https://console.cloud.google.com/apis/credentials → OAuth 2.0 Client → Web App
-2. Redirect URI: `https://[supabase-project].supabase.co/auth/v1/callback`
-3. Supabase Dashboard → Auth → Providers → Google → paste Client ID + Secret → Save
-
-### Microsoft (Azure Entra ID)
-1. https://portal.azure.com → Azure AD → App registrations → New
-2. Redirect URI: `https://[supabase-project].supabase.co/auth/v1/callback`
-3. Certificates & Secrets → New client secret
-4. Supabase Dashboard → Auth → Providers → Azure → paste App ID + Secret → Tenant: `common` → Save
-
-### Supabase URL Config
-- Site URL: `https://connai.linkgrow.io`
-- Redirect URLs: `https://connai.linkgrow.io/auth/callback`
+### Supabase Callback URL (for OAuth apps)
+`https://mhuofnkbjbanrdvvktps.supabase.co/auth/v1/callback`
 
 ## Feature Queue
 
 ### HQ-2: Benchmarking Panel (Forge next task)
 - Location: `src/app/report/[id]/page.tsx` — add below dimension scores
 - Show 'How you compare' section: org score vs. industry median per dimension
-- Use static seed benchmarks (update to DB later):
+- Use static benchmark data (seed with industry averages — see below)
+- For each dimension, show: org score vs. industry median (teal bar vs. grey bar)
+- Industry averages (use these as static seed data):
   ```
   IT Infrastructure & Cloud: 52
   Cybersecurity: 45
@@ -75,14 +87,12 @@ Code is live. Auth needs these provider configs in Supabase Dashboard:
   Innovation & Strategy: 38
   Governance & Compliance: 50
   ```
-- Visual: teal bar = org score, light grey bar behind = industry median
-- Label: 'Industry median'
-- Gate rules apply: 'use client' already on this file, createClient at component level is OK
+- Label: 'Industry median' (light grey bar behind teal score bar)
+- Target: `staging` branch, gate checks, RELAY_COMMIT when ready
 
 ### HQ-3: Email Report Delivery
 - Trigger: after `leads.status` → 'completed'
 - Send email via Resend with report URL + score summary
-- Needs RESEND_API_KEY in Vercel env (Ludovic has it)
 
 ### HQ-4: Shared Report Link
 - Public token-protected URL for sharing report with stakeholders
@@ -96,7 +106,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 GROQ_API_KEY
 CEREBRAS_API_KEY
-RESEND_API_KEY
 NEXT_PUBLIC_APP_URL=https://connai.linkgrow.io
 ```
 
