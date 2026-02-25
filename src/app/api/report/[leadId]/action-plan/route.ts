@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60
+export const maxDuration = 120
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const GROQ_KEY = process.env.GROQ_API_KEY
 const CEREBRAS_KEY = process.env.CEREBRAS_API_KEY
+const APP_URL = process.env.NEXT_PUBLIC_URL || 'https://connai.linkgrow.io'
 
 function isRateLimit(err: any): boolean {
   const msg = String(err?.message ?? '').toLowerCase()
@@ -34,31 +35,81 @@ async function callLLM(apiKey: string, baseUrl: string, model: string, prompt: s
   return data.choices?.[0]?.message?.content as string
 }
 
+async function supaGet(path: string) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+    cache: 'no-store',
+  })
+  if (!res.ok) throw new Error(`DB error: ${res.status}`)
+  return res.json()
+}
+
 export async function GET(req: NextRequest, { params }: { params: { leadId: string } }) {
   const { leadId } = params
 
-  // Fetch the latest report for this lead
-  const reportRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/reports?lead_id=eq.${leadId}&order=generated_at.desc&limit=1`,
-    { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
-  )
-
-  if (!reportRes.ok) {
-    return NextResponse.json({ error: 'Report not found' }, { status: 404 })
+  // 1. Check for existing report
+  let reports: any[]
+  try {
+    reports = await supaGet(
+      `reports?lead_id=eq.${leadId}&order=generated_at.desc&limit=1`
+    )
+  } catch {
+    return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
 
-  const reports: any[] = await reportRes.json()
+  // 2. Self-heal: if no report yet, auto-generate it now
   if (!reports.length) {
-    return NextResponse.json({ error: 'No report yet' }, { status: 404 })
+    let interviews: any[]
+    try {
+      interviews = await supaGet(
+        `interviews?lead_id=eq.${leadId}&status=eq.complete&select=id,token&limit=1`
+      )
+    } catch {
+      return NextResponse.json({ error: 'No completed interviews' }, { status: 404 })
+    }
+
+    if (!interviews.length) {
+      return NextResponse.json({ error: 'No completed interviews for this lead' }, { status: 404 })
+    }
+
+    const interviewToken = interviews[0].token
+    if (!interviewToken) {
+      return NextResponse.json({ error: 'Interview has no token' }, { status: 500 })
+    }
+
+    // Synchronous call to report/generate (await — NOT fire-and-forget)
+    const genRes = await fetch(`${APP_URL}/api/report/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: interviewToken }),
+    })
+
+    if (!genRes.ok) {
+      const err = await genRes.text().catch(() => genRes.statusText)
+      return NextResponse.json({ error: `Report generation failed: ${err}` }, { status: 500 })
+    }
+
+    // Re-fetch reports after generation
+    try {
+      reports = await supaGet(
+        `reports?lead_id=eq.${leadId}&order=generated_at.desc&limit=1`
+      )
+    } catch {
+      return NextResponse.json({ error: 'Report generation timed out' }, { status: 503 })
+    }
+
+    if (!reports.length) {
+      return NextResponse.json({ error: 'Report generation did not persist' }, { status: 503 })
+    }
   }
 
+  // 3. Generate action plan from dimension scores
   const report = reports[0]
   const scores: Record<string, number> = report.dimension_scores ?? {}
   const overall: number = report.overall_score ?? 0
 
-  // Sort dimensions by score ascending (weakest first)
   const sorted = Object.entries(scores)
-    .sort(([, a], [, b]) => a - b)
+    .sort(([, a], [, b]) => (a as number) - (b as number))
     .map(([dim, score]) => `${dim}: ${score}/100`)
     .join('\n')
 
@@ -105,10 +156,13 @@ Rules: 2-3 items per tier. Actions must be specific and actionable (not generic)
 
   if (!text) return NextResponse.json({ error: 'No LLM configured' }, { status: 500 })
 
+  let plan: any
   try {
-    const plan = JSON.parse(text.trim())
-    return NextResponse.json(plan)
+    const clean = text.trim().replace(/^```[a-z]*\n?/, '').replace(/```$/, '').trim()
+    plan = JSON.parse(clean)
   } catch {
     return NextResponse.json({ error: 'Invalid plan format from LLM', raw: text }, { status: 500 })
   }
+
+  return NextResponse.json(plan)
 }
