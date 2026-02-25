@@ -35,35 +35,40 @@ export default function InterviewPage() {
 
   useEffect(() => {
     async function loadContext() {
-      // createClient inside effect only — never at module level (gate rule)
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
+      try {
+        // createClient inside effect only — never at module level (gate rule)
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
 
-      const { data: ivData, error: ivErr } = await supabase
-        .from('interviews')
-        .select('lead_id, stakeholder_name, stakeholder_role, stakeholder_email')
-        .eq('token', token)
-        .single();
+        const { data: ivData, error: ivErr } = await supabase
+          .from('interviews')
+          .select('lead_id, stakeholder_name, stakeholder_role, stakeholder_email')
+          .eq('token', token)
+          .single();
 
-      if (ivErr || !ivData) { setError('Invalid or expired interview link.'); setLoading(false); return; }
-      setInterview(ivData);
+        if (ivErr || !ivData) { setError('Invalid or expired interview link.'); setLoading(false); return; }
+        setInterview(ivData);
 
-      // If email was pre-captured (self-service flow), skip email collection
-      if (ivData.stakeholder_email) {
-        setEmail(ivData.stakeholder_email);
-        setStep('questions');
+        // If email was pre-captured (self-service flow), skip email collection
+        if (ivData.stakeholder_email) {
+          setEmail(ivData.stakeholder_email);
+          setStep('questions');
+        }
+
+        const { data: leadData, error: leadErr } = await supabase
+          .from('leads')
+          .select('org_name, industry')
+          .eq('id', ivData.lead_id)
+          .single();
+
+        if (!leadErr && leadData) setLead(leadData);
+        setLoading(false);
+      } catch {
+        setError('Failed to load interview. Please try again.');
+        setLoading(false);
       }
-
-      const { data: leadData, error: leadErr } = await supabase
-        .from('leads')
-        .select('org_name, industry')
-        .eq('id', ivData.lead_id)
-        .single();
-
-      if (!leadErr && leadData) setLead(leadData);
-      setLoading(false);
     }
     loadContext();
   }, [token]);
@@ -109,7 +114,7 @@ export default function InterviewPage() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <p className="text-gray-500 text-sm">Loading…</p>
+      <p className="text-gray-500 text-sm">Loading...</p>
     </div>
   );
 
@@ -160,7 +165,7 @@ export default function InterviewPage() {
               disabled={submitting}
               className="w-full bg-[#0D5C63] hover:bg-[#0a4a50] text-white font-semibold py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50"
             >
-              {submitting ? 'Saving…' : 'Start Interview →'}
+              {submitting ? 'Saving...' : 'Start Interview ->'}
             </button>
           </form>
         )}
@@ -193,7 +198,7 @@ export default function InterviewPage() {
                   updated[currentQ] = e.target.value;
                   setAnswers(updated);
                 }}
-                placeholder="Your answer…"
+                placeholder="Your answer..."
                 className="mt-3 w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
@@ -203,7 +208,7 @@ export default function InterviewPage() {
               disabled={submitting || !answers[currentQ].trim()}
               className="w-full bg-[#0D5C63] hover:bg-[#0a4a50] text-white font-semibold py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50"
             >
-              {submitting ? 'Saving…' : currentQ < QUESTIONS.length - 1 ? 'Next →' : 'Submit Interview →'}
+              {submitting ? 'Saving...' : currentQ < QUESTIONS.length - 1 ? 'Next ->' : 'Submit Interview ->'}
             </button>
           </div>
         )}
@@ -211,7 +216,7 @@ export default function InterviewPage() {
         {/* Step: done */}
         {step === 'done' && (
           <div className="text-center space-y-3 py-4">
-            <div className="text-4xl">✅</div>
+            <div className="text-4xl">&#10003;</div>
             <p className="text-gray-800 font-semibold">Thank you for your input!</p>
             <p className="text-gray-500 text-sm">Your responses have been recorded. {lead?.org_name} will use them to build their digital maturity report.</p>
           </div>
