@@ -72,14 +72,16 @@ const Footer = () => (
   <footer className="bg-[#0E1117] text-gray-400 py-10 px-6 border-t border-white/5">
     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
       <div className="flex items-center gap-3">
-        <span className="text-xs text-gray-600 uppercase tracking-widest">Built by</span>
-        <Image
-          src="/linkgrow-logo.png"
-          alt="Linkgrow"
-          width={100}
-          height={28}
-          className="h-6 w-auto object-contain brightness-0 invert opacity-50"
-        />
+        <span className="text-xs text-gray-600 uppercase tracking-widest font-medium">Built by</span>
+        <div className="bg-white rounded px-2 py-0.5">
+          <Image
+            src="/linkgrow-logo.png"
+            alt="Linkgrow"
+            width={80}
+            height={22}
+            className="h-4 w-auto object-contain"
+          />
+        </div>
       </div>
       <div className="flex gap-6 text-sm">
         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
