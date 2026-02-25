@@ -34,21 +34,33 @@ export default function LoginPage() {
   const signIn = async (provider: 'google' | 'azure') => {
     setLoading(provider)
     setError('')
-    // createClient inside handler — never runs during build-time pre-render
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        scopes: provider === 'azure' ? 'openid email profile' : undefined,
-        queryParams: provider === 'azure' ? { prompt: 'select_account' } : undefined,
-      },
-    })
-    if (error) {
-      setError('Sign-in failed. Please try again.')
+    try {
+      // PKCE flow required — callback page uses exchangeCodeForSession
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { auth: { flowType: 'pkce' } }
+      )
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          // skipBrowserRedirect: true lets us control navigation explicitly
+          // so the button never hangs if auto-redirect silently fails
+          skipBrowserRedirect: true,
+          scopes: provider === 'azure' ? 'openid email profile' : undefined,
+          queryParams: provider === 'azure' ? { prompt: 'select_account' } : undefined,
+        },
+      })
+      if (oauthError || !data?.url) {
+        setError(oauthError?.message ?? 'Sign-in configuration error. Please try again.')
+        setLoading(null)
+        return
+      }
+      // Navigate — page unloads, no need to clear loading state
+      window.location.assign(data.url)
+    } catch {
+      setError('Unexpected error. Please try again.')
       setLoading(null)
     }
   }
@@ -72,7 +84,7 @@ export default function LoginPage() {
             className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 px-4 py-3 rounded-xl font-medium text-sm hover:bg-gray-50 active:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             {loading === 'google' ? (
-              <span className="text-gray-500">Connecting to Google…</span>
+              <span className="text-gray-500">Connecting to Google...</span>
             ) : (
               <><GoogleIcon /><span>Continue with Google</span></>
             )}
@@ -84,7 +96,7 @@ export default function LoginPage() {
             className="w-full flex items-center justify-center gap-3 bg-[#2C2C2C] text-white border border-white/10 px-4 py-3 rounded-xl font-medium text-sm hover:bg-[#383838] active:bg-[#444] transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading === 'azure' ? (
-              <span className="text-white/60">Connecting to Microsoft…</span>
+              <span className="text-white/60">Connecting to Microsoft...</span>
             ) : (
               <><MicrosoftIcon /><span>Continue with Microsoft</span></>
             )}
@@ -101,7 +113,7 @@ export default function LoginPage() {
             href="/"
             className="inline-block text-teal-400 text-sm font-medium hover:text-teal-300 transition"
           >
-            Start a free audit →
+            Start a free audit {'->'}
           </a>
         </div>
 
