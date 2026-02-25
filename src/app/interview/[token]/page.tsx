@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -25,6 +25,8 @@ export default function InterviewPage() {
   const { token } = useParams<{ token: string }>()
   const [orgName, setOrgName] = useState('')
   const [email, setEmail] = useState('')
+  const [leadId, setLeadId] = useState('')
+  const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
@@ -43,6 +45,7 @@ export default function InterviewPage() {
         })
         if (!iv) { setError('Invalid or expired interview link.'); setLoading(false); return }
         if (iv.stakeholder_email) setEmail(iv.stakeholder_email)
+        setLeadId(iv.lead_id ?? '')
 
         const lead = await sbGet('leads', {
           id: `eq.${iv.lead_id}`,
@@ -96,6 +99,9 @@ export default function InterviewPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token, answers: final }),
           })
+          setTimeout(() => {
+            if (leadId) router.push(`/report/${leadId}`)
+          }, 3000)
         }
       }
     } catch {
@@ -192,14 +198,8 @@ export default function InterviewPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-gray-800 font-semibold">Interview complete</p>
-            {email && (
-              <p className="text-gray-500 text-sm">
-                Your report is being generated and will be sent to
-                {' '}
-                <span className="font-medium">{email}</span>.
-              </p>
-            )}
+            <p className="text-gray-800 font-semibold">Thank you. Your initial insights are ready.</p>
+            <p className="text-gray-500 text-sm">Redirecting you to your results&hellip;</p>
           </div>
         </div>
       ) : (
