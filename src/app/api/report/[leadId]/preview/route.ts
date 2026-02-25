@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 const DIMENSIONS = ['Strategy', 'Operations', 'People', 'Technology', 'Data'];
 
-// Returns a 0-100 score based on answer quality
 function scoreFromAnswer(answer: string): number {
   if (!answer || answer.trim().length < 10) return 10;
   if (answer.trim().length < 50) return 30;
@@ -18,12 +19,13 @@ export async function GET(
   const { leadId } = params;
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/interviews?lead_id=eq.${leadId}&select=id,status,answers`,
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/interviews?lead_id=eq.${leadId}&select=id,status,transcript`,
     {
       headers: {
         apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
         Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
       },
+      cache: 'no-store',
     }
   );
 
@@ -32,7 +34,7 @@ export async function GET(
     return NextResponse.json({ error: err }, { status: 500 });
   }
 
-  const allInterviews: { id: string; status: string; answers: string[] | null }[] = await res.json();
+  const allInterviews: { id: string; status: string; transcript: any[] | null }[] = await res.json();
 
   const totalCount = allInterviews.length;
   const complete = allInterviews.filter((i) => i.status === 'complete');
@@ -44,14 +46,14 @@ export async function GET(
       completedCount: 0,
       totalCount,
       dimensions: [],
-      partial: true,
+      partial: totalCount > 0,
     });
   }
 
   const dimensionTotals = DIMENSIONS.map(() => ({ sum: 0, count: 0 }));
 
   for (const interview of complete) {
-    const answers: string[] = Array.isArray(interview.answers) ? interview.answers : [];
+    const answers: string[] = Array.isArray(interview.transcript) ? interview.transcript : [];
     answers.forEach((ans, idx) => {
       if (idx < DIMENSIONS.length) {
         dimensionTotals[idx].sum += scoreFromAnswer(ans);
