@@ -1,14 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import BenchmarkingPanel from './benchmarking-panel';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface Dimension { name: string; score: number; }
 interface ReportData {
@@ -35,19 +30,23 @@ const SCORE_COLOR = (s: number) =>
   s >= 70 ? 'bg-teal-500' : s >= 40 ? 'bg-amber-500' : 'bg-red-500';
 
 const TIER_LABELS: Record<string, { label: string; color: string; desc: string }> = {
-  quick_wins:  { label: 'Quick Wins',      color: 'text-teal-400',   desc: 'Start in the next 30 days' },
-  six_month:   { label: '6-Month Actions', color: 'text-amber-400',  desc: 'Plan and execute this quarter' },
+  quick_wins:  { label: 'Quick Wins',          color: 'text-teal-400',   desc: 'Start in the next 30 days' },
+  six_month:   { label: '6-Month Actions',     color: 'text-amber-400',  desc: 'Plan and execute this quarter' },
   long_term:   { label: 'Strategic (12–24 months)', color: 'text-purple-400', desc: 'Requires investment and planning' },
 };
 
 export default function ReportPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const paid = searchParams.get('paid') === 'true';
+
   const [report, setReport] = useState<ReportData | null>(null);
   const [orgName, setOrgName] = useState<string>('');
   const [plan, setPlan] = useState<ActionPlan | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -56,6 +55,11 @@ export default function ReportPage() {
       const data: ReportData = await res.json();
       setReport(data);
 
+      // createClient used INSIDE handler — not at module level (gate rule)
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
       const { data: lead } = await supabase
         .from('leads')
         .select('org_name')
@@ -65,13 +69,13 @@ export default function ReportPage() {
 
       setLoading(false);
 
-      // Auto-load action plan if report is complete
-      if (!data.partial) {
+      // Auto-load action plan if paid or report is complete
+      if (!data.partial || paid) {
         loadActionPlan();
       }
     }
     load();
-  }, [id]);
+  }, [id, paid]);
 
   const loadActionPlan = async () => {
     setPlanLoading(true);
@@ -80,6 +84,26 @@ export default function ReportPage() {
       if (res.ok) setPlan(await res.json());
     } catch { /* silent */ }
     setPlanLoading(false);
+  };
+
+  const handleUpgrade = async () => {
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId: id }),
+      });
+      if (res.ok) {
+        const { url } = await res.json();
+        if (url) window.location.href = url;
+      } else {
+        alert('Payment unavailable — please try again.');
+      }
+    } catch {
+      alert('Payment error — please try again.');
+    }
+    setCheckoutLoading(false);
   };
 
   if (loading) return (
@@ -112,7 +136,7 @@ export default function ReportPage() {
               <h1 className="text-2xl font-semibold">{orgName || 'Your Organisation'}</h1>
               {partial && (
                 <span className="inline-block mt-2 text-xs bg-amber-500/20 text-amber-300 px-3 py-1 rounded-full">
-                  Partial — {completedCount}/{totalCount} interviews complete
+                  Partial · {completedCount}/{totalCount} interviews complete
                 </span>
               )}
             </div>
@@ -172,11 +196,11 @@ export default function ReportPage() {
         {/* Benchmarking Panel — How you compare */}
         <BenchmarkingPanel dimensions={dimensions} />
 
-        {/* Action Plan */}
+        {/* Action Plan — gated behind $49 paywall */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white/60 uppercase tracking-widest print:text-gray-500">Action Plan</h2>
-            {partial && !plan && !planLoading && (
+            {partial && !plan && !planLoading && paid && (
               <button
                 onClick={loadActionPlan}
                 className="text-xs text-teal-400 hover:text-teal-300 transition print:hidden"
@@ -186,6 +210,45 @@ export default function ReportPage() {
             )}
           </div>
 
+          {/* Paywall — shown only when not paid */}
+          {!paid && !partial && (
+            <div className="relative rounded-2xl overflow-hidden">
+              {/* Blurred preview (first few items if plan exists) */}
+              <div className="blur-sm pointer-events-none select-none opacity-40 space-y-2 py-4">
+                {[
+                  'Implement a unified data platform across departments',
+                  'Launch digital skills training programme for all staff',
+                  'Automate top 3 manual reporting processes',
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-3 bg-white/5 rounded-xl p-3">
+                    <div className="flex-1">
+                      <p className="text-sm text-white/90">{item}</p>
+                      <p className="text-xs text-white/30 mt-0.5">Strategic Priority</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Paywall overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0E1117]/80 backdrop-blur-sm rounded-2xl">
+                <div className="text-center px-6 space-y-3">
+                  <p className="text-lg font-semibold text-white">Unlock Your Full Action Plan</p>
+                  <p className="text-sm text-white/50 max-w-xs">
+                    Get a prioritised, AI-generated roadmap tailored to your organisation's digital maturity gaps.
+                  </p>
+                  <button
+                    onClick={handleUpgrade}
+                    disabled={checkoutLoading}
+                    className="mt-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-semibold text-sm px-6 py-3 rounded-xl transition print:hidden"
+                  >
+                    {checkoutLoading ? 'Redirecting…' : 'Get Full Report — $49'}
+                  </button>
+                  <p className="text-xs text-white/30">One-time payment · Instant access · No subscription</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Plan loading spinner */}
           {planLoading && (
             <div className="text-center py-8">
               <div className="w-6 h-6 border-2 border-teal-400/30 border-t-teal-400 rounded-full animate-spin mx-auto mb-2" />
@@ -193,7 +256,8 @@ export default function ReportPage() {
             </div>
           )}
 
-          {plan && (
+          {/* Paid: render full plan */}
+          {plan && paid && (
             <div className="space-y-6">
               {plan.summary && (
                 <p className="text-white/60 text-sm italic border-l-2 border-teal-500/50 pl-4">
@@ -230,7 +294,7 @@ export default function ReportPage() {
             </div>
           )}
 
-          {!plan && !planLoading && !partial && (
+          {!plan && !planLoading && !partial && paid && (
             <div className="text-center py-6 text-white/20 text-sm">
               Action plan unavailable — report may still be generating.
             </div>
