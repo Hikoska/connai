@@ -21,6 +21,7 @@ export default function InterviewPage() {
     lead_id: string;
     stakeholder_name: string;
     stakeholder_role: string;
+    stakeholder_email: string;
   } | null>(null);
   const [lead, setLead] = useState<{ org_name: string; industry: string } | null>(null);
   const [email, setEmail] = useState('');
@@ -42,12 +43,18 @@ export default function InterviewPage() {
 
       const { data: ivData, error: ivErr } = await supabase
         .from('interviews')
-        .select('lead_id, stakeholder_name, stakeholder_role')
+        .select('lead_id, stakeholder_name, stakeholder_role, stakeholder_email')
         .eq('token', token)
         .single();
 
       if (ivErr || !ivData) { setError('Invalid or expired interview link.'); setLoading(false); return; }
       setInterview(ivData);
+
+      // If email was pre-captured (self-service flow), skip email collection
+      if (ivData.stakeholder_email) {
+        setEmail(ivData.stakeholder_email);
+        setStep('questions');
+      }
 
       const { data: leadData, error: leadErr } = await supabase
         .from('leads')
@@ -161,7 +168,7 @@ export default function InterviewPage() {
         {/* Step: questions */}
         {step === 'questions' && (
           <div className="space-y-5">
-            {/* Progress bar — Step X of Y + teal fill */}
+            {/* Progress bar */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-medium text-gray-500">Step {currentQ + 1} of {QUESTIONS.length}</span>
