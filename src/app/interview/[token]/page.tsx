@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
 
 const QUESTIONS = [
   'How would you describe your organisation\'s current use of digital tools day-to-day?',
@@ -11,6 +10,25 @@ const QUESTIONS = [
   'How confident are you that your team could adopt a new digital tool within 30 days?',
   'If you could change one thing about how your organisation uses technology, what would it be?',
 ];
+
+const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+async function sbGet(table: string, params: Record<string, string>) {
+  const url = new URL(`${SB_URL}/rest/v1/${table}`);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const res = await fetch(url.toString(), {
+    headers: {
+      apikey: SB_ANON,
+      Authorization: `Bearer ${SB_ANON}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!res.ok) throw new Error(`${table} fetch failed (${res.status})`);
+  const rows = await res.json();
+  return Array.isArray(rows) ? rows[0] ?? null : rows;
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -36,34 +54,27 @@ export default function InterviewPage() {
   useEffect(() => {
     async function loadContext() {
       try {
-        // createClient inside effect only — never at module level (gate rule)
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
+        const ivData = await sbGet('interviews', {
+          token: `eq.${token}`,
+          select: 'lead_id,stakeholder_name,stakeholder_role,stakeholder_email',
+          limit: '1',
+        });
 
-        const { data: ivData, error: ivErr } = await supabase
-          .from('interviews')
-          .select('lead_id, stakeholder_name, stakeholder_role, stakeholder_email')
-          .eq('token', token)
-          .single();
-
-        if (ivErr || !ivData) { setError('Invalid or expired interview link.'); setLoading(false); return; }
+        if (!ivData) { setError('Invalid or expired interview link.'); setLoading(false); return; }
         setInterview(ivData);
 
-        // If email was pre-captured (self-service flow), skip email collection
         if (ivData.stakeholder_email) {
           setEmail(ivData.stakeholder_email);
           setStep('questions');
         }
 
-        const { data: leadData, error: leadErr } = await supabase
-          .from('leads')
-          .select('org_name, industry')
-          .eq('id', ivData.lead_id)
-          .single();
+        const leadData = await sbGet('leads', {
+          id: `eq.${ivData.lead_id}`,
+          select: 'org_name,industry',
+          limit: '1',
+        }).catch(() => null);
 
-        if (!leadErr && leadData) setLead(leadData);
+        if (leadData) setLead(leadData);
         setLoading(false);
       } catch {
         setError('Failed to load interview. Please try again.');
