@@ -1,12 +1,9 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 function GoogleIcon() {
   return (
@@ -37,6 +34,11 @@ export default function LoginPage() {
   const signIn = async (provider: 'google' | 'azure') => {
     setLoading(provider)
     setError('')
+    // createClient inside handler — never runs during build-time pre-render
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -49,14 +51,12 @@ export default function LoginPage() {
       setError('Sign-in failed. Please try again.')
       setLoading(null)
     }
-    // On success, browser redirects — no need to setLoading(null)
   }
 
   return (
     <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
 
-        {/* Logo / Brand */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 mb-4">
             <span className="text-2xl font-bold text-teal-400 tracking-tight">Connai</span>
@@ -65,7 +65,6 @@ export default function LoginPage() {
           <p className="text-white/40 text-sm">Access your digital maturity reports and audits</p>
         </div>
 
-        {/* OAuth buttons */}
         <div className="space-y-3">
           <button
             onClick={() => signIn('google')}
@@ -96,7 +95,6 @@ export default function LoginPage() {
           <p className="text-red-400 text-xs text-center">{error}</p>
         )}
 
-        {/* Divider + start new audit */}
         <div className="text-center space-y-3">
           <p className="text-white/20 text-xs">Don&apos;t have an account yet?</p>
           <a

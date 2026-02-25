@@ -1,19 +1,20 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export default function AuthCallbackPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Exchange PKCE code for session; Supabase reads the ?code param from window.location
+    // createClient inside useEffect — browser-only, never runs at build time
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
     supabase.auth
       .exchangeCodeForSession(window.location.href)
       .then(({ error }) => {
