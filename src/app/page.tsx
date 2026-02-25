@@ -8,7 +8,6 @@ import { WhoItsFor } from '@/components/WhoItsFor'
 import { ProductScreenshot } from '@/components/ProductScreenshot'
 import { Testimonials } from '@/components/Testimonials'
 import { FAQ } from '@/components/FAQ'
-import Image from 'next/image'
 import Link from 'next/link'
 
 const instrumentSerif = Instrument_Serif({
@@ -73,15 +72,12 @@ const Footer = () => (
     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
       <div className="flex items-center gap-3">
         <span className="text-xs text-gray-600 uppercase tracking-widest font-medium">Built by</span>
-        <div className="bg-white rounded px-2 py-0.5">
-          <Image
-            src="/linkgrow-logo.png"
-            alt="Linkgrow"
-            width={80}
-            height={22}
-            className="h-4 w-auto object-contain"
-          />
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/linkgrow-logo.png"
+          alt="Linkgrow"
+          style={{ height: '20px', width: 'auto', display: 'block' }}
+        />
       </div>
       <div className="flex gap-6 text-sm">
         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
