@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { FileText, PlayCircle, Users } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { StartInterviewButton } from '@/components/StartInterviewButton'
 
 type Interview = {
   id: string
@@ -161,9 +162,9 @@ export default function DashboardPage() {
             )) : (
               <div className="p-8 text-center text-white/40">
                 <p className="mb-3">No audits yet.</p>
-                <Link href="/" className="text-teal-400 font-semibold hover:underline">
+                <StartInterviewButton className="text-teal-400 font-semibold hover:underline">
                   Start your first audit →
-                </Link>
+                </StartInterviewButton>
               </div>
             )}
           </div>
