@@ -54,7 +54,6 @@ export default function InterviewPage() {
         }).catch(() => null)
         if (lead?.org_name) setOrgName(lead.org_name)
 
-        // Get opening question
         const res = await fetch('/api/interviews/message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -142,7 +141,6 @@ export default function InterviewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 flex-shrink-0">
         <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -213,7 +211,7 @@ export default function InterviewPage() {
         </div>
       ) : (
         <div className="bg-white border-t border-gray-100 px-4 py-3 flex-shrink-0">
-          <div class="max-w-2xl mx-auto flex gap-3 items-end">
+          <div className="max-w-2xl mx-auto flex gap-3 items-end">
             <textarea
               value={input}
               onChange={e => setInput(e.target.value)}
@@ -233,7 +231,7 @@ export default function InterviewPage() {
               </svg>
             </button>
           </div>
-          <p className="text-xs text-gray-400 text-center mt-2">Enter to send &middot; Shift+Enter for new line</p>
+          <p className="text-xs text-gray-400 text-center mt-2">Enter to send · Shift+Enter for new line</p>
         </div>
       )}
     </div>
