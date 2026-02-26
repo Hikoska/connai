@@ -78,6 +78,7 @@ export default function ReportPage() {
   const [summary, setSummary]                     = useState('');
   const [summaryLoading, setSummaryLoading]       = useState(false);
   const [plan, setPlan]                           = useState<ActionPlan | null>(null);
+  const [dimInsights, setDimInsights]             = useState<Record<string, string>>({});
   const [planLoading, setPlanLoading]             = useState(false);
   const [loading, setLoading]                     = useState(true);
   const [error, setError]                         = useState('');
@@ -117,7 +118,10 @@ export default function ReportPage() {
     setSummaryLoading(true);
     fetch(`/api/report/${id}/executive-summary`)
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.summary) setSummary(d.summary); })
+      .then(d => {
+        if (d?.summary) setSummary(d.summary);
+        if (d?.dimension_insights) setDimInsights(d.dimension_insights);
+      })
       .catch(() => {})
       .finally(() => setSummaryLoading(false));
   }, [report, id]);
@@ -317,6 +321,11 @@ export default function ReportPage() {
                           </span>
                         </div>
                       </div>
+                      {dimInsights[d.name] && (
+                        <p className="text-slate-500 text-xs leading-snug italic border-t border-slate-800/60 pt-3">
+                          {dimInsights[d.name]}
+                        </p>
+                      )}
                     </div>
                   );
                 })}
