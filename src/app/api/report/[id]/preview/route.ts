@@ -18,7 +18,7 @@ const cerebras = createOpenAI({
   apiKey:  process.env.CEREBRAS_API_KEY ?? '',
 })
 
-const DIMENIONS = [
+const DIMENSIONS = [
   'Digital Strategy & Leadership',
   'Customer Experience & Digital Channels',
   'Operations & Process Automation',
@@ -113,7 +113,7 @@ export async function GET(
   if (cached?.dimension_scores && typeof cached.dimension_scores === 'object') {
     return NextResponse.json({
       leadId: id, completedCount, totalCount, partial,
-      dimensions: DIMENIONS.map(name => ({ name, score: (cached.dimension_scores as Record<string, number>)[name] ?? 35 })),
+      dimensions: DIMENSIONS.map(name => ({ name, score: (cached.dimension_scores as Record<string, number>)[name] ?? 35 })),
     })
   }
 
