@@ -41,7 +41,7 @@ export async function GET(_req: NextRequest) {
             marginBottom: '48px',
           }}
         >
-          <span style={{ fontSize: '32px' }}>🤕</span>
+          <span style={{ fontSize: '32px' }}>💬</span>
           <span
             style={{
               fontSize: '28px',
