@@ -32,21 +32,40 @@ const SCORE_COLOR = (s: number) =>
 const TIER_LABELS: Record<string, { label: string; color: string; desc: string }> = {
   quick_wins:  { label: 'Quick Wins',          color: 'text-teal-400',   desc: 'Start in the next 30 days' },
   six_month:   { label: '6-Month Actions',     color: 'text-amber-400',  desc: 'Plan and execute this quarter' },
-  long_term:   { label: 'Strategic (12–24 months)', color: 'text-purple-400', desc: 'Requires investment and planning' },
+  long_term:   { label: 'Strategic (12\u201324 months)', color: 'text-purple-400', desc: 'Requires investment and planning' },
 };
 
 export default function ReportPage() {
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
-  const paid = searchParams.get('paid') === 'true';
+  // URL param used only as optimistic hint (e.g. post-Stripe redirect UX)
+  // Canonical paid status is fetched from DB via /api/report/[id]/paid-status
+  const paidHint = searchParams.get('paid') === 'true'; // eslint-disable-line @typescript-eslint/no-unused-vars
 
-  const [report, setReport] = useState<ReportData | null>(null);
-  const [orgName, setOrgName] = useState<string>('');
-  const [plan, setPlan] = useState<ActionPlan | null>(null);
-  const [planLoading, setPlanLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [report, setReport]               = useState<ReportData | null>(null);
+  const [orgName, setOrgName]             = useState<string>('');
+  const [plan, setPlan]                   = useState<ActionPlan | null>(null);
+  const [planLoading, setPlanLoading]     = useState(false);
+  const [loading, setLoading]             = useState(true);
+  const [error, setError]                 = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [paid, setPaid]                   = useState(false);
+  const [paidChecked, setPaidChecked]     = useState(false);
+
+  // Verify payment status from DB (service-role API route — URL param is not trusted)
+  useEffect(() => {
+    async function checkPaid() {
+      try {
+        const res = await fetch(`/api/report/${id}/paid-status`);
+        if (res.ok) {
+          const { paid: dbPaid } = await res.json();
+          setPaid(dbPaid);
+        }
+      } catch { /* silent — default remains false */ }
+      setPaidChecked(true);
+    }
+    checkPaid();
+  }, [id]);
 
   useEffect(() => {
     async function load() {
@@ -68,14 +87,17 @@ export default function ReportPage() {
       if (lead?.org_name) setOrgName(lead.org_name);
 
       setLoading(false);
-
-      // Auto-load action plan if paid or report is complete
-      if (!data.partial || paid) {
-        loadActionPlan();
-      }
     }
     load();
-  }, [id, paid]);
+  }, [id]);
+
+  // Load action plan once both report data and paid status are resolved
+  useEffect(() => {
+    if (!report || !paidChecked) return;
+    if (!report.partial || paid) {
+      loadActionPlan();
+    }
+  }, [report, paid, paidChecked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadActionPlan = async () => {
     setPlanLoading(true);
@@ -98,17 +120,17 @@ export default function ReportPage() {
         const { url } = await res.json();
         if (url) window.location.href = url;
       } else {
-        alert('Payment unavailable — please try again.');
+        alert('Payment unavailable \u2014 please try again.');
       }
     } catch {
-      alert('Payment error — please try again.');
+      alert('Payment error \u2014 please try again.');
     }
     setCheckoutLoading(false);
   };
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#0E1117]">
-      <p className="text-white/40 text-sm animate-pulse">Building your report…</p>
+      <p className="text-white/40 text-sm animate-pulse">Building your report\u2026</p>
     </div>
   );
 
@@ -136,11 +158,10 @@ export default function ReportPage() {
               <h1 className="text-2xl font-semibold">{orgName || 'Your Organisation'}</h1>
               {partial && (
                 <span className="inline-block mt-2 text-xs bg-amber-500/20 text-amber-300 px-3 py-1 rounded-full">
-                  Partial · {completedCount}/{totalCount} interviews complete
+                  Partial \u00b7 {completedCount}/{totalCount} interviews complete
                 </span>
               )}
             </div>
-            {/* Print / PDF button */}
             <button
               onClick={() => window.print()}
               className="flex-shrink-0 flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white/70 hover:text-white text-xs px-3 py-2 rounded-lg transition print:hidden"
@@ -193,10 +214,10 @@ export default function ReportPage() {
           ))}
         </div>
 
-        {/* Benchmarking Panel — How you compare */}
+        {/* Benchmarking Panel */}
         <BenchmarkingPanel dimensions={dimensions} />
 
-        {/* Action Plan — gated behind $49 paywall */}
+        {/* Action Plan — gated behind DB-verified payment */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white/60 uppercase tracking-widest print:text-gray-500">Action Plan</h2>
@@ -205,15 +226,14 @@ export default function ReportPage() {
                 onClick={loadActionPlan}
                 className="text-xs text-teal-400 hover:text-teal-300 transition print:hidden"
               >
-                Generate preview →
+                Generate preview \u2192
               </button>
             )}
           </div>
 
-          {/* Paywall — shown only when not paid */}
-          {!paid && !partial && (
+          {/* Paywall — shown only after DB check confirms unpaid (avoids flash) */}
+          {paidChecked && !paid && !partial && (
             <div className="relative rounded-2xl overflow-hidden">
-              {/* Blurred preview (first few items if plan exists) */}
               <div className="blur-sm pointer-events-none select-none opacity-40 space-y-2 py-4">
                 {[
                   'Implement a unified data platform across departments',
@@ -228,35 +248,32 @@ export default function ReportPage() {
                   </div>
                 ))}
               </div>
-              {/* Paywall overlay */}
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0E1117]/80 backdrop-blur-sm rounded-2xl">
                 <div className="text-center px-6 space-y-3">
                   <p className="text-lg font-semibold text-white">Unlock Your Full Action Plan</p>
                   <p className="text-sm text-white/50 max-w-xs">
-                    Get a prioritised, AI-generated roadmap tailored to your organisation's digital maturity gaps.
+                    Get a prioritised, AI-generated roadmap tailored to your organisation&apos;s digital maturity gaps.
                   </p>
                   <button
                     onClick={handleUpgrade}
                     disabled={checkoutLoading}
                     className="mt-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-semibold text-sm px-6 py-3 rounded-xl transition print:hidden"
                   >
-                    {checkoutLoading ? 'Redirecting…' : 'Get Full Report — $49'}
+                    {checkoutLoading ? 'Redirecting\u2026' : 'Get Full Report \u2014 $49'}
                   </button>
-                  <p className="text-xs text-white/30">One-time payment · Instant access · No subscription</p>
+                  <p className="text-xs text-white/30">One-time payment \u00b7 Instant access \u00b7 No subscription</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Plan loading spinner */}
           {planLoading && (
             <div className="text-center py-8">
               <div className="w-6 h-6 border-2 border-teal-400/30 border-t-teal-400 rounded-full animate-spin mx-auto mb-2" />
-              <p className="text-white/30 text-xs">Generating your action plan…</p>
+              <p className="text-white/30 text-xs">Generating your action plan\u2026</p>
             </div>
           )}
 
-          {/* Paid: render full plan */}
           {plan && paid && (
             <div className="space-y-6">
               {plan.summary && (
@@ -296,7 +313,7 @@ export default function ReportPage() {
 
           {!plan && !planLoading && !partial && paid && (
             <div className="text-center py-6 text-white/20 text-sm">
-              Action plan unavailable — report may still be generating.
+              Action plan unavailable \u2014 report may still be generating.
             </div>
           )}
         </div>
