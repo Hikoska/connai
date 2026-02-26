@@ -7,6 +7,7 @@ export const maxDuration = 60
 
 const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const SB_SVC  = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 const groq = createOpenAI({
   baseURL: 'https://api.groq.com/openai/v1',
@@ -17,13 +18,24 @@ const cerebras = createOpenAI({
   apiKey:  process.env.CEREBRAS_API_KEY ?? '',
 })
 
-async function sbGet(path: string) {
+async function sbGet(path: string, useService = false) {
+  const key = useService ? SB_SVC : SB_ANON
   const res = await fetch(`${SB_URL}/rest/v1${path}`, {
-    headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, Accept: 'application/json' },
+    headers: { apikey: key, Authorization: `Bearer ${key}`, Accept: 'application/json' },
     cache: 'no-store',
   })
   if (!res.ok) return null
   return res.json()
+}
+
+/** Server-side payment gate — queries report_payments via service role key */
+async function isPaid(leadId: string): Promise<boolean> {
+  if (!SB_SVC) return false // fail closed: no service key = no access
+  const rows = await sbGet(
+    `/report_payments?lead_id=eq.${encodeURIComponent(leadId)}&limit=1&select=id`,
+    true
+  )
+  return Array.isArray(rows) && rows.length > 0
 }
 
 export async function GET(
@@ -31,6 +43,16 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const { id } = params
+
+  // ── Payment gate (server-side, cannot be bypassed via URL params) ─────────
+  const paid = await isPaid(id)
+  if (!paid) {
+    return NextResponse.json(
+      { error: 'Payment required to access the action plan.' },
+      { status: 402 }
+    )
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   const leadRows = await sbGet(`/leads?id=eq.${id}&select=org_name,industry,dimension_scores&limit=1`)
   const lead = Array.isArray(leadRows) ? leadRows[0] : null
