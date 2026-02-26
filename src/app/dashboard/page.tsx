@@ -26,9 +26,9 @@ type Lead = {
 }
 
 const statusColors: { [key: string]: string } = {
-  captured: 'bg-blue-100 text-blue-800',
-  interviewed: 'bg-yellow-100 text-yellow-800',
-  reported: 'bg-green-100 text-green-800',
+  captured: 'bg-blue-500/20 text-blue-300',
+  interviewed: 'bg-yellow-500/20 text-yellow-300',
+  reported: 'bg-green-500/20 text-green-300',
 }
 
 export default function DashboardPage() {
@@ -93,21 +93,21 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="pt-20 min-h-screen flex items-center justify-center text-gray-400 text-sm">
-        Loading...
+      <div className="min-h-screen bg-[#0E1117] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
       </div>
     )
   }
 
   if (!user) {
     return (
-      <div className="pt-20 min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0E1117] p-4">
         <div className="text-center max-w-sm">
-          <h1 className="text-2xl font-bold mb-2">Your audits</h1>
-          <p className="mb-6 text-gray-600">Log in to view your audit dashboard.</p>
+          <h1 className="text-2xl font-bold text-white mb-2">Your audits</h1>
+          <p className="mb-6 text-white/60">Log in to view your audit dashboard.</p>
           <Link
             href="/auth/login"
-            className="bg-[#0D5C63] text-white font-bold px-6 py-2 rounded-lg hover:opacity-90 transition-opacity"
+            className="bg-teal-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-teal-500 transition-opacity"
           >
             Log in
           </Link>
@@ -117,27 +117,27 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="pt-20 min-h-screen bg-gray-50">
-      <main className="p-4 sm:p-8 max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold mb-1">Your Audits</h1>
-        <p className="text-sm text-gray-500 mb-6">{user.email}</p>
+    <div className="min-h-screen bg-[#0E1117]">
+      <main className="p-4 sm:p-8 max-w-5xl mx-auto pt-24">
+        <h1 className="text-2xl font-bold text-white mb-1">Your Audits</h1>
+        <p className="text-sm text-white/40 mb-6">{user.email}</p>
 
-        <div className="bg-white rounded-lg border">
-          <div className="divide-y">
+        <div className="bg-white/5 border border-white/10 rounded-lg">
+          <div className="divide-y divide-white/10">
             {leads.length > 0 ? leads.map(lead => (
               <div key={lead.id} className="p-4">
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex items-start gap-4">
-                    <FileText className="text-gray-400 mt-0.5 shrink-0" size={20} />
+                    <FileText className="text-white/30 mt-0.5 shrink-0" size={20} />
                     <div>
-                      <h2 className="font-semibold">{lead.org_name}</h2>
-                      <p className="text-sm text-gray-500">
+                      <h2 className="font-semibold text-white">{lead.org_name}</h2>
+                      <p className="text-sm text-white/40">
                         {new Date(lead.captured_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                       </p>
                       {lead.interviews.length > 0 && (
                         <div className="flex items-center gap-1 mt-1">
-                          <Users size={13} className="text-gray-400" />
-                          <span className="text-xs text-gray-500">
+                          <Users size={13} className="text-white/30" />
+                          <span className="text-xs text-white/40">
                             {lead.interviews.filter(i => i.status === 'complete').length}/{lead.interviews.length} interviews complete
                           </span>
                         </div>
@@ -145,12 +145,12 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColors[lead.status] || 'bg-gray-100 text-gray-800'}`}>
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColors[lead.status] || 'bg-white/10 text-white/80'}`}>
                       {lead.status}
                     </span>
                     <Link
                       href={`/audit/${lead.id}`}
-                      className="flex items-center gap-1.5 text-sm bg-white border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50"
+                      className="flex items-center gap-1.5 text-sm bg-white/10 border border-white/20 rounded-md px-3 py-1.5 hover:bg-white/20 text-white"
                     >
                       <PlayCircle size={15} />
                       View
@@ -159,9 +159,9 @@ export default function DashboardPage() {
                 </div>
               </div>
             )) : (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-white/40">
                 <p className="mb-3">No audits yet.</p>
-                <Link href="/" className="text-teal-600 font-semibold hover:underline">
+                <Link href="/" className="text-teal-400 font-semibold hover:underline">
                   Start your first audit →
                 </Link>
               </div>
