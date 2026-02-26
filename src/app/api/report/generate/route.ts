@@ -132,11 +132,81 @@ export async function POST(req: Request) {
     const emailRows = await emailRes.json()
     const leadEmail = emailRows[0]?.email
     if (process.env.RESEND_API_KEY && leadEmail) {
+      // Compute tier + accent color for styled email
+      const _emailScore = overallScore
+      const _emailTier =
+        _emailScore >= 91 ? 'Digital Leader'  :
+        _emailScore >= 76 ? 'Advanced'         :
+        _emailScore >= 61 ? 'Established'      :
+        _emailScore >= 41 ? 'Developing'       :
+        _emailScore >= 21 ? 'Emerging'         : 'Digitally Dormant'
+      const _emailColor =
+        _emailScore >= 70 ? '#14b8a6' :
+        _emailScore >= 40 ? '#f59e0b' : '#ef4444'
+      const _siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+      const _reportUrl = `${_siteUrl}/report/${interview.lead_id}`
+      const _topDims = Object.entries(dimensionScores)
+        .sort(([, a], [, b]) => (b as number) - (a as number))
+        .slice(0, 2)
+        .map(([name, score]) =>
+          `<tr>
+            <td style="padding:6px 0;color:#94a3b8;font-size:13px;">${name}</td>
+            <td style="padding:6px 0;text-align:right;font-weight:600;color:#f1f5f9;font-size:13px;">${score}/100</td>
+          </tr>`
+        ).join('')
+      const _emailHtml = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0E1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0E1117;min-height:100vh;">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+        <tr><td style="padding-bottom:32px;text-align:center;">
+          <span style="font-size:12px;color:#64748b;letter-spacing:0.1em;text-transform:uppercase;">Connai &nbsp;·&nbsp; Digital Maturity Report</span>
+        </td></tr>
+        <tr><td style="background:#111827;border:1px solid #1e293b;border-radius:16px;padding:36px 32px;text-align:center;">
+          <table align="center" cellpadding="0" cellspacing="0" style="margin:0 auto 20px;">
+            <tr><td style="width:96px;height:96px;border-radius:50%;border:6px solid ${_emailColor};text-align:center;vertical-align:middle;background:#0E1117;">
+              <div style="font-size:30px;font-weight:700;color:#f1f5f9;line-height:1;">${_emailScore}</div>
+              <div style="font-size:10px;color:#64748b;margin-top:2px;">/ 100</div>
+            </td></tr>
+          </table>
+          <p style="margin:0 0 8px;font-size:21px;font-weight:700;color:#f1f5f9;">Your assessment is ready</p>
+          <p style="margin:0;font-size:13px;color:#64748b;">
+            Maturity tier &nbsp;·&nbsp;
+            <span style="color:${_emailColor};font-weight:600;">${_emailTier}</span>
+          </p>
+        </td></tr>
+        <tr><td style="padding-top:16px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#111827;border:1px solid #1e293b;border-radius:12px;padding:20px 24px;">
+            <tr><td colspan="2" style="padding-bottom:10px;">
+              <span style="font-size:11px;color:#64748b;letter-spacing:0.08em;text-transform:uppercase;">Top Strengths</span>
+            </td></tr>
+            ${_topDims}
+          </table>
+        </td></tr>
+        <tr><td style="padding-top:24px;text-align:center;">
+          <a href="${_reportUrl}" style="display:inline-block;background:#14b8a6;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">
+            View Full Report →
+          </a>
+          <p style="margin:14px 0 0;font-size:12px;color:#475569;">
+            Your complete report with all 8 dimensions and action plan:<br>
+            <a href="${_reportUrl}" style="color:#14b8a6;text-decoration:none;">${_reportUrl}</a>
+          </p>
+        </td></tr>
+        <tr><td style="padding-top:40px;text-align:center;">
+          <span style="font-size:11px;color:#334155;">Built by Linkgrow &nbsp;·&nbsp; connai.linkgrow.io</span>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
       await resend.emails.send({
         from: 'Connai <reports@connai.linkgrow.io>',
         to: [leadEmail],
-        subject: 'Your Digital Maturity Report is ready',
-        html: `<p>Hi,</p><p>Your Digital Maturity Assessment is complete. Overall score: <strong>${overallScore}/100</strong>.</p><p><a href="${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/report/${interview.lead_id}">View your report</a></p>`,
+        subject: `Your Digital Maturity Report is ready — ${_emailTier} (${_emailScore}/100)`,
+        html: _emailHtml,
       })
     }
   } catch (emailErr) {
