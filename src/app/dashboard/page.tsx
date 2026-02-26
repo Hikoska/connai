@@ -83,7 +83,6 @@ export default function DashboardPage() {
 
         setLeads(merged)
       } else {
-        // Not logged in — show email lookup prompt
         setUser(null)
       }
       setLoading(false)
@@ -92,23 +91,19 @@ export default function DashboardPage() {
     init()
   }, [])
 
-  const handleLogout = async () => {
-    if (supabaseRef.current) {
-      await supabaseRef.current.auth.signOut()
-    }
-    setUser(null)
-    window.location.href = '/'
-  }
-
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading dashboard...</div>
+    return (
+      <div className="pt-20 min-h-screen flex items-center justify-center text-gray-400 text-sm">
+        Loading...
+      </div>
+    )
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="pt-20 min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
         <div className="text-center max-w-sm">
-          <h1 className="text-2xl font-bold mb-2">Find your audit</h1>
+          <h1 className="text-2xl font-bold mb-2">Your audits</h1>
           <p className="mb-6 text-gray-600">Log in to view your audit dashboard.</p>
           <Link
             href="/auth/login"
@@ -122,18 +117,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🧬</span>
-            <span className="font-bold text-teal-600 text-xl">Connai</span>
-          </div>
-          <button onClick={handleLogout} className="text-sm font-medium text-gray-500 hover:text-teal-600">
-            Log out
-          </button>
-        </div>
-      </header>
+    <div className="pt-20 min-h-screen bg-gray-50">
       <main className="p-4 sm:p-8 max-w-5xl mx-auto">
         <h1 className="text-2xl font-bold mb-1">Your Audits</h1>
         <p className="text-sm text-gray-500 mb-6">{user.email}</p>
