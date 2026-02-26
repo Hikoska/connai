@@ -66,9 +66,9 @@ ${transcript.slice(0, 6000)}`
 
   let raw = ''
   try { raw = await tryAI(groq('llama-3.3-70b-versatile')) }
-  catch { try { raw = await tryAI(cerebras('hama3.1-8b')) } catch { /* fallback below */ } }
+  catch { try { raw = await tryAI(cerebras('llama3.1-8b')) } catch { /* fallback below */ } }
 
-  const match = raw.match(/\{7[\s\S]*\}/)
+  const match = raw.match(/\{[\s\S]*\}/)
   if (!match) return Object.fromEntries(DIMENSIONS.map(d => [d, 35]))
   try { return JSON.parse(match[0]) } catch { return Object.fromEntries(DIMENSIONS.map(d => [d, 35])) }
 }
@@ -79,7 +79,6 @@ export async function GET(
 ) {
   const { id } = params
 
-  // Guard: SUPABASE_SERVICE_ROLE_KEY is required to fetch interview answers
   if (!SB_SVC) {
     return NextResponse.json(
       { error: 'Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY is not set.' },
@@ -87,18 +86,17 @@ export async function GET(
     )
   }
 
-  // 1. Fetch all interviews for this lead
   const interviews = await sbGet(`/interviews?lead_id=eq.${id}&select=id,status,created_at&order=created_at.desc`)
   if (!Array.isArray(interviews) || interviews.length === 0) {
     return NextResponse.json({ error: 'No interviews found' }, { status: 404 })
   }
 
   const totalCount = interviews.length
-  const completed = interviews.filter((iv: { status: string }) => iv.status === 'completed')
+  // FIX: DB stores 'complete' not 'completed'
+  const completed = interviews.filter((iv: { status: string }) => iv.status === 'complete' || iv.status === 'completed')
   const completedCount = completed.length
   const partial = completedCount < totalCount || completedCount === 0
 
-  // If nothing completed yet, return placeholder
   if (completedCount === 0) {
     return NextResponse.json({
       leadId: id, completedCount: 0, totalCount,
@@ -107,7 +105,6 @@ export async function GET(
     })
   }
 
-  // 2. Check for cached scores on the lead
   const leadRows = await sbGet(`/leads?id=eq.${id}&select=dimension_scores,overall_score&limit=1`)
   const cached = Array.isArray(leadRows) ? leadRows[0] : null
   if (cached?.dimension_scores && typeof cached.dimension_scores === 'object') {
@@ -117,14 +114,14 @@ export async function GET(
     })
   }
 
-  // 3. Fetch transcript from most recent completed interview
+  // FIX: column is 'transcript', not 'answers'
   const latestId = completed[0].id
-  const ivRows = await sbGet(`/interviews?id=eq.${latestId}&select=answers&limit=1`, true)
+  const ivRows = await sbGet(`/interviews?id=eq.${latestId}&select=transcript&limit=1`, true)
   const ivData  = Array.isArray(ivRows) ? ivRows[0] : null
 
   let transcript = ''
-  if (Array.isArray(ivData?.answers)) {
-    transcript = (ivData.answers as Array<{ role: string; content: string }>)
+  if (Array.isArray(ivData?.transcript)) {
+    transcript = (ivData.transcript as Array<{ role: string; content: string }>)
       .map(m => `${m.role === 'user' ? 'Stakeholder' : 'Interviewer'}: ${m.content}`)
       .join('\n\n')
   }
@@ -136,7 +133,6 @@ export async function GET(
     })
   }
 
-  // 4. Score with AI
   const raw = await scoreTranscript(transcript)
   const dimensions = DIMENSIONS.map(name => ({
     name,
@@ -144,7 +140,6 @@ export async function GET(
   }))
   const overallScore = Math.round(dimensions.reduce((s, d) => s + d.score, 0) / dimensions.length)
 
-  // 5. Cache to leads (best-effort -- columns may not exist yet)
   fetch(`${SB_URL}/rest/v1/leads?id=eq.${id}`, {
     method: 'PATCH',
     headers: { apikey: SB_SVC, Authorization: `Bearer ${SB_SVC}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
