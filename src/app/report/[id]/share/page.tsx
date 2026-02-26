@@ -1,3 +1,4 @@
+import React from 'react'
 import { notFound } from 'next/navigation'
 
 const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -113,7 +114,7 @@ export default async function SharePage({ params }: { params: { id: string } }) 
         {overallScore !== null && tier && (
           <div className="flex flex-col items-center gap-4">
             <div className="relative w-36 h-36">
-              <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+              <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90" style={{ ["--ring-arc" as string]: `${ringArc}` } as React.CSSProperties}>
                 <circle cx="60" cy="60" r={R} fill="none" stroke="#1e293b" strokeWidth="10" />
                 <circle
                   cx="60" cy="60" r={R}
@@ -122,7 +123,18 @@ export default async function SharePage({ params }: { params: { id: string } }) 
                   strokeWidth="10"
                   strokeLinecap="round"
                   strokeDasharray={`${ringArc} ${CIRC}`}
+                  className="score-ring-progress"
                 />
+                <style>{`
+                  .score-ring-progress {
+                    stroke-dashoffset: var(--ring-arc);
+                    animation: ring-fill 0.8s ease-out forwards;
+                  }
+                  @keyframes ring-fill {
+                    from { stroke-dashoffset: var(--ring-arc); }
+                    to   { stroke-dashoffset: 0; }
+                  }
+                `}</style>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-3xl font-bold text-white">{overallScore}</span>
