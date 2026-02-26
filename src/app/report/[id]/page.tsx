@@ -74,8 +74,13 @@ export default function ReportPage() {
 
   const [report, setReport]                       = useState<ReportData | null>(null);
   const [ringAnimated, setRingAnimated]           = useState(false);
-  // Trigger score ring animation after mount
-  useEffect(() => { const t = setTimeout(() => setRingAnimated(true), 50); return () => clearTimeout(t); }, []);
+  const [barAnimated, setBarAnimated]             = useState(false);
+  // Trigger score ring + bar animations after mount
+  useEffect(() => {
+    const t1 = setTimeout(() => setRingAnimated(true), 50);
+    const t2 = setTimeout(() => setBarAnimated(true), 80);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
   const [orgName, setOrgName]                     = useState('');
   const [industry, setIndustry]                   = useState('');
   const [summary, setSummary]                     = useState('');
@@ -259,7 +264,7 @@ export default function ReportPage() {
               <div className="h-1.5 bg-slate-700/60 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${barColor(overallScore)}`}
-                  style={{ width: `${overallScore}%` }}
+                  style={{ width: barAnimated ? `${overallScore}%` : '0%', transition: 'width 0.7s ease-out' }}
                 />
               </div>
             </div>
@@ -299,7 +304,7 @@ export default function ReportPage() {
             <div key={group} className="space-y-3">
               <p className={`text-xs font-mono uppercase tracking-widest ${labelColor}`}>{group}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {dims.map(d => {
+                {dims.map((d, i) => {
                   const median = INDUSTRY_MEDIANS[d.name] ?? 50;
                   const delta  = d.score - median;
                   return (
@@ -315,7 +320,7 @@ export default function ReportPage() {
                         <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                           <div
                             className={`h-full ${barColor(d.score)} rounded-full`}
-                            style={{ width: `${d.score}%` }}
+                            style={{ width: barAnimated ? `${d.score}%` : '0%', transition: `width 0.6s ease-out ${i * 60}ms` }}
                           />
                         </div>
                         <div className="flex justify-between items-center text-xs">
