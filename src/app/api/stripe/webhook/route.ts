@@ -10,10 +10,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing signature or secret' }, { status: 400 });
   }
 
-  // App Router: req.text() gives raw body without any bodyParser config needed
   const rawBody = await req.text();
 
-  // Verify Stripe signature manually (avoids importing stripe SDK)
   const crypto = await import('crypto');
   const parts = sig.split(',').reduce<Record<string, string>>((acc, part) => {
     const [k, v] = part.split('=');
@@ -54,17 +52,19 @@ export async function POST(req: NextRequest) {
     const sessionId = session.id;
 
     if (reportId && sessionId) {
-      // Record payment in Supabase via raw fetch (no createClient in API routes)
       const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supaKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
       if (supaUrl && supaKey) {
+        // Idempotent insert — stripe_session_id has a UNIQUE constraint (migration CL-13).
+        // Prefer: resolution=ignore-duplicates → ON CONFLICT DO NOTHING, so Stripe retries
+        // (network blips, timeouts) are safe and won't produce duplicate payment records.
         await fetch(`${supaUrl}/rest/v1/report_payments`, {
           method: 'POST',
           headers: {
             apikey: supaKey,
             Authorization: `Bearer ${supaKey}`,
             'Content-Type': 'application/json',
-            Prefer: 'return=minimal',
+            Prefer: 'return=minimal,resolution=ignore-duplicates',
           },
           body: JSON.stringify({
             lead_id: reportId,
