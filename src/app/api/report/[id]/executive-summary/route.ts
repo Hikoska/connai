@@ -3,7 +3,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 30
+export const maxDuration = 45
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_SVC = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -25,6 +25,30 @@ function getMaturityTier(score: number): string {
   if (score >= 41) return 'Developing'
   if (score >= 21) return 'Emerging'
   return 'Digitally Dormant'
+}
+
+type AIModel = ReturnType<typeof groq>
+
+async function callAI(model: AIModel, prompt: string, maxTokens = 512): Promise<string> {
+  const { text } = await generateText({
+    model,
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.35,
+    maxTokens,
+  })
+  return text.trim()
+}
+
+async function withFallback(prompt: string, maxTokens = 512): Promise<string> {
+  try {
+    return await callAI(groq('llama-3.3-70b-versatile'), prompt, maxTokens)
+  } catch {
+    try {
+      return await callAI(cerebras('llama3.1-8b'), prompt, maxTokens)
+    } catch {
+      throw new Error('All AI providers failed')
+    }
+  }
 }
 
 export async function GET(
@@ -60,7 +84,7 @@ export async function GET(
     .map(([name, score]) => `  ${name}: ${score}/100`)
     .join('\n')
 
-  const prompt = `You are a senior digital transformation consultant preparing a confidential maturity assessment report.
+  const summaryPrompt = `You are a senior digital transformation consultant preparing a confidential maturity assessment report.
 
 Organisation: ${orgName}${industryCtx}
 Overall Maturity Score: ${overallScore}/100 — ${tier} tier
@@ -80,26 +104,42 @@ Constraints:
 - Address the organisation by name throughout
 - Specific and insightful, not boilerplate consulting language`
 
-  const tryAI = async (model: ReturnType<typeof groq>) => {
-    const { text } = await generateText({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.4,
-      maxTokens: 512,
-    })
-    return text.trim()
+  const insightsPrompt = `You are a digital maturity expert interpreting assessment results for a business audience.
+
+For each dimension below, write exactly ONE sentence (max 20 words) that explains what the score means for the business in plain English. Be specific — no filler phrases, no "you should improve this".
+
+Scores:
+${dimensionList}
+
+Return ONLY a valid JSON object in this exact format (no markdown, no explanation):
+{
+${sortedDims.map(([name]) => `  "${name}": "one sentence here"`).join(',\n')}
+}`
+
+  // Run both AI calls in parallel
+  const [summaryResult, insightsResult] = await Promise.allSettled([
+    withFallback(summaryPrompt, 512),
+    withFallback(insightsPrompt, 800),
+  ])
+
+  if (summaryResult.status === 'rejected') {
+    return NextResponse.json({ error: 'AI unavailable' }, { status: 503 })
   }
 
-  let summary = ''
-  try {
-    summary = await tryAI(groq('llama-3.3-70b-versatile'))
-  } catch {
+  const summary = summaryResult.value
+
+  let dimension_insights: Record<string, string> = {}
+  if (insightsResult.status === 'fulfilled') {
     try {
-      summary = await tryAI(cerebras('llama3.1-8b'))
+      const raw = insightsResult.value
+      // Strip any markdown code fences if present
+      const cleaned = raw.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim()
+      dimension_insights = JSON.parse(cleaned)
     } catch {
-      return NextResponse.json({ error: 'AI unavailable' }, { status: 503 })
+      // Insights are optional — degrade gracefully
+      dimension_insights = {}
     }
   }
 
-  return NextResponse.json({ summary, tier, overall_score: overallScore })
+  return NextResponse.json({ summary, tier, overall_score: overallScore, dimension_insights })
 }
