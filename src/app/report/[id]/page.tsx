@@ -73,6 +73,9 @@ export default function ReportPage() {
   const _paidHint = searchParams.get('paid') === 'true';
 
   const [report, setReport]                       = useState<ReportData | null>(null);
+  const [ringAnimated, setRingAnimated]           = useState(false);
+  // Trigger score ring animation after mount
+  useEffect(() => { const t = setTimeout(() => setRingAnimated(true), 50); return () => clearTimeout(t); }, []);
   const [orgName, setOrgName]                     = useState('');
   const [industry, setIndustry]                   = useState('');
   const [summary, setSummary]                     = useState('');
@@ -231,7 +234,8 @@ export default function ReportPage() {
                   stroke={overallScore >= 70 ? '#14b8a6' : overallScore >= 40 ? '#f59e0b' : '#ef4444'}
                   strokeWidth="10"
                   strokeLinecap="round"
-                  strokeDasharray={`${(overallScore / 100) * 314} 314`}
+                  strokeDasharray={ringAnimated ? `${(overallScore / 100) * 314} 314` : '0 314'}
+                  style={{ transition: 'stroke-dasharray 0.8s ease-out' }}
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
