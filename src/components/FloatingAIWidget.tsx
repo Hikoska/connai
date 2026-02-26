@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useChat } from 'ai/react'
 
 function stripTags(content: string): string {
@@ -16,6 +17,7 @@ export function FloatingAIWidget() {
   const [auditUrl, setAuditUrl] = useState<string | null>(null)
   const processedIds = useRef<Set<string>>(new Set())
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/chat',
@@ -49,7 +51,7 @@ export function FloatingAIWidget() {
             body: JSON.stringify(data),
           })
             .then(r => r.json())
-            .then(res => { if (res.token) setLeadId(res.token) })
+            .then(res => { if (res.token) { setLeadId(res.token); router.push('/dashboard') } })
             .catch(e => console.error('[CONNAI_CAPTURE] fetch failed', e))
         } catch (e) {
           console.error('[CONNAI_CAPTURE] parse error', e)
@@ -88,58 +90,73 @@ export function FloatingAIWidget() {
               aria-label="Close chat"
               className="text-gray-400 hover:text-gray-600 text-lg leading-none"
             >
-              &times;
+              ×
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.length === 0 && (
-              <p className="text-sm text-gray-400">Ask me anything about your digital maturity...</p>
-            )}
-            {messages.map((m) => (
-              <div key={m.id} className={`text-sm ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
-                <span className={`inline-block px-3 py-2 rounded-xl max-w-[90%] whitespace-pre-wrap ${
-                  m.role === 'user' ? 'bg-[#0D5C63] text-white' : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {stripTags(m.content)}
-                </span>
+          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`text-sm px-3 py-2 rounded-xl max-w-[90%] ${
+                  msg.role === 'user'
+                    ? 'ml-auto bg-[#0D5C63] text-white rounded-br-sm'
+                    : 'bg-gray-100 text-gray-800 rounded-bl-sm'
+                }`}
+              >
+                {stripTags(msg.content)}
               </div>
             ))}
-            {isLoading && <p className="text-xs text-gray-400">Thinking...</p>}
-            {auditUrl && (
-              <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 text-sm">
-                <p className="font-medium text-teal-800 mb-1">Audit page ready ✓</p>
-                <a href={auditUrl} className="text-teal-600 underline break-all text-xs">
-                  View your audit dashboard
-                </a>
+            {isLoading && (
+              <div className="bg-gray-100 text-gray-800 rounded-xl rounded-bl-sm px-3 py-2 text-sm max-w-[90%]">
+                <div className="flex gap-1">
+                  <span className="animate-bounce [animation-delay:0ms]">·</span>
+                  <span className="animate-bounce [animation-delay:150ms]">·</span>
+                  <span className="animate-bounce [animation-delay:300ms]">·</span>
+                </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
-          <form onSubmit={handleSubmit} className="p-3 border-t border-gray-100 flex gap-2">
-            <input
-              value={input}
-              onChange={handleInputChange}
-              placeholder="Type a message..."
-              className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#0D5C63]"
-            />
-            <button
-              type="submit"
-              disabled={isLoading}
-              aria-label="Send message"
-              className="bg-[#0D5C63] text-white px-3 py-2 rounded-lg text-sm hover:bg-[#0a4a50] disabled:opacity-50"
+          {auditUrl ? (
+            <div className="px-4 py-3 border-t border-gray-100 text-center">
+              <a
+                href={auditUrl}
+                className="text-sm text-[#0D5C63] font-medium hover:underline"
+              >
+                View your audit report →
+              </a>
+            </div>
+          ) : (
+            <form
+              onSubmit={handleSubmit}
+              className="flex items-center gap-2 px-3 py-2 border-t border-gray-100"
             >
-              &#8594;
-            </button>
-          </form>
+              <input
+                value={input}
+                onChange={handleInputChange}
+                placeholder="Type a message…"
+                className="flex-1 text-sm px-3 py-1.5 rounded-full border border-gray-200 focus:outline-none focus:border-[#0D5C63]"
+              />
+              <button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                className="w-7 h-7 bg-[#0D5C63] text-white rounded-full flex items-center justify-center disabled:opacity-40 hover:bg-[#0a4a50] transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </form>
+          )}
         </div>
       ) : (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-[#0D5C63] text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-[#0a4a50] transition-colors"
-          aria-label="Open chat"
+          className="w-14 h-14 bg-[#0D5C63] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#0a4a50] transition-colors"
+          aria-label="Open Connai chat"
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+            <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       )}

@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: Request) {
   try {
     const { lead_id, stakeholders } = await req.json() as {
       lead_id: string
-      stakeholders: { name: string; role: string }[]
+      stakeholders: { name: string; role: string; email?: string }[]
     }
 
     if (!lead_id || !Array.isArray(stakeholders) || stakeholders.length === 0) {
@@ -44,6 +47,15 @@ export async function POST(req: Request) {
           role: s.role.trim(),
           interview_url: `/interview/${tokenValue}`,
         })
+
+        if (s.email && process.env.RESEND_API_KEY) {
+          await resend.emails.send({
+            from: 'Connai <invites@connai.linkgrow.io>',
+            to: [s.email],
+            subject: 'You are invited to complete a Digital Maturity Interview',
+            html: `<p>Hi ${s.name},</p><p>You have been invited to complete a Digital Maturity Assessment interview.</p><p><a href="${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/interview/${tokenValue}">Start your interview</a></p>`,
+          }).catch(e => console.warn('[invites/generate] Email failed for', s.name, e))
+        }
       } else {
         const err = await res.text().catch(() => res.statusText)
         console.error(`[invites/generate] insert failed for ${s.name}:`, err)

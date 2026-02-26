@@ -99,6 +99,10 @@ export default function InterviewPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token, answers: final }),
           })
+          setMessages(prev => [
+            ...prev,
+            { role: 'assistant', content: 'Thank you! Your Digital Maturity Report is being generated. You will be redirected shortly...' },
+          ])
           setTimeout(() => {
             if (leadId) router.push(`/report/${leadId}`)
           }, 3000)
@@ -153,6 +157,11 @@ export default function InterviewPage() {
               Digital Maturity Assessment
             </p>
           )}
+          {messages.length > 0 && (
+            <p className="text-xs text-teal-600 font-medium">
+              Question {Math.ceil(messages.length / 2)} of 20
+            </p>
+          )}
         </div>
       </div>
 
@@ -204,7 +213,7 @@ export default function InterviewPage() {
         </div>
       ) : (
         <div className="bg-white border-t border-gray-100 px-4 py-3 flex-shrink-0">
-          <div className="max-w-2xl mx-auto flex gap-3 items-end">
+          <div class="max-w-2xl mx-auto flex gap-3 items-end">
             <textarea
               value={input}
               onChange={e => setInput(e.target.value)}
