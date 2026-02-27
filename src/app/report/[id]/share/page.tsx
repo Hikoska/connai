@@ -278,8 +278,17 @@ export default async function SharePage({ params }: { params: { id: string } }) 
       </main>
 
       {/* Footer */}
-      <footer className="text-center py-6 text-xs text-slate-700">
-        Built by <span className="text-slate-500 font-medium">Linkgrow</span>
+      <footer className="border-t border-slate-800/60 py-6 px-6">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
+          <p className="text-slate-600 text-xs">Share this summary with your leadership team.</p>
+          <a href="https://linkgrow.io" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity shrink-0">
+            <span className="text-slate-500 text-xs uppercase tracking-widest font-medium">Built by</span>
+            <div className="bg-slate-800 rounded px-2 py-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/linkgrow-logo.png" alt="Linkgrow" style={{ height: '14px', width: 'auto', display: 'block' }} />
+            </div>
+          </a>
+        </div>
       </footer>
 
     </div>
