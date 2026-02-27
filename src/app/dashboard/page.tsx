@@ -14,7 +14,13 @@ type Interview = {
   stakeholder_name: string
   stakeholder_role: string
   interview_token: string
-  status: string
+  status: string // 'pending' | 'started' | 'complete'
+}
+
+function ivStatusLabel(status: string): { label: string; dot: string } {
+  if (status === 'complete') return { label: 'Completed', dot: 'bg-teal-400' }
+  if (status === 'started')  return { label: 'In progress', dot: 'bg-yellow-400' }
+  return { label: 'Sent', dot: 'bg-white/30' }
 }
 
 type Report = {
@@ -204,23 +210,34 @@ export default function DashboardPage() {
                           </div>
                         )}
 
-                        {/* Per-stakeholder names */}
+                        {/* Per-stakeholder status */}
                         {lead.interviews.length > 0 && (
-                          <div className="mt-1.5 flex flex-wrap gap-1.5">
-                            {lead.interviews.map(iv => (
-                              <span
-                                key={iv.id}
-                                className={`text-xs px-2 py-0.5 rounded-full border ${
-                                  iv.status === 'complete'
-                                    ? 'bg-teal-500/10 border-teal-500/30 text-teal-400'
-                                    : 'bg-white/5 border-white/10 text-white/40'
-                                }`}
-                              >
-                                {iv.stakeholder_name}
-                                {iv.status === 'complete' && ' ✓'}
-                              </span>
-                            ))}
+                          <div className="mt-2 flex flex-col gap-1.5">
+                            {lead.interviews.map(iv => {
+                              const s = ivStatusLabel(iv.status)
+                              return (
+                                <div key={iv.id} className="flex items-center gap-2">
+                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
+                                  <span className="text-xs text-white/60 truncate max-w-[140px]">
+                                    {iv.stakeholder_name}
+                                  </span>
+                                  <span className={`text-xs ml-auto px-1.5 py-0.5 rounded-full ${
+                                    iv.status === 'complete' ? 'bg-teal-500/10 text-teal-400'
+                                    : iv.status === 'started' ? 'bg-yellow-500/10 text-yellow-400'
+                                    : 'bg-white/5 text-white/30'
+                                  }`}>
+                                    {s.label}
+                                  </span>
+                                </div>
+                              )
+                            })}
                           </div>
+                        )}
+                        {/* Free-tier teaser */}
+                        {total === 1 && !lead.report && (
+                          <p className="mt-2 text-xs text-teal-400/70 italic">
+                            First interview is free — add more stakeholders for a full multi-perspective report.
+                          </p>
                         )}
                       </div>
                     </div>
