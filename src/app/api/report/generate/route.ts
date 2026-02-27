@@ -153,7 +153,7 @@ export async function POST(req: Request) {
     overall_score: overallScore,
     dimension_scores: dimensionScores,
     generated_at: new Date().toISOString(),
-    interview_count: lead_id ? ivList.length : 1,
+    interview_count: lead_id ? (ivList?.length ?? 1) : 1,
   })
 
   const reportId = reportRows[0]?.id ?? interview.lead_id
