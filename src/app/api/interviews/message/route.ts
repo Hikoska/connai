@@ -114,6 +114,13 @@ Format rules:
           system,
           messages: formatted,
         })
+        if (isDone && ctx?.lead_id) {
+          fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/report/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ interview_id: ctx.id, lead_id: ctx.lead_id }),
+          }).catch(err => console.error('[auto-report] trigger failed:', err))
+        }
         return NextResponse.json({ message: text, done: isDone })
       } catch (err) {
         if (!isRateLimit(err)) throw err
@@ -128,6 +135,13 @@ Format rules:
         system,
         messages: formatted,
       })
+      if (isDone && ctx?.lead_id) {
+        fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/report/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ interview_id: ctx.id, lead_id: ctx.lead_id }),
+        }).catch(err => console.error('[auto-report] trigger failed:', err))
+      }
       return NextResponse.json({ message: text, done: isDone })
     }
 
