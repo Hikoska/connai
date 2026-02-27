@@ -8,19 +8,17 @@ export default function CopyLinkButton() {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
-      // fallback: select a temp input
+      // Fallback for older browsers / non-HTTPS
       const el = document.createElement('input');
       el.value = window.location.href;
       document.body.appendChild(el);
       el.select();
       document.execCommand('copy');
       document.body.removeChild(el);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
