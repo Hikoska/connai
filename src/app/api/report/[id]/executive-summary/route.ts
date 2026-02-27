@@ -82,7 +82,15 @@ export async function GET(
   if (!repRes.ok) return NextResponse.json({ error: 'Scores not ready' }, { status: 404 })
   const repRows = await repRes.json()
   const rep = Array.isArray(repRows) ? repRows[0] : null
-  if (!rep?.dimension_scores) return NextResponse.json({ error: 'Scores not ready' }, { status: 404 })
+  if (!rep?.dimension_scores) {
+    // Graceful fallback — scores not yet ready, return placeholder instead of 404 (CL-19 Task B)
+    return NextResponse.json({
+      summary: 'This organisation has completed a ConnAI digital maturity assessment. A personalised executive summary will be generated once all dimension scores are available.',
+      tier: null,
+      overall_score: null,
+      dimension_insights: {},
+    })
+  }
 
   const scores = rep.dimension_scores as Record<string, number>
   const vals = Object.values(scores) as number[]
