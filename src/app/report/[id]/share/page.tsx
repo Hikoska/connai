@@ -13,16 +13,32 @@ interface Lead {
 }
 
 async function getLead(id: string): Promise<Lead | null> {
-  const res = await fetch(
-    `${SB_URL}/rest/v1/leads?id=eq.${id}&select=org_name,overall_score,dimension_scores&limit=1`,
-    {
-      headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, Accept: 'application/json' },
-      cache: 'no-store',
-    }
+  const h = { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, Accept: 'application/json' }
+  // 1. Fetch lead name from leads table
+  const leadRes = await fetch(
+    `${SB_URL}/rest/v1/leads?id=eq.${id}&select=org_name&limit=1`,
+    { headers: h, cache: 'no-store' }
   )
-  if (!res.ok) return null
-  const rows = await res.json()
-  return Array.isArray(rows) ? (rows[0] ?? null) : null
+  if (!leadRes.ok) return null
+  const leadRows = await leadRes.json()
+  if (!Array.isArray(leadRows) || !leadRows[0]) return null
+  const lead = leadRows[0]
+
+  // 2. Fetch scores from reports table (joined by lead_id)
+  const repRes = await fetch(
+    `${SB_URL}/rest/v1/reports?lead_id=eq.${id}&select=overall_score,dimension_scores&order=created_at.desc&limit=1`,
+    { headers: h, cache: 'no-store' }
+  )
+  if (!repRes.ok) return null
+  const repRows = await repRes.json()
+  if (!Array.isArray(repRows) || !repRows[0]) return null
+  const rep = repRows[0]
+
+  return {
+    org_name: lead.org_name,
+    overall_score: rep.overall_score,
+    dimension_scores: rep.dimension_scores,
+  }
 }
 
 const INDUSTRY_MEDIANS: Record<string, number> = {
