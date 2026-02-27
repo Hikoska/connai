@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -53,43 +53,39 @@ export default function NewAuditPage() {
     const valid = stakeholders.filter(s => s.name.trim() && s.role.trim())
     if (!valid.length) { setError('Add at least one stakeholder.'); return }
     setSubmitting(true)
+
     try {
+      // Get current user session
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/auth/login'); return }
 
-      // Create lead
-      const leadRes = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/leads`,
-        {
-          method: 'POST',
-          headers: {
-            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            Authorization: `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-            Prefer: 'return=representation',
-          },
-          body: JSON.stringify({
-            org_name: orgName.trim(),
-            industry,
-            role,
-            email: session.user.email,
-            status: 'captured',
-          }),
-        }
-      )
-      if (!leadRes.ok) throw new Error('Failed to create audit record.')
-      const [leadData] = await leadRes.json()
-      const leadId = leadData.id
+      // Create lead via server-side API (bypasses RLS with service role key)
+      const leadRes = await fetch('/api/leads/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          org_name: orgName.trim(),
+          industry,
+          role,
+          email: session.user.email,
+        }),
+      })
+      const leadData = await leadRes.json()
+      if (!leadRes.ok || !leadData.lead_id) {
+        setError(leadData.error || 'Failed to create audit record.')
+        setSubmitting(false)
+        return
+      }
 
-      // Send invites
+      // Generate stakeholder invite links
       await fetch('/api/invites/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lead_id: leadId, stakeholders: valid }),
+        body: JSON.stringify({ lead_id: leadData.lead_id, stakeholders: valid }),
       })
 
-      router.push(`/audit/${leadId}`)
+      router.push(`/audit/${leadData.lead_id}`)
     } catch (err: any) {
       setError(err.message || 'Something went wrong.')
       setSubmitting(false)
