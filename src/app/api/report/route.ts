@@ -162,24 +162,59 @@ export async function POST(request: Request) {
         to: [interview[0].stakeholder_email],
         subject: 'Your Connai Digital Maturity Report is Ready',
         html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-            <h1 style="color: #0D5C63; text-align: center;">Your Report is Ready</h1>
-            <p>Thank you for completing the Connai digital maturity assessment. Your overall score is <strong>${overallScore}/100</strong>.</p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-            <h2 style="color: #333;">Key Dimensions:</h2>
-            <p><strong>Top 2 Strongest:</strong></p>
-            <ul>
-              ${strongest.map(([name, score]) => `<li>${name}: ${score}</li>`).join('')}
-            </ul>
-            <p><strong>Top 2 Weakest:</strong></p>
-            <ul>
-              ${weakest.map(([name, score]) => `<li>${name}: ${score}</li>`).join('')}
-            </ul>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-            <div style="text-align: center; margin-top: 20px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-              <a href="${pdf_url}" style="background-color: #0D5C63; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Download Full PDF Report</a>
-              <a href="https://connai.linkgrow.io/report/${interview_id}/share" style="background-color: transparent; color: #0D5C63; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; border: 2px solid #0D5C63; display: inline-block;">Share Your Results →</a>
+          <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: auto; background-color: #0E1117; border-radius: 10px; overflow: hidden;">
+
+            <!-- Header bar -->
+            <div style="background-color: #0D5C63; padding: 24px 32px; text-align: center;">
+              <div style="font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">CONNAI</div>
+              <div style="font-size: 12px; color: #A7F3D0; letter-spacing: 2px; margin-top: 4px; text-transform: uppercase;">Digital Maturity Report</div>
             </div>
+
+            <!-- Score hero -->
+            <div style="padding: 36px 32px 24px; text-align: center; background-color: #0E1117;">
+              <div style="font-size: 13px; color: #94A3B8; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">Your Overall Score</div>
+              <div style="font-size: 64px; font-weight: 800; color: #4ECDC4; line-height: 1;">${overallScore}</div>
+              <div style="font-size: 20px; color: #64748B; margin-top: 4px;">/ 100</div>
+              <div style="display: inline-block; margin-top: 14px; background-color: #0D5C63; color: #A7F3D0; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; padding: 5px 16px; border-radius: 20px; text-transform: uppercase;">Assessment Complete</div>
+              <p style="color: #94A3B8; font-size: 14px; margin: 18px 0 0; line-height: 1.6;">Thank you for completing the Connai digital maturity assessment.<br/>Here is a summary of your results.</p>
+            </div>
+
+            <!-- Divider -->
+            <div style="height: 1px; background-color: #1E2D3D; margin: 0 32px;"></div>
+
+            <!-- Dimensions summary -->
+            <div style="padding: 24px 32px; background-color: #0E1117;">
+              <div style="font-size: 13px; color: #64748B; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; text-align: center;">Key Dimensions</div>
+
+              <!-- Strongest -->
+              <div style="margin-bottom: 16px;">
+                <div style="font-size: 12px; font-weight: 700; color: #4ECDC4; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">▲ Top Strengths</div>
+                ${strongest.map(([name, score]) => `<div style="display: flex; justify-content: space-between; padding: 8px 12px; background-color: #0D1B23; border-left: 3px solid #4ECDC4; border-radius: 4px; margin-bottom: 6px;"><span style="color: #E2E8F0; font-size: 13px;">${name}</span><span style="color: #4ECDC4; font-size: 13px; font-weight: 700;">${score}</span></div>`).join('')}
+              </div>
+
+              <!-- Weakest -->
+              <div>
+                <div style="font-size: 12px; font-weight: 700; color: #F59E0B; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">▼ Areas to Improve</div>
+                ${weakest.map(([name, score]) => `<div style="display: flex; justify-content: space-between; padding: 8px 12px; background-color: #1A1507; border-left: 3px solid #F59E0B; border-radius: 4px; margin-bottom: 6px;"><span style="color: #E2E8F0; font-size: 13px;">${name}</span><span style="color: #F59E0B; font-size: 13px; font-weight: 700;">${score}</span></div>`).join('')}
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div style="height: 1px; background-color: #1E2D3D; margin: 0 32px;"></div>
+
+            <!-- CTAs -->
+            <div style="padding: 28px 32px; text-align: center; background-color: #0E1117;">
+              <div style="margin-bottom: 24px;">
+                <a href="${pdf_url}" style="display: inline-block; background-color: #0D5C63; color: #ffffff; padding: 13px 28px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 700; margin: 6px;">Download Full PDF Report</a>
+                <a href="https://connai.linkgrow.io/report/${interview_id}/share" style="display: inline-block; background-color: transparent; color: #4ECDC4; padding: 11px 26px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 700; border: 2px solid #4ECDC4; margin: 6px;">Share Your Results →</a>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="background-color: #080C10; padding: 16px 32px; text-align: center;">
+              <div style="font-size: 11px; color: #334155;">Built by <span style="color: #4ECDC4;">Linkgrow</span> · connai.linkgrow.io</div>
+            </div>
+
           </div>
         `,
         text: `Your Connai report is ready. Your overall score is ${overallScore}/100. Download the full PDF here: ${pdf_url} | Share your results: https://connai.linkgrow.io/report/${interview_id}/share`
