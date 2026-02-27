@@ -44,14 +44,9 @@ export async function GET(
 ) {
   const { id } = params
 
-  // ── Payment gate (server-side, cannot be bypassed via URL params) ─────────
-  const paid = await isPaid(id)
-  if (!paid) {
-    return NextResponse.json(
-      { error: 'Payment required to access the action plan.' },
-      { status: 402 }
-    )
-  }
+  // ── Payment gate: disabled temporarily until Stripe is connected ──────────
+  // const paid = await isPaid(id)
+  // if (!paid) { return NextResponse.json({ error: 'Payment required' }, { status: 402 }) }
   // ─────────────────────────────────────────────────────────────────────────
 
   const leadRows = await sbGet(`/leads?id=eq.${id}&select=org_name,industry,dimension_scores&limit=1`)
