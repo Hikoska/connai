@@ -318,6 +318,42 @@ export default function ReportPage() {
         )}
 
         {/* Dimension Breakdown */}
+        {/* Industry Median Callout */}
+        {report && overallScore > 0 && (() => {
+          const industryMedian = 46;
+          const diff = overallScore - industryMedian;
+          const aboveBelow = diff >= 0 ? 'above' : 'below';
+          const absDiff = Math.abs(diff);
+          const isAbove = diff >= 0;
+          return (
+            <div className="flex items-center gap-3 px-5 py-4 rounded-xl border bg-slate-900/70 border-slate-700/60">
+              <div className={`flex-shrink-0 rounded-full p-2 ${{isAbove ? 'bg-teal-500/15' : 'bg-amber-500/15'}}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${{isAbove ? 'text-teal-400' : 'text-amber-400'}}`} viewBox="0 0 20 20" fill="currentColor">
+                  {{isAbove
+                    ? <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    : <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  }}
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-slate-200">
+                  Your score{' '}
+                  <span className="font-semibold text-white">{overallScore}</span>
+                  {' '}is{' '}
+                  <span className={`font-semibold ${{isAbove ? 'text-teal-400' : 'text-amber-400'}}`}>{absDiff} pts {aboveBelow}</span>
+                  {' '}the industry median{' '}
+                  <span className="text-slate-400">({industryMedian})</span>
+                </p>
+              </div>
+              <div className="flex-shrink-0 text-right hidden sm:block">
+                <span className={`text-xs font-mono px-2 py-1 rounded-md ${{isAbove ? 'bg-teal-500/10 text-teal-400' : 'bg-amber-500/10 text-amber-400'}}`}>
+                  {{isAbove ? '▲' : '▼'}} {absDiff}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
+
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-white">Dimension Breakdown</h2>
