@@ -7,8 +7,9 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import {
   Copy, Check, ExternalLink, RefreshCw, BarChart2,
-  Users, Clock, CheckCircle2, FileText, Send
+  Users, Clock, CheckCircle2, FileText, Send, Plus
 } from 'lucide-react'
+import { InviteForm } from '@/components/InviteForm'
 
 type Interview = {
   id: string
@@ -79,6 +80,7 @@ export default function AuditDetailPage() {
   const [loading, setLoading] = useState(true)
   const [resending, setResending] = useState<string | null>(null)
   const [resendDone, setResendDone] = useState<string | null>(null)
+  const [showInviteForm, setShowInviteForm] = useState(false)
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
 
@@ -274,6 +276,22 @@ export default function AuditDetailPage() {
               </div>
             )
           })}
+        </div>
+
+
+        {/* Invite new stakeholder */}
+        <div className="space-y-3">
+          <button
+            onClick={() => setShowInviteForm(!showInviteForm)}
+            className="flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors"
+          >
+            <Plus size={14} /> {showInviteForm ? 'Cancel' : 'Invite New Stakeholder'}
+          </button>
+          {showInviteForm && (
+            <div className="mt-4">
+              <InviteForm leadId={lead.id} onInviteSent={() => { setShowInviteForm(false); fetchData() }} />
+            </div>
+          )}
         </div>
 
         {/* Score card when report exists */}
