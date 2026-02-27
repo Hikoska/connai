@@ -194,19 +194,14 @@ export default function ReportPage() {
     : 0;
   const tier = getMaturityTier(overallScore);
 
+  const [mockPaid, setMockPaid] = useState(false);
+
   const handleUpgrade = async () => {
     setCheckoutLoading(true);
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId: id }),
-      });
-      if (res.ok) {
-        const { url } = await res.json();
-        if (url) window.location.href = url;
-      }
-    } catch { /* silent */ }
+    // Beta: mock payment success — no real Stripe charge
+    await new Promise(r => setTimeout(r, 1200));
+    setPaid(true);
+    setMockPaid(true);
     setCheckoutLoading(false);
   };
 
@@ -494,7 +489,7 @@ export default function ReportPage() {
                   disabled={checkoutLoading}
                   className="mt-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-semibold px-8 py-3 rounded-xl transition-colors text-sm"
                 >
-                  {checkoutLoading ? 'Redirecting…' : 'Get Full Report — $49'}
+                  {checkoutLoading ? 'Processing…' : 'Get Full Report — $49'}
                 </button>
               </div>
             </div>
