@@ -58,21 +58,35 @@ export async function GET(
   const { id } = params
   const key = SB_SVC || SB_ANON
 
+  // 1. Fetch lead metadata (org name + industry)
   const leadRes = await fetch(
-    `${SB_URL}/rest/v1/leads?id=eq.${id}&select=org_name,industry,dimension_scores,overall_score&limit=1`,
+    `${SB_URL}/rest/v1/leads?id=eq.${id}&select=org_name,industry&limit=1`,
     {
       headers: { apikey: key, Authorization: `Bearer ${key}`, Accept: 'application/json' },
       cache: 'no-store',
     }
   )
   if (!leadRes.ok) return NextResponse.json({ error: 'Lead not found' }, { status: 404 })
-  const leads = await leadRes.json()
-  const lead = Array.isArray(leads) ? leads[0] : null
-  if (!lead?.dimension_scores) return NextResponse.json({ error: 'Scores not ready' }, { status: 404 })
+  const leadRows = await leadRes.json()
+  const lead = Array.isArray(leadRows) ? leadRows[0] : null
+  if (!lead) return NextResponse.json({ error: 'Lead not found' }, { status: 404 })
 
-  const scores = lead.dimension_scores as Record<string, number>
+  // 2. Fetch scores from reports table (scores live here, not on leads)
+  const repRes = await fetch(
+    `${SB_URL}/rest/v1/reports?lead_id=eq.${id}&select=overall_score,dimension_scores&order=created_at.desc&limit=1`,
+    {
+      headers: { apikey: SB_SVC, Authorization: `Bearer ${SB_SVC}`, Accept: 'application/json' },
+      cache: 'no-store',
+    }
+  )
+  if (!repRes.ok) return NextResponse.json({ error: 'Scores not ready' }, { status: 404 })
+  const repRows = await repRes.json()
+  const rep = Array.isArray(repRows) ? repRows[0] : null
+  if (!rep?.dimension_scores) return NextResponse.json({ error: 'Scores not ready' }, { status: 404 })
+
+  const scores = rep.dimension_scores as Record<string, number>
   const vals = Object.values(scores) as number[]
-  const overallScore = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+  const overallScore = rep.overall_score ?? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
   const tier = getMaturityTier(overallScore)
   const orgName = lead.org_name ?? 'this organisation'
   const industryCtx = lead.industry ? ` in the ${lead.industry} sector` : ''
