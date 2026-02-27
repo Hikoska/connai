@@ -215,6 +215,13 @@ export default function ReportPage() {
     <div className="min-h-screen bg-slate-950 text-white">
 
       {/* Header */}
+            <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          body { background: #0E1117 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page { size: A4 portrait; margin: 12mm; }
+        }
+      `}</style>
       <header className="border-b border-slate-800/60 px-6 py-4 sticky top-0 bg-slate-950/90 backdrop-blur z-10">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -222,7 +229,19 @@ export default function ReportPage() {
             <span className="text-slate-700">·</span>
             <span className="text-slate-500 text-xs">Digital Maturity Report</span>
           </div>
-          <span className="text-slate-600 text-xs">Built by Linkgrow</span>
+          <div className="flex items-center gap-3 no-print">
+            <span className="text-slate-600 text-xs hidden sm:inline">Built by Linkgrow</span>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors border border-slate-700"
+              title="Download as PDF"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+              Download PDF
+            </button>
+          </div>
         </div>
       </header>
 
