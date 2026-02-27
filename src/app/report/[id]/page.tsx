@@ -278,6 +278,24 @@ export default function ReportPage() {
         </div>
       </header>
 
+      {/* Single-perspective banner */}
+      {report?.completedCount === 1 && (
+        <div className="no-print bg-amber-900/20 border-b border-amber-500/20">
+          <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+            <p className="text-amber-300 text-sm">
+              <span className="font-semibold">Single-perspective report.</span>{' '}
+              Add more stakeholders for a multi-dimensional view and a richer action plan.
+            </p>
+            <a
+              href={`/audit/${id}`}
+              className="shrink-0 text-xs font-semibold text-amber-300 border border-amber-500/30 rounded-md px-3 py-1.5 hover:bg-amber-900/40 transition-colors whitespace-nowrap"
+            >
+              Add Stakeholders →
+            </a>
+          </div>
+        </div>
+      )}
+
       <main className="max-w-4xl mx-auto px-6 py-10 space-y-10">
 
         {/* Hero */}

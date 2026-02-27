@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { FileText, PlayCircle, Users, Plus, BarChart2 } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { PricingModal } from '@/components/PricingModal'
 import { StartInterviewButton } from '@/components/StartInterviewButton'
 
 type Interview = {
@@ -57,6 +58,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const supabaseRef = useRef<SupabaseClient | null>(null)
+  const [pricingTarget, setPricingTarget] = useState<string | null>(null)
 
   useEffect(() => {
     const init = async () => {
@@ -291,6 +293,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      <PricingModal
+        isOpen={pricingTarget !== null}
+        onClose={() => setPricingTarget(null)}
+        leadId={pricingTarget ?? undefined}
+      />
     </div>
   )
 }
