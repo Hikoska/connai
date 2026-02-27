@@ -66,3 +66,14 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* ━━━━ Print / PDF ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media print {
+  .no-print { display: none !important; }
+  body {
+    background: #0E1117 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page { size: A4 portrait; margin: 12mm; }
+}
