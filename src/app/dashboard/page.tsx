@@ -153,7 +153,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#0E1117]">
       <main className="p-4 sm:p-8 max-w-5xl mx-auto pt-24">
         {/* Header row */}
-        <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">Your Audits</h1>
             <p className="text-sm text-white/40">{user.email}</p>
@@ -248,7 +248,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Right: score + actions */}
-                    <div className="flex items-center gap-3 shrink-0 pl-13 sm:pl-0">
+                    <div className="flex items-center gap-3 shrink-0 pl-[52px] sm:pl-0">
                       {/* Score badge */}
                       {lead.report && tier && (
                         <div className="text-right hidden sm:block">
