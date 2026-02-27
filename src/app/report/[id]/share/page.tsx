@@ -66,6 +66,58 @@ function barColor(score: number) {
   return 'bg-red-500'
 }
 
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const lead = await getLead(params.id)
+  if (!lead) {
+    return {
+      title: 'Digital Maturity Report — ConnAI by Linkgrow',
+      description: 'See how your organisation ranks across 8 digital maturity dimensions.',
+    }
+  }
+
+  const overallScore = lead.overall_score ?? null
+  const tier = overallScore !== null ? getMaturityTier(overallScore) : null
+  const orgName = lead.org_name ?? 'Your Organisation'
+
+  const topDims = lead.dimension_scores
+    ? Object.entries(lead.dimension_scores)
+        .sort(([, a], [, b]) => (b as number) - (a as number))
+        .slice(0, 2)
+        .map(([name]) => name.split('&')[0].trim())
+    : []
+
+  const title = overallScore !== null
+    ? `${orgName}: ${overallScore}/100 — ${tier?.label ?? 'Digital Maturity'}`
+    : `${orgName} — Digital Maturity Assessment`
+
+  const descParts = [
+    tier ? `Rated ${tier.label}` : null,
+    topDims.length ? `Strong in ${topDims.join(' & ')}` : null,
+    'Assessed across 8 digital dimensions. Built by Linkgrow.',
+  ].filter(Boolean)
+
+  const description = descParts.join('. ')
+
+  const url = `https://connai.linkgrow.io/report/${params.id}/share`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'ConnAI by Linkgrow',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
+  }
+}
+
 export default async function SharePage({ params }: { params: { id: string } }) {
   const lead = await getLead(params.id)
   if (!lead) notFound()
