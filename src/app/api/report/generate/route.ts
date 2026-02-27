@@ -45,13 +45,14 @@ async function dbPost(table: string, body: Record<string, unknown>) {
 }
 
 const DIMENSIONS = [
-  'Strategy & Leadership',
-  'Customer Experience',
-  'Operations & Automation',
+  'Digital Strategy & Leadership',
+  'Customer Experience & Digital Channels',
+  'Operations & Process Automation',
   'Data & Analytics',
   'Technology Infrastructure',
-  'Culture & Change Management',
-  'Innovation & Agility',
+  'Talent & Digital Culture',
+  'Innovation & Agile Delivery',
+  'Cybersecurity & Risk',
 ]
 
 export async function POST(req: Request) {
