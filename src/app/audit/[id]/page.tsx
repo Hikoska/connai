@@ -161,7 +161,7 @@ export default function AuditDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#0E1117] text-white">
-      <header className="border-b border-white/10 px-6 py-4 sticky top-0 bg-[#0E1117]/90 backdrop-blur z-10">
+      <header className="border-b border-white/10 px-4 sm:px-6 py-4 sticky top-0 bg-[#0E1117]/90 backdrop-blur z-10">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="text-white/40 hover:text-white/70 text-xs transition-colors">← Dashboard</Link>
@@ -189,7 +189,7 @@ export default function AuditDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-10 space-y-8">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-8">
 
         {/* Overview */}
         <div>
@@ -296,7 +296,7 @@ export default function AuditDetailPage() {
 
         {/* Score card when report exists */}
         {report && (
-          <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-5 flex items-center justify-between">
+          <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center gap-4">
             <div>
               <p className="text-xs text-teal-400 font-medium uppercase tracking-wider mb-1">Report ready</p>
               <p className="text-white font-semibold">Score: {report.overall_score}/100</p>
@@ -312,7 +312,7 @@ export default function AuditDetailPage() {
 
         {/* CTA when all done but no report */}
         {allDone && !report && (
-          <div className="bg-white/5 border border-white/10 rounded-lg p-5 flex items-center justify-between">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center gap-4">
             <div>
               <p className="text-xs text-white/40 font-medium uppercase tracking-wider mb-1">All interviews complete</p>
               <p className="text-white font-semibold">Ready to generate your Digital Maturity Report</p>
