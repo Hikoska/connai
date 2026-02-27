@@ -145,7 +145,7 @@ export default function ReportPage() {
 
   // Action plan — paid tier only
   useEffect(() => {
-    if (!report || !paidChecked || report.partial || !paid) return;
+    if (!report || !paidChecked || report.partial) return;
     setPlanLoading(true);
     fetch(`/api/report/${id}/action-plan`)
       .then(r => r.ok ? r.json() : null)
@@ -214,14 +214,15 @@ export default function ReportPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
 
-      {/* Header */}
-            <style>{`
+      <style>{`
         @media print {
           .no-print { display: none !important; }
           body { background: #0E1117 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           @page { size: A4 portrait; margin: 12mm; }
         }
       `}</style>
+
+      {/* Header */}
       <header className="border-b border-slate-800/60 px-6 py-4 sticky top-0 bg-slate-950/90 backdrop-blur z-10">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -230,6 +231,8 @@ export default function ReportPage() {
             <span className="text-slate-500 text-xs">Digital Maturity Report</span>
           </div>
           <div className="flex items-center gap-3 no-print">
+            <a href="/dashboard" className="text-slate-500 hover:text-slate-300 text-xs transition-colors hidden sm:inline">Dashboard</a>
+            <span className="text-slate-700 hidden sm:inline">·</span>
             <span className="text-slate-600 text-xs hidden sm:inline">Built by Linkgrow</span>
             <button
               onClick={() => window.print()}
@@ -520,20 +523,20 @@ export default function ReportPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/60 mt-16 px-6 py-8">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <footer className="border-t border-slate-800/60 mt-16 px-6 py-8 no-print">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-teal-500 font-bold text-sm">Connai</span>
+            <span className="text-teal-400 font-bold text-sm tracking-tight">Connai</span>
             <span className="text-slate-700">·</span>
             <span className="text-slate-600 text-xs">Digital Maturity Intelligence</span>
           </div>
-          <p className="text-slate-700 text-xs">
-            Built by{' '}
-            <a href="https://linkgrow.io" className="text-slate-600 hover:text-slate-400 transition-colors">
-              Linkgrow
-            </a>
-            {' '}· {reportDate}
-          </p>
+          <a href="https://linkgrow.io" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
+            <span className="text-slate-500 text-xs uppercase tracking-widest font-medium">Built by</span>
+            <div className="bg-slate-800 rounded px-2 py-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/linkgrow-logo.png" alt="Linkgrow" style={{ height: '16px', width: 'auto', display: 'block' }} />
+            </div>
+          </a>
         </div>
       </footer>
     </div>
