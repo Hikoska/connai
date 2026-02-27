@@ -6,8 +6,8 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { FileText, PlayCircle, Users, Plus, BarChart2 } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { PricingModal } from '@/components/PricingModal'
 import { StartInterviewButton } from '@/components/StartInterviewButton'
+import { PricingModal } from '@/components/PricingModal'
 
 type Interview = {
   id: string
@@ -58,7 +58,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const supabaseRef = useRef<SupabaseClient | null>(null)
-  const [pricingTarget, setPricingTarget] = useState<string | null>(null)
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -236,10 +236,13 @@ export default function DashboardPage() {
                           </div>
                         )}
                         {/* Free-tier teaser */}
-                        {total === 1 && !lead.report && (
-                          <p className="mt-2 text-xs text-teal-400/70 italic">
-                            First interview is free — add more stakeholders for a full multi-perspective report.
-                          </p>
+                        {completed >= 1 && (
+                          <button
+                            onClick={() => setIsPricingModalOpen(true)}
+                            className="mt-2 inline-flex items-center gap-1.5 text-xs bg-teal-500/10 border border-teal-500/20 text-teal-400 hover:bg-teal-500/20 px-2.5 py-1 rounded-full transition-colors"
+                          >
+                            Free interview used — add more from $99
+                          </button>
                         )}
                       </div>
                     </div>
@@ -294,11 +297,7 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      <PricingModal
-        isOpen={pricingTarget !== null}
-        onClose={() => setPricingTarget(null)}
-        leadId={pricingTarget ?? undefined}
-      />
+      <PricingModal isOpen={isPricingModalOpen} onClose={() => setIsPricingModalOpen(false)} />
     </div>
   )
 }
