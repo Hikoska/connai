@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -14,7 +15,12 @@ type Interview = {
   status: string
   stakeholder_name: string
   stakeholder_role: string
+  stakeholder_email?: string
   token: string
+  sent_at?: string
+  link_opened_at?: string
+  first_message_at?: string
+  completed_at?: string
 }
 
 type Lead = {
@@ -29,19 +35,19 @@ type Lead = {
 type Report = { lead_id: string; overall_score: number } | null
 
 function StatusPill({ status }: { status: string }) {
-  if (status === 'complete') return (
-    <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-400 border border-teal-500/20">
-      <CheckCircle2 size={11} /> Complete
-    </span>
-  )
-  if (status === 'in_progress') return (
-    <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/20">
-      <Clock size={11} /> In progress
-    </span>
-  )
+  const cfg: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
+    complete:    { label: 'Completed',  cls: 'bg-teal-500/15 text-teal-400 border-teal-500/20',    icon: <CheckCircle2 size={11} /> },
+    started:     { label: 'Started',   cls: 'bg-blue-500/15 text-blue-300 border-blue-500/20',    icon: <Clock size={11} /> },
+    in_progress: { label: 'In progress', cls: 'bg-blue-500/15 text-blue-300 border-blue-500/20', icon: <Clock size={11} /> },
+    opened:      { label: 'Link opened', cls: 'bg-violet-500/15 text-violet-300 border-violet-500/20', icon: <ExternalLink size={11} /> },
+    sent:        { label: 'Sent',       cls: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/20', icon: <Send size={11} /> },
+    pending:     { label: 'Pending',    cls: 'bg-white/8 text-white/40 border-white/10',           icon: <Clock size={11} /> },
+    cancelled:   { label: 'Cancelled',  cls: 'bg-red-500/15 text-red-400 border-red-500/20',       icon: <Clock size={11} /> },
+  }
+  const { label, cls, icon } = cfg[status] ?? cfg.pending
   return (
-    <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-white/8 text-white/40 border border-white/10">
-      <Clock size={11} /> Pending
+    <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${cls}`}>
+      {icon} {label}
     </span>
   )
 }
@@ -85,7 +91,7 @@ export default function AuditDetailPage() {
       .from('leads')
       .select(`
         id, org_name, email, captured_at, status,
-        interviews ( id, status, stakeholder_name, stakeholder_role, token )
+        interviews ( id, status, stakeholder_name, stakeholder_role, stakeholder_email, token, sent_at, link_opened_at, first_message_at, completed_at )
       `)
       .eq('id', id)
       .single()
