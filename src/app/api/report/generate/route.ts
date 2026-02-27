@@ -56,36 +56,69 @@ const DIMENSIONS = [
 ]
 
 export async function POST(req: Request) {
-  const { interview_id } = await req.json() as { interview_id: string }
+  const body = await req.json() as { interview_id?: string; lead_id?: string }
+  const { interview_id, lead_id } = body
 
-  if (!interview_id) {
-    return NextResponse.json({ error: 'interview_id is required' }, { status: 400 })
+  if (!interview_id && !lead_id) {
+    return NextResponse.json({ error: 'interview_id or lead_id is required' }, { status: 400 })
   }
 
-  // Fetch interview + messages
-  const ivRes = await fetch(
-    `${SB_URL}/rest/v1/interviews?id=eq.${interview_id}&select=id,lead_id,stakeholder_name,stakeholder_role,status&limit=1`,
-    { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, Accept: 'application/json' } }
-  )
-  const ivRows = await ivRes.json()
-  if (!ivRows.length) return NextResponse.json({ error: 'Interview not found' }, { status: 404 })
-  const interview = ivRows[0]
+  // Resolve interviews and aggregate messages
+  let primaryInterview: Record<string, string>
+  let allMessages: { role: string; content: string }[] = []
+  let transcriptContext = ''
+  let resolvedLeadId: string
 
-  const msgsRes = await fetch(
-    `${SB_URL}/rest/v1/interview_messages?interview_id=eq.${interview_id}&select=role,content&order=created_at.asc`,
-    { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, Accept: 'application/json' } }
-  )
-  const messages = await msgsRes.json()
+  if (lead_id) {
+    // Multi-stakeholder: fetch ALL complete interviews for this lead
+    const ivListRes = await fetch(
+      `${SB_URL}/rest/v1/interviews?lead_id=eq.${lead_id}&status=eq.complete&select=id,lead_id,stakeholder_name,stakeholder_role`,
+      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, Accept: 'application/json' } }
+    )
+    const ivList = await ivListRes.json()
+    if (!ivList.length) return NextResponse.json({ error: 'No completed interviews for this lead' }, { status: 404 })
 
-  if (!messages.length) {
-    return NextResponse.json({ error: 'No messages found for this interview' }, { status: 400 })
+    primaryInterview = ivList[0]
+    resolvedLeadId   = lead_id
+    transcriptContext = ivList.map((iv: Record<string,string>) =>
+      `Interview with: ${iv.stakeholder_name} (${iv.stakeholder_role})`
+    ).join('; ')
+
+    // Fetch all messages for all interviews in one query
+    const ids = ivList.map((iv: Record<string,string>) => iv.id).join(',')
+    const msgsRes = await fetch(
+      `${SB_URL}/rest/v1/interview_messages?interview_id=in.(${ids})&select=role,content,interview_id&order=created_at.asc`,
+      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, Accept: 'application/json' } }
+    )
+    allMessages = await msgsRes.json()
+  } else {
+    // Single interview (backward compat)
+    const ivRes = await fetch(
+      `${SB_URL}/rest/v1/interviews?id=eq.${interview_id}&select=id,lead_id,stakeholder_name,stakeholder_role,status&limit=1`,
+      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, Accept: 'application/json' } }
+    )
+    const ivRows = await ivRes.json()
+    if (!ivRows.length) return NextResponse.json({ error: 'Interview not found' }, { status: 404 })
+    primaryInterview = ivRows[0]
+    resolvedLeadId   = primaryInterview.lead_id
+
+    const msgsRes = await fetch(
+      `${SB_URL}/rest/v1/interview_messages?interview_id=eq.${interview_id}&select=role,content&order=created_at.asc`,
+      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, Accept: 'application/json' } }
+    )
+    allMessages = await msgsRes.json()
+    transcriptContext = `Interview with: ${primaryInterview.stakeholder_name} (${primaryInterview.stakeholder_role})`
   }
 
-  const transcript = messages
+  if (!allMessages.length) {
+    return NextResponse.json({ error: 'No messages found' }, { status: 400 })
+  }
+
+  const transcript = allMessages
     .map((m: { role: string; content: string }) => `${m.role.toUpperCase()}: ${m.content}`)
-    .join('\n\n')
+    .join('\n\n---\n\n')
 
-  const scoringPrompt = `You are a digital maturity assessment expert. Analyze this interview transcript and score the organization across ${DIMENSIONS.length} dimensions.\n\nInterview with: ${interview.stakeholder_name} (${interview.stakeholder_role})\n\nTranscript:\n${transcript}\n\nScore each dimension from 0-100 based on the evidence in the transcript. Return ONLY a JSON object:\n${JSON.stringify(Object.fromEntries(DIMENSIONS.map(d => [d, 0])), null, 2)}\n\nReturn only valid JSON, no explanation.`
+  const scoringPrompt = `You are a digital maturity assessment expert. Analyze the following interview transcript(s) and score the organization across ${DIMENSIONS.length} dimensions.\n\n${transcriptContext}\n\nTranscript(s):\n${transcript}\n\nScore each dimension from 0-100 based on the evidence. Return ONLY a JSON object:\n${JSON.stringify(Object.fromEntries(DIMENSIONS.map(d => [d, 0])), null, 2)}\n\nReturn only valid JSON, no explanation.`
 
   let dimensionScores: Record<string, number> = {}
 
@@ -115,8 +148,8 @@ export async function POST(req: Request) {
 
   // Save report
   const reportRows = await dbPost('reports', {
-    lead_id: interview.lead_id,
-    interview_id: interview.id,
+    lead_id: resolvedLeadId,
+    interview_id: primaryInterview.id,
     overall_score: overallScore,
     dimension_scores: dimensionScores,
     generated_at: new Date().toISOString(),
@@ -127,11 +160,12 @@ export async function POST(req: Request) {
   // Send report-ready email to lead (non-fatal)
   try {
     const emailRes = await fetch(
-      `${SB_URL}/rest/v1/leads?id=eq.${interview.lead_id}&select=email&limit=1`,
+      `${SB_URL}/rest/v1/leads?id=eq.${resolvedLeadId}&select=email,org_name&limit=1`,
       { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, Accept: 'application/json' } }
     )
     const emailRows = await emailRes.json()
     const leadEmail = emailRows[0]?.email
+    const leadOrgName: string = emailRows[0]?.org_name ?? ''
     if (process.env.RESEND_API_KEY && leadEmail) {
       // Compute tier + accent color for styled email
       const _emailScore = overallScore
@@ -145,7 +179,7 @@ export async function POST(req: Request) {
         _emailScore >= 70 ? '#14b8a6' :
         _emailScore >= 40 ? '#f59e0b' : '#ef4444'
       const _siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
-      const _reportUrl = `${_siteUrl}/report/${interview.lead_id}`
+      const _reportUrl = `${_siteUrl}/report/${resolvedLeadId}`
       const _topDims = Object.entries(dimensionScores)
         .sort(([, a], [, b]) => (b as number) - (a as number))
         .slice(0, 2)
@@ -206,7 +240,7 @@ export async function POST(req: Request) {
       await resend.emails.send({
         from: 'Connai <reports@connai.linkgrow.io>',
         to: [leadEmail],
-        subject: `Your Digital Maturity Report is ready — ${_emailTier} (${_emailScore}/100)`,
+        subject: `${leadOrgName ? leadOrgName + ' — ' : ''}Digital Maturity Report: ${_emailTier} (${_emailScore}/100)`,
         html: _emailHtml,
       })
     }
@@ -216,7 +250,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    lead_id: interview.lead_id,
+    lead_id: resolvedLeadId,
     report_id: reportId,
     overall_score: overallScore,
     dimensions: dimensionScores,
