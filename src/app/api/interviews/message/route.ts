@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
     if (!ctx) return NextResponse.json({ error: 'Interview not found' }, { status: 404 })
 
     const count = (messages ?? []).length
+    const isFirstMessage = count === 1  // 1 = first user message just arrived
     const isDone = count >= 20
     const isStart = count === 0
 
@@ -121,7 +122,31 @@ Format rules:
             body: JSON.stringify({ interview_id: ctx.id, lead_id: ctx.lead_id }),
           }).catch(err => console.error('[auto-report] trigger failed:', err))
         }
-        return NextResponse.json({ message: text, done: isDone })
+        // Fire-and-forget: set first_message_at + status='started' on first user reply
+        if (isFirstMessage) {
+          fetch(`${SB_URL}/rest/v1/interviews?token=eq.${token}&status=eq.opened`, {
+            method: 'PATCH',
+            headers: {
+              apikey: SERVICE_KEY,
+              Authorization: `Bearer ${SERVICE_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ first_message_at: new Date().toISOString(), status: 'started' }),
+          }).catch(() => { /* non-fatal */ })
+        }
+        // Fire-and-forget: set first_message_at + status='started' on first user reply
+      if (isFirstMessage) {
+        fetch(`${SB_URL}/rest/v1/interviews?token=eq.${token}&status=eq.opened`, {
+          method: 'PATCH',
+          headers: {
+            apikey: SERVICE_KEY,
+            Authorization: `Bearer ${SERVICE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ first_message_at: new Date().toISOString(), status: 'started' }),
+        }).catch(() => { /* non-fatal */ })
+      }
+      return NextResponse.json({ message: text, done: isDone })
       } catch (err) {
         if (!isRateLimit(err)) throw err
         console.warn('Groq rate limit — cascading to Cerebras')
