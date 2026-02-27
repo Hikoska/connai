@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 
 const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const SB_SVC  = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 interface Lead {
   org_name: string
@@ -13,21 +14,23 @@ interface Lead {
 }
 
 async function getLead(id: string): Promise<Lead | null> {
-  const h = { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, Accept: 'application/json' }
-  // 1. Fetch lead name from leads table
+  const anonH = { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}`, Accept: 'application/json' }
+  const svcH  = { apikey: SB_SVC,  Authorization: `Bearer ${SB_SVC}`,  Accept: 'application/json' }
+
+  // 1. Fetch lead name (anon key — leads table has anon SELECT policy)
   const leadRes = await fetch(
     `${SB_URL}/rest/v1/leads?id=eq.${id}&select=org_name&limit=1`,
-    { headers: h, cache: 'no-store' }
+    { headers: anonH, cache: 'no-store' }
   )
   if (!leadRes.ok) return null
   const leadRows = await leadRes.json()
   if (!Array.isArray(leadRows) || !leadRows[0]) return null
   const lead = leadRows[0]
 
-  // 2. Fetch scores from reports table (joined by lead_id)
+  // 2. Fetch scores from reports (service role key — reports has no anon SELECT policy)
   const repRes = await fetch(
     `${SB_URL}/rest/v1/reports?lead_id=eq.${id}&select=overall_score,dimension_scores&order=created_at.desc&limit=1`,
-    { headers: h, cache: 'no-store' }
+    { headers: svcH, cache: 'no-store' }
   )
   if (!repRes.ok) return null
   const repRows = await repRes.json()
