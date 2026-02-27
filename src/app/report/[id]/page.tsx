@@ -61,6 +61,40 @@ const TIER_META = {
   six_month:  { label: '6-Month Actions',          color: 'text-amber-400',  border: 'border-amber-500/30',  desc: 'Plan and execute this quarter'        },
   long_term:  { label: 'Strategic (12\u201324 months)', color: 'text-purple-400', border: 'border-purple-500/30', desc: 'Requires investment and planning'  },
 } as const;
+const OPPORTUNITY_TOOLS: Record<string, { tool: string; action: string; link?: string }[]> = {
+  'Digital Strategy & Leadership': [
+    { tool: 'OKR Board', action: 'Define a 90-day digital objectives cycle with quarterly reviews' },
+    { tool: 'Notion / ClickUp', action: 'Centralise strategy documentation and assign digital ownership' },
+  ],
+  'Customer Experience & Digital Channels': [
+    { tool: 'HubSpot CRM', action: 'Unify customer touchpoints and automate follow-up sequences' },
+    { tool: 'Hotjar', action: 'Map digital friction points via session recordings and heatmaps' },
+  ],
+  'Operations & Process Automation': [
+    { tool: 'Make (Integromat)', action: 'Automate repetitive hand-offs between internal systems' },
+    { tool: 'Process Street', action: 'Digitalise SOPs and create auditable checklist workflows' },
+  ],
+  'Data & Analytics': [
+    { tool: 'Google Looker Studio', action: 'Build a live KPI dashboard connected to operational data' },
+    { tool: 'Segment', action: 'Implement a first-party data collection layer across channels' },
+  ],
+  'Technology Infrastructure': [
+    { tool: 'Vercel / Cloudflare', action: 'Migrate customer-facing services to edge-optimised infrastructure' },
+    { tool: 'Uptime Robot', action: 'Establish 24/7 availability monitoring with incident alerts' },
+  ],
+  'Talent & Digital Culture': [
+    { tool: 'LinkedIn Learning', action: 'Launch a structured digital upskilling programme for all departments' },
+    { tool: 'Loom', action: 'Introduce async video documentation to reduce knowledge silos' },
+  ],
+  'Innovation & Agile Delivery': [
+    { tool: 'Jira / Linear', action: 'Adopt 2-week sprint cycles with a visible backlog and velocity tracking' },
+    { tool: 'Figma', action: 'Run lightweight design sprints before committing to development' },
+  ],
+  'Cybersecurity & Risk': [
+    { tool: 'Datto / Acronis', action: 'Implement automated encrypted backups with tested restore procedures' },
+    { tool: 'KnowBe4', action: 'Deploy phishing simulation and security-awareness training for all staff' },
+  ],
+};
 
 function getMaturityTier(score: number) {
   if (score >= 91) return { label: 'Digital Leader',   color: 'text-yellow-300', bg: 'bg-yellow-900/20 border-yellow-500/30' };
@@ -458,6 +492,126 @@ export default function ReportPage() {
             </div>
           ))}
         </section>
+
+
+        {/* ── Industry Benchmark Comparison ── */}
+        {report && report.dimensions.length > 0 && (
+          <section className="space-y-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-white">Industry Benchmarks</h2>
+              <span className="text-xs text-slate-500 font-mono">Your score vs sector median</span>
+            </div>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+              {report.dimensions.map((d) => {
+                const median = INDUSTRY_MEDIANS[d.name] ?? 50;
+                const isAbove = d.score >= median;
+                return (
+                  <div key={d.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400 truncate max-w-[60%]">{d.name}</span>
+                      <span className={`font-mono font-semibold ${isAbove ? 'text-teal-400' : 'text-amber-400'}`}>
+                        {d.score} <span className="text-slate-600 font-normal">vs {median}</span>
+                      </span>
+                    </div>
+                    <div className="relative h-4 rounded-full bg-slate-800 overflow-hidden">
+                      {/* Industry median marker */}
+                      <div
+                        className="absolute top-0 bottom-0 w-0.5 bg-slate-500/70 z-10"
+                        style={{ left: `${median}%` }}
+                      />
+                      {/* Organisation score bar */}
+                      <div
+                        className={`absolute top-0.5 bottom-0.5 left-0.5 rounded-full transition-all duration-700 ${isAbove ? 'bg-teal-500' : 'bg-amber-500'}`}
+                        style={{ width: barAnimated ? `calc(${d.score}% - 4px)` : '0%' }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-slate-600">
+                      <span>0</span>
+                      <span>Median {median}</span>
+                      <span>100</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-slate-600 text-right">
+              Benchmarks based on aggregated SME assessments in your region and sector.
+            </p>
+          </section>
+        )}
+
+        {/* ── Named Opportunity Register ── */}
+        {report && report.dimensions.length > 0 && (
+          <section className="space-y-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-white">Opportunity Register</h2>
+              <span className="text-xs text-slate-500 font-mono">Highest-impact gaps · named tools</span>
+            </div>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-800/50">
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  The following dimensions show the largest improvement potential relative to your current maturity.
+                  Each entry maps to a specific tool or programme your team can adopt immediately.
+                </p>
+              </div>
+              <div className="divide-y divide-slate-800/50">
+                {[...report.dimensions]
+                  .sort((a, b) => {
+                    const gapA = (INDUSTRY_MEDIANS[a.name] ?? 50) - a.score;
+                    const gapB = (INDUSTRY_MEDIANS[b.name] ?? 50) - b.score;
+                    return gapB - gapA;
+                  })
+                  .slice(0, 5)
+                  .map((d, idx) => {
+                    const median   = INDUSTRY_MEDIANS[d.name] ?? 50;
+                    const gap      = median - d.score;
+                    const tools    = OPPORTUNITY_TOOLS[d.name] ?? [];
+                    const priority = idx === 0 ? 'Critical' : idx <= 1 ? 'High' : 'Medium';
+                    const priorityColor = idx === 0 ? 'text-red-400 bg-red-500/10' : idx <= 1 ? 'text-amber-400 bg-amber-500/10' : 'text-blue-400 bg-blue-500/10';
+                    return (
+                      <div key={d.name} className="px-6 py-5 space-y-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium text-white">{DIMENSION_ICONS[d.name] ?? '◆'} {d.name}</span>
+                              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${priorityColor}`}>{priority}</span>
+                            </div>
+                            <p className="text-xs text-slate-500">
+                              Score {d.score} · {gap > 0 ? `${gap} pts below median` : 'At or above median'} · {percentileLabel(d.score)}
+                            </p>
+                          </div>
+                          {gap > 0 && (
+                            <div className="shrink-0 text-right">
+                              <span className="text-lg font-bold text-amber-400 tabular-nums">+{gap}</span>
+                              <p className="text-[10px] text-slate-600">gap to median</p>
+                            </div>
+                          )}
+                        </div>
+                        {tools.length > 0 && (
+                          <div className="space-y-2">
+                            {tools.map((t, ti) => (
+                              <div key={ti} className="flex items-start gap-3 bg-slate-800/40 rounded-lg px-4 py-3">
+                                <span className="text-teal-400 text-xs font-mono mt-0.5 shrink-0">▶</span>
+                                <div>
+                                  <span className="text-xs font-semibold text-slate-200">{t.tool}</span>
+                                  <span className="text-slate-500 text-xs"> — {t.action}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+              <div className="px-6 py-4 border-t border-slate-800/50 bg-slate-900/40">
+                <p className="text-xs text-slate-600">
+                  Showing top 5 gaps. Full register available in your Action Plan below.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Action Plan */}
         <section className="space-y-5">
