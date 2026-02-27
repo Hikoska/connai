@@ -44,19 +44,31 @@ export async function GET(
 ) {
   const { id } = params
 
-  // ── Payment gate: disabled temporarily until Stripe is connected ──────────
-  // const paid = await isPaid(id)
-  // if (!paid) { return NextResponse.json({ error: 'Payment required' }, { status: 402 }) }
+  // ── Payment gate (server-side, cannot be bypassed via URL params) ─────────
+  const paid = await isPaid(id)
+  if (!paid) {
+    return NextResponse.json(
+      { error: 'Payment required to access the action plan.' },
+      { status: 402 }
+    )
+  }
   // ─────────────────────────────────────────────────────────────────────────
 
-  const leadRows = await sbGet(`/leads?id=eq.${id}&select=org_name,industry,dimension_scores&limit=1`)
+  // 1. Lead metadata (org name + industry)
+  const leadRows = await sbGet(`/leads?id=eq.${id}&select=org_name,industry&limit=1`)
   const lead = Array.isArray(leadRows) ? leadRows[0] : null
-
-  if (!lead?.dimension_scores) {
-    return NextResponse.json({ error: 'Scores not yet generated. Call /preview first.' }, { status: 404 })
+  if (!lead) {
+    return NextResponse.json({ error: 'Lead not found.' }, { status: 404 })
   }
 
-  const scores = lead.dimension_scores as Record<string, number>
+  // 2. Scores from reports table (dimension_scores lives here)
+  const repRows = await sbGet(`/reports?lead_id=eq.${id}&select=overall_score,dimension_scores&order=created_at.desc&limit=1`, true)
+  const rep = Array.isArray(repRows) ? repRows[0] : null
+  if (!rep?.dimension_scores) {
+    return NextResponse.json({ error: 'Scores not yet generated.' }, { status: 404 })
+  }
+
+  const scores = rep.dimension_scores as Record<string, number>
   const orgName = lead.org_name ?? 'the organisation'
   const industry = lead.industry ? ` in the ${lead.industry} sector` : ''
 
