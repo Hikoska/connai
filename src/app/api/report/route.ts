@@ -176,12 +176,13 @@ export async function POST(request: Request) {
               ${weakest.map(([name, score]) => `<li>${name}: ${score}</li>`).join('')}
             </ul>
             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-            <div style="text-align: center; margin-top: 20px;">
-              <a href="${pdf_url}" style="background-color: #0D5C63; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Download Full PDF Report</a>
+            <div style="text-align: center; margin-top: 20px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+              <a href="${pdf_url}" style="background-color: #0D5C63; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Download Full PDF Report</a>
+              <a href="https://connai.linkgrow.io/report/${interview_id}/share" style="background-color: transparent; color: #0D5C63; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; border: 2px solid #0D5C63; display: inline-block;">Share Your Results →</a>
             </div>
           </div>
         `,
-        text: `Your Connai report is ready. Your overall score is ${overallScore}/100. Download the full PDF here: ${pdf_url}`
+        text: `Your Connai report is ready. Your overall score is ${overallScore}/100. Download the full PDF here: ${pdf_url} | Share your results: https://connai.linkgrow.io/report/${interview_id}/share`
       });
       console.log(`Report email sent to ${interview[0].stakeholder_email}`)
     } catch (emailError) {
