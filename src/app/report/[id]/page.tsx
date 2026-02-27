@@ -102,6 +102,41 @@ export default function ReportPage() {
   const [checkoutLoading, setCheckoutLoading]     = useState(false);
   const [paid, setPaid]                           = useState(false);
   const [paidChecked, setPaidChecked]             = useState(false);
+  const [downloading, setDownloading]             = useState(false);
+
+  const downloadPdf = async () => {
+    setDownloading(true)
+    try {
+      const jsPDF = (await import('jspdf')).default
+      const html2canvas = (await import('html2canvas')).default
+      const element = document.getElementById('report-root')
+      if (!element) { setDownloading(false); return }
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#0E1117',
+        logging: false,
+      })
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const pageW = pdf.internal.pageSize.getWidth()
+      const pageH = pdf.internal.pageSize.getHeight()
+      const ratio = canvas.width / canvas.height
+      const imgH = pageW / ratio
+      let y = 0
+      while (y < imgH) {
+        if (y > 0) pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, -y, pageW, imgH)
+        y += pageH
+      }
+      const slug = (orgName || 'report').replace(/[^a-z0-9]/gi, '-').toLowerCase()
+      pdf.save(`connai-${slug}.pdf`)
+    } catch (err) {
+      console.error('PDF generation failed:', err)
+      window.print()
+    }
+    setDownloading(false)
+  }
 
   useEffect(() => {
     fetch(`/api/report/${id}/paid-status`)
@@ -181,7 +216,7 @@ export default function ReportPage() {
   const critical   = report?.dimensions.filter(d => d.score < 40) ?? [];
 
   if (loading) return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div id="report-root" className="min-h-screen bg-slate-950 text-white">
       <div className="border-b border-slate-800 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="h-6 w-20 bg-slate-800 rounded animate-pulse" />
@@ -235,14 +270,14 @@ export default function ReportPage() {
             <span className="text-slate-700 hidden sm:inline">·</span>
             <span className="text-slate-600 text-xs hidden sm:inline">Built by Linkgrow</span>
             <button
-              onClick={() => window.print()}
+              onClick={downloadPdf} disabled={downloading}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors border border-slate-700"
               title="Download as PDF"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
-              Download PDF
+              {downloading ? 'Generating…' : 'Download PDF'}
             </button>
           </div>
         </div>
