@@ -1,4 +1,5 @@
 import React from 'react'
+import PrintButton from '@/components/PrintButton';
 import { notFound } from 'next/navigation'
 
 const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -146,11 +147,15 @@ export default async function SharePage({ params }: { params: { id: string } }) 
           <span className="text-slate-400 text-xs">Digital Maturity Report</span>
         </div>
         <a
-          href={`/report/${params.id}`}
-          className="text-xs bg-teal-500/20 text-teal-300 border border-teal-500/30 px-3 py-1.5 rounded-lg hover:bg-teal-500/30 transition"
-        >
-          View Full Report →
-        </a>
+          <div className="flex items-center gap-2">
+            <PrintButton />
+            <a
+              href={`/report/${params.id}`}
+              className="text-xs bg-teal-500/20 text-teal-300 border border-teal-500/30 px-3 py-1.5 rounded-lg hover:bg-teal-500/30 transition"
+            >
+              View Full Report →
+            </a>
+          </div>
       </header>
 
       {/* Main content */}
