@@ -47,7 +47,7 @@ export default function InterviewPage() {
     }
     setSubmitted(true)
     setSubmitting(false)
-    setTimeout(() => { if (leadId) router.push(`/report/${leadId}`) }, 2000)
+    setTimeout(() => { router.push(`/interview/${token}/complete`) }, 2000)
   }
   const [error, setError] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -217,7 +217,7 @@ export default function InterviewPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-gray-800 font-semibold">Submitted — taking you to the report…</p>
+                <p className="text-gray-800 font-semibold">Submitted — taking you to your summary…</p>
               </div>
             ) : (
               <>
@@ -240,11 +240,11 @@ export default function InterviewPage() {
                     disabled={submitting}
                     className="flex-1 bg-[#0D5C63] hover:bg-[#0a4a50] text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
                   >
-                    {submitting ? 'Submitting…' : 'Submit & view results'}
+                    {submitting ? 'Submitting…' : 'Submit & view summary'}
                   </button>
                   {!comment.trim() && (
                     <button
-                      onClick={() => { setSubmitted(true); setTimeout(() => { if (leadId) router.push(`/report/${leadId}`) }, 800) }}
+                      onClick={() => { setSubmitted(true); setTimeout(() => { router.push(`/interview/${token}/complete`) }, 800) }}
                       className="text-sm text-gray-400 hover:text-gray-600 px-3"
                     >
                       Skip
