@@ -117,7 +117,7 @@ export async function POST(request: Request) {
   }
 
   // Step 1: Fetch the interview transcript
-  const interview = await fetch(`${SUPABASE_URL}/rest/v1/interviews?id=eq.${interview_id}&select=transcript,stakeholder_email`, {
+  const interview = await fetch(`${SUPABASE_URL}/rest/v1/interviews?id=eq.${interview_id}&select=transcript,stakeholder_email,lead_id,leads(org_name)`, {
     headers: {
       'apikey': SUPABASE_SERVICE_ROLE_KEY,
       'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
@@ -131,6 +131,7 @@ export async function POST(request: Request) {
   }
 
   const transcript = interview[0].transcript;
+  const orgName: string = (interview[0].leads as any)?.org_name ?? '';
 
   // Step 2: Real LLM-based scoring via Groq / OpenRouter
   let reportDimensions: Record<Dimension, number>
@@ -145,8 +146,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to score interview' }, { status: 500 })
   }
 
-  // Step 3: Placeholder for saving the report back to Supabase
-  console.log('Placeholder for saving report to Supabase.')
+  // Step 3: Save report to reports table
+  const overallScoreNum = Math.round(
+    Object.values(reportDimensions).reduce((a, b) => a + b, 0) / DIMENSIONS.length
+  )
+  const { data: savedReport } = await fetch(`${SUPABASE_URL}/rest/v1/reports`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_SERVICE_ROLE_KEY,
+      'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    },
+    body: JSON.stringify({
+      interview_id,
+      lead_id: interview[0].lead_id,
+      overall_score: overallScoreNum,
+      dimension_scores: reportDimensions,
+      created_at: new Date().toISOString(),
+    }),
+  }).then(r => r.json()).then(rows => ({ data: Array.isArray(rows) ? rows[0] : rows })).catch(() => ({ data: null }))
+  const reportLeadId: string = (savedReport as any)?.lead_id ?? interview[0].lead_id ?? interview_id
 
   // Step 4: Placeholder for PDF generation and upload
   const pdf_url = `https://example.com/reports/${interview_id}.pdf`
@@ -160,7 +180,7 @@ export async function POST(request: Request) {
       await resend.emails.send({
         from: 'Connai <reports@connai.linkgrow.io>',
         to: [interview[0].stakeholder_email],
-        subject: 'Your Connai Digital Maturity Report is Ready',
+        subject: `Your Connai Digital Maturity Report is Ready${orgName ? ` — ${orgName}` : ''}`,
         html: `
           <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: auto; background-color: #0E1117; border-radius: 10px; overflow: hidden;">
 
@@ -206,7 +226,7 @@ export async function POST(request: Request) {
             <div style="padding: 28px 32px; text-align: center; background-color: #0E1117;">
               <div style="margin-bottom: 24px;">
                 <a href="${pdf_url}" style="display: inline-block; background-color: #0D5C63; color: #ffffff; padding: 13px 28px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 700; margin: 6px;">Download Full PDF Report</a>
-                <a href="https://connai.linkgrow.io/report/${interview_id}/share" style="display: inline-block; background-color: transparent; color: #4ECDC4; padding: 11px 26px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 700; border: 2px solid #4ECDC4; margin: 6px;">Share Your Results →</a>
+                <a href="https://connai.linkgrow.io/report/${reportLeadId}/share" style="display: inline-block; background-color: transparent; color: #4ECDC4; padding: 11px 26px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 700; border: 2px solid #4ECDC4; margin: 6px;">Share Your Results →</a>
               </div>
             </div>
 
