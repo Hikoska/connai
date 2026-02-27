@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 const STORAGE_KEY = 'connai_admin_authed'
 
-type Interview = { id: string; status: string }
+type Interview = { id: string; status: string; stakeholder_email?: string }
 type Report    = { lead_id: string; overall_score: number; pdf_url?: string | null }
 type Lead = {
   id:          string
@@ -46,6 +46,15 @@ export default function AdminLeadsPage() {
   const [loading,   setLoading]   = useState(false)
   const [filter,    setFilter]    = useState<string>('all')
   const [search,    setSearch]    = useState('')
+
+  // ── Interview invite dispatch ──
+  const [inviteLeadId, setInviteLeadId] = useState<string | null>(null)
+  const [stakeEmail,   setStakeEmail]   = useState('')
+  const [stakeName,    setStakeName]    = useState('')
+  const [stakeRole,    setStakeRole]    = useState('')
+  const [sending,      setSending]      = useState(false)
+  const [sendErr,      setSendErr]      = useState<string | null>(null)
+  const [sendOk,       setSendOk]       = useState<string | null>(null)
 
   // Restore session from localStorage on mount
   useEffect(() => {
@@ -88,6 +97,46 @@ export default function AdminLeadsPage() {
     const res = await fetch('/api/admin/leads')
     if (res.ok) setLeads(await res.json())
     setLoading(false)
+  }
+
+  async function handleSendInvite(e: React.FormEvent) {
+    e.preventDefault()
+    if (!inviteLeadId || !stakeEmail.trim()) return
+    setSending(true); setSendErr(null); setSendOk(null)
+    try {
+      const r1 = await fetch('/api/interview/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lead_id:           inviteLeadId,
+          stakeholder_email: stakeEmail.trim(),
+          stakeholder_name:  stakeName.trim() || undefined,
+          stakeholder_role:  stakeRole.trim() || undefined,
+        }),
+      })
+      if (!r1.ok) { const j = await r1.json().catch(() => ({})); throw new Error(j.error ?? `Start failed: HTTP ${r1.status}`) }
+      const { interview_id } = await r1.json()
+      const r2 = await fetch('/api/interview/send-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ interview_id }),
+      })
+      if (!r2.ok) { const j = await r2.json().catch(() => ({})); throw new Error(j.error ?? `Invite failed: HTTP ${r2.status}`) }
+      const { interview_url } = await r2.json()
+      setSendOk(interview_url)
+      setStakeEmail(''); setStakeName(''); setStakeRole('')
+      loadLeads()
+    } catch (err: unknown) {
+      setSendErr(err instanceof Error ? err.message : 'Dispatch failed')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  function closeInvitePanel() {
+    setInviteLeadId(null)
+    setStakeEmail(''); setStakeName(''); setStakeRole('')
+    setSendErr(null); setSendOk(null)
   }
 
   // Prevent flash of login gate if restoring session
@@ -229,6 +278,7 @@ export default function AdminLeadsPage() {
                   <th className="px-4 py-3">Score</th>
                   <th className="px-4 py-3">Captured</th>
                   <th className="px-4 py-3">Report</th>
+                  <th className="px-4 py-3">Invite</th>
                 </tr>
               </thead>
               <tbody>
@@ -287,6 +337,21 @@ export default function AdminLeadsPage() {
                           <span className="text-gray-600 text-xs">—</span>
                         )}
                       </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => {
+                            if (inviteLeadId === lead.id) { closeInvitePanel() }
+                            else { closeInvitePanel(); setInviteLeadId(lead.id) }
+                          }}
+                          className={`text-xs px-2 py-1 rounded-md border transition-colors ${
+                            inviteLeadId === lead.id
+                              ? 'bg-teal-600 border-teal-500 text-white'
+                              : 'bg-teal-600/10 border-teal-600/30 text-teal-400 hover:bg-teal-600/20'
+                          }`}
+                        >
+                          ✉️ Invite
+                        </button>
+                      </td>
                     </tr>
                   )
                 })}
@@ -307,6 +372,66 @@ export default function AdminLeadsPage() {
         </div>
       )}
 
+
+      {/* Interview Invite Panel */}
+      {inviteLeadId && (() => {
+        const lead = leads.find(l => l.id === inviteLeadId)
+        if (!lead) return null
+        return (
+          <div className="mt-4 bg-gray-900 border border-teal-700/40 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-teal-300 uppercase tracking-wide">
+                Send Interview Invite — <span className="text-white normal-case">{lead.org_name}</span>
+              </h2>
+              <button onClick={closeInvitePanel} className="text-gray-500 hover:text-white text-lg leading-none">×</button>
+            </div>
+            {sendOk ? (
+              <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-4">
+                <p className="text-green-400 font-medium text-sm mb-1">✓ Invite sent!</p>
+                <p className="text-gray-400 text-xs mb-1">Interview link:</p>
+                <a href={sendOk} target="_blank" rel="noopener noreferrer"
+                  className="text-blue-400 text-xs break-all hover:text-blue-300">{sendOk}</a>
+                <button onClick={() => setSendOk(null)}
+                  className="mt-3 block text-xs text-gray-400 hover:text-white border border-gray-700 px-3 py-1 rounded-md">
+                  Send another
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSendInvite} className="flex flex-wrap gap-3 items-end">
+                <div className="flex flex-col gap-1 min-w-[200px]">
+                  <label className="text-xs text-gray-500 font-medium uppercase tracking-wide">Email *</label>
+                  <input type="email" required value={stakeEmail} onChange={e => setStakeEmail(e.target.value)}
+                    placeholder="stakeholder@company.com"
+                    className="bg-gray-800 border border-gray-700 text-white text-sm px-3 py-1.5 rounded-md focus:outline-none focus:border-teal-500 w-full" />
+                </div>
+                <div className="flex flex-col gap-1 min-w-[140px]">
+                  <label className="text-xs text-gray-500 font-medium uppercase tracking-wide">Name</label>
+                  <input type="text" value={stakeName} onChange={e => setStakeName(e.target.value)}
+                    placeholder="Jane Doe"
+                    className="bg-gray-800 border border-gray-700 text-white text-sm px-3 py-1.5 rounded-md focus:outline-none focus:border-teal-500 w-full" />
+                </div>
+                <div className="flex flex-col gap-1 min-w-[120px]">
+                  <label className="text-xs text-gray-500 font-medium uppercase tracking-wide">Role</label>
+                  <input type="text" value={stakeRole} onChange={e => setStakeRole(e.target.value)}
+                    placeholder="CTO"
+                    className="bg-gray-800 border border-gray-700 text-white text-sm px-3 py-1.5 rounded-md focus:outline-none focus:border-teal-500 w-full" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  {sendErr && <p className="text-red-400 text-xs">{sendErr}</p>}
+                  <button type="submit" disabled={sending || !stakeEmail.trim()}
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                      sending || !stakeEmail.trim()
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-teal-600 hover:bg-teal-500 text-white'
+                    }`}>
+                    {sending ? 'Sending…' : 'Send Invite'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )
+      })()}
       {!loading && visible.length === 0 && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-16 text-center">
           <p className="text-gray-500">
