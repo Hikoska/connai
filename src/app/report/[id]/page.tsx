@@ -36,6 +36,15 @@ const INDUSTRY_MEDIANS: Record<string, number> = {
   'Cybersecurity & Risk': 46,
 };
 
+function percentileLabel(score: number): string {
+  if (score >= 80) return 'Top 10%';
+  if (score >= 70) return 'Top 20%';
+  if (score >= 60) return 'Top 30%';
+  if (score >= 50) return 'Top 45%';
+  if (score >= 40) return 'Top 60%';
+  return 'Bottom 40%';
+}
+
 const DIMENSION_ICONS: Record<string, string> = {
   'Digital Strategy & Leadership': '🧭',
   'Customer Experience & Digital Channels': '🤝',
@@ -329,6 +338,10 @@ export default function ReportPage() {
                             {delta >= 0 ? '+' : ''}{delta} vs median
                           </span>
                         </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <span className="text-xs font-mono text-slate-400">📊</span>
+                        <span className="text-xs text-slate-400">{percentileLabel(d.score)} of assessments</span>
                       </div>
                       {dimInsights[d.name] && (
                         <p className="text-slate-500 text-xs leading-snug italic border-t border-slate-800/60 pt-3">
