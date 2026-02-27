@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
+import { FeedbackBar } from '@/components/FeedbackBar';
 
 interface Dimension { name: string; score: number; }
 interface ReportData {
@@ -745,6 +746,7 @@ export default function ReportPage() {
             </div>
           </a>
         </div>
+      <FeedbackBar reportId={report?.leadId || ''} />
       </footer>
     </div>
   );
