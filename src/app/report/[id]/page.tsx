@@ -314,14 +314,21 @@ export default function ReportPage() {
 
       <main className="max-w-4xl mx-auto px-6 py-10 space-y-10">
 
-        {/* Single-perspective banner */}
-        {report?.completedCount === 1 && (
+        {/* Perspective banner */}
+        {report && report.completedCount === 1 && (
           <div className="bg-amber-900/40 border border-amber-500/30 text-amber-300 rounded-xl p-4 text-sm no-print">
             <p className="font-semibold mb-1">This report reflects one perspective.</p>
             <p className="text-amber-300/80">
               Add more stakeholders for a multi-dimensional view, deeper action plan, and full opportunity register.{' '}
               <a href={`/audit/${id}`} className="font-bold underline hover:text-white transition-colors">Add stakeholders →</a>
             </p>
+          </div>
+        )}
+        {report && report.completedCount >= 2 && (
+          <div className="bg-teal-900/30 border border-teal-500/30 text-teal-300 rounded-xl p-4 text-sm no-print flex items-center gap-2">
+            <span className="text-teal-400 font-bold">✓</span>
+            <span className="font-semibold">{report.completedCount} perspectives collected</span>
+            <span className="text-teal-300/60">— multi-dimensional analysis active</span>
           </div>
         )}
 
@@ -355,6 +362,11 @@ export default function ReportPage() {
               </div>
             </div>
             <p className="text-slate-400 text-sm">Overall Maturity Score</p>
+            {report && (
+              <p className="text-teal-400 text-xs mt-1">
+                {report.completedCount} stakeholder{report.completedCount !== 1 ? 's' : ''} interviewed
+              </p>
+            )}
           </div>
 
           <div className={`${tier.bg} border rounded-2xl p-8 flex flex-col justify-between`}>
