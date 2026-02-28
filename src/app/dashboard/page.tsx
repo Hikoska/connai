@@ -149,6 +149,28 @@ export default function DashboardPage() {
     )
   }
 
+  if (!loading && user && leads.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
+        <div className="text-center max-w-sm">
+          <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-5">
+            <BarChart2 className="text-white/20" size={28} />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">No audits yet</h2>
+          <p className="text-white/50 text-sm mb-6">
+            Start your first digital maturity audit and get a scored report in 30 minutes.
+          </p>
+          <Link
+            href="/audit/new"
+            className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-colors"
+          >
+            <Plus size={15} /> Start your first audit
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#0E1117]">
       <main className="p-4 sm:p-8 max-w-5xl mx-auto pt-24">
@@ -168,7 +190,7 @@ export default function DashboardPage() {
 
         <div className="bg-white/5 border border-white/10 rounded-lg">
           <div className="divide-y divide-white/10">
-            {leads.length > 0 ? leads.map(lead => {
+            {leads.map(lead => {
               const completed = lead.interviews.filter(i => i.status === 'complete').length
               const total = lead.interviews.length
               const allDone = total > 0 && completed === total
@@ -225,8 +247,8 @@ export default function DashboardPage() {
                                   </span>
                                   <span className={`text-xs ml-auto px-1.5 py-0.5 rounded-full ${
                                     iv.status === 'complete' ? 'bg-teal-500/10 text-teal-400'
-                                    : iv.status === 'started' ? 'bg-yellow-500/10 text-yellow-400'
-                                    : 'bg-white/5 text-white/30'
+                                      : iv.status === 'started' ? 'bg-yellow-500/10 text-yellow-400'
+                                      : 'bg-white/5 text-white/30'
                                   }`}>
                                     {s.label}
                                   </span>
@@ -235,6 +257,7 @@ export default function DashboardPage() {
                             })}
                           </div>
                         )}
+
                         {/* Free-tier teaser */}
                         {completed >= 1 && (
                           <button
@@ -279,20 +302,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )
-            }) : (
-              <div className="p-12 text-center">
-                <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4">
-                  <FileText className="text-white/20" size={22} />
-                </div>
-                <p className="text-white/50 mb-4">No audits yet.</p>
-                <Link
-                  href="/audit/new"
-                  className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-colors"
-                >
-                  <Plus size={15} /> Start your first audit
-                </Link>
-              </div>
-            )}
+            })}
           </div>
         </div>
       </main>
