@@ -1,100 +1,64 @@
-import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
+'use client'
 
-export const dynamic = 'force-dynamic'
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import ReportCTA from './ReportCTA'
 
-interface Props {
-  params: { token: string }
-}
+export default function InterviewCompletePage() {
+  const params = useParams()
+  const token = params?.token as string
+  const [leadId, setLeadId] = useState<string | null>(null)
+  const [orgName, setOrgName] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
-export default async function InterviewCompletePage({ params }: Props) {
-  const { token } = params
-  const supabase = createClient()
+  useEffect(() => {
+    const fetchLead = async () => {
+      if (!token) {
+        setLoading(false)
+        return
+      }
+      const supabase = createClient()
+      const { data: interview } = await supabase
+        .from('interviews')
+        .select('lead_id, leads(org_name)')
+        .eq('interview_token', token)
+        .single()
+      if (interview) {
+        setLeadId(interview.lead_id)
+        const leads = interview.leads as any
+        setOrgName(Array.isArray(leads) ? leads[0]?.org_name : leads?.org_name)
+      }
+      setLoading(false)
+    }
+    fetchLead()
+  }, [token])
 
-  // Fetch interview record
-  const { data: interview } = await supabase
-    .from('interviews')
-    .select('lead_id, stakeholder_email, stakeholder_name, status')
-    .eq('token', token)
-    .single()
-
-  let orgName = ''
-  let leadId = ''
-
-  if (interview?.lead_id) {
-    leadId = interview.lead_id
-    const { data: lead } = await supabase
-      .from('leads')
-      .select('org_name')
-      .eq('id', interview.lead_id)
-      .single()
-    if (lead?.org_name) orgName = lead.org_name
-  }
-
-  if (!interview) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center space-y-2">
-          <p className="text-gray-800 font-semibold">Interview not found</p>
-          <p className="text-gray-500 text-sm">This link may be invalid or expired.</p>
-        </div>
+      <div className="min-h-screen bg-[#0E1117] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-6 text-center">
-        {/* Check icon */}
-        <div className="w-14 h-14 bg-teal-50 rounded-full flex items-center justify-center mx-auto">
-          <svg className="w-7 h-7 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
+      <div className="max-w-md w-full text-center">
+        <div className="w-16 h-16 rounded-full bg-teal-500/20 flex items-center justify-center mx-auto mb-6">
+          <svg className="w-8 h-8 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
 
-        {/* Heading */}
-        <div className="space-y-2">
-          <h1 className="text-xl font-bold text-gray-900">Thank you!</h1>
-          <p className="text-gray-500 text-sm leading-relaxed">
-            {interview.stakeholder_name
-              ? `Your input has been recorded, ${interview.stakeholder_name}.`
-              : 'Your input has been recorded.'}
-            {orgName ? ` It will be included in the ${orgName} digital maturity assessment.` : ''}
-          </p>
-        </div>
-
-        {/* What happens next */}
-        <div className="bg-gray-50 rounded-xl p-4 text-left space-y-3">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">What happens next</p>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li className="flex items-start gap-2">
-              <span className="text-teal-500 mt-0.5 flex-shrink-0">✓</span>
-              <span>Your responses have been securely submitted</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-teal-500 mt-0.5 flex-shrink-0">✓</span>
-              <span>The assessment report will be generated once all stakeholders have responded</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-teal-500 mt-0.5 flex-shrink-0">✓</span>
-              <span>You may receive a copy of the report by email</span>
-            </li>
-          </ul>
-        </div>
-
-        {/* CTA — only show report link if leadId known */}
-        {leadId && (
-          <Link
-            href={`/report/${leadId}`}
-            className="inline-block w-full bg-[#0D5C63] hover:bg-[#0a4a50] text-white font-semibold text-sm px-4 py-3 rounded-xl transition-colors"
-          >
-            View the report
-          </Link>
-        )}
-
-        <p className="text-xs text-gray-400">
-          You can close this tab.
+        <h1 className="text-2xl font-bold text-white mb-2">
+          Thank you!
+        </h1>
+        <p className="text-white/60 mb-4">
+          {orgName ? `Your interview for ${orgName} is complete.` : 'Your interview is complete.'}
         </p>
+
+        {leadId && <ReportCTA leadId={leadId} />}
       </div>
     </div>
   )
