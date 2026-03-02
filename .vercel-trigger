@@ -1,0 +1,3 @@
+# Vercel redeploy trigger
+Last triggered: 2026-03-02T13:50 UTC
+Reason: FG-14/15/16 were committed in separate pushes; first deploy failed with module_not_found before HomeConcierge.tsx existed. All files now present on main.
