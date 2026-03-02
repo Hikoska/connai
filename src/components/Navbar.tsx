@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { StartInterviewButton } from '@/components/StartInterviewButton'
 
 // Connai logomark — geometric neural-node mark
@@ -30,6 +31,7 @@ export function Navbar() {
   const [user, setUser] = useState<{ email: string } | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -87,8 +89,8 @@ export function Navbar() {
   const initials = user?.email ? user.email[0].toUpperCase() : ''
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-      scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100' : 'bg-transparent'
+    <header className={`sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 transition-shadow duration-300 ${
+      scrolled ? 'shadow-sm' : 'shadow-none'
     }`}>
       <nav className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
         {/* Logo */}
@@ -138,9 +140,11 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/auth/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                Sign in
-              </Link>
+              {!pathname?.startsWith('/auth') && (
+                <Link href="/auth/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  Sign in
+                </Link>
+              )}
               <StartInterviewButton className="bg-[#0D5C63] text-white text-sm font-semibold px-5 py-2 rounded-full hover:bg-[#0a4a50] transition-colors">
                 Start free audit
               </StartInterviewButton>
@@ -168,7 +172,9 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/auth/login" className="block text-sm text-gray-700" onClick={() => setMenuOpen(false)}>Sign in</Link>
+              {!pathname?.startsWith('/auth') && (
+                <Link href="/auth/login" className="block text-sm text-gray-700" onClick={() => setMenuOpen(false)}>Sign in</Link>
+              )}
               <StartInterviewButton className="w-full bg-[#0D5C63] text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-[#0a4a50] transition-colors text-center block">
                 Start free audit
               </StartInterviewButton>
