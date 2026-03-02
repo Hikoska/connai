@@ -138,6 +138,7 @@ export default function ReportPage() {
   const [paid, setPaid]                           = useState(false);
   const [paidChecked, setPaidChecked]             = useState(false);
   const [downloading, setDownloading]             = useState(false);
+  const [copied, setCopied]                       = useState(false);
 
   const downloadPdf = async () => {
     setDownloading(true)
@@ -171,6 +172,14 @@ export default function ReportPage() {
       window.print()
     }
     setDownloading(false)
+  }
+
+  const handleCopy = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href).catch(() => {})
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }
 
   useEffect(() => {
@@ -299,6 +308,12 @@ export default function ReportPage() {
             <a href="/dashboard" className="text-slate-500 hover:text-slate-300 text-xs transition-colors hidden sm:inline">Dashboard</a>
             <span className="text-slate-700 hidden sm:inline">·</span>
             <span className="text-slate-600 text-xs hidden sm:inline">Built by Linkgrow</span>
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors border border-slate-700"
+            >
+              {copied ? '✓ Copied!' : 'Share'}
+            </button>
             <button
               onClick={downloadPdf} disabled={downloading}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors border border-slate-700"
@@ -497,6 +512,11 @@ export default function ReportPage() {
                         <p className="text-slate-500 text-xs leading-snug italic border-t border-slate-800/60 pt-3">
                           {dimInsights[d.name]}
                         </p>
+                      )}
+                      {summaryLoading && !dimInsights[d.name] && (
+                        <div className="border-t border-slate-800/60 pt-3">
+                          <div className="h-2.5 bg-slate-700 rounded animate-pulse w-[70%]" />
+                        </div>
                       )}
                     </div>
                   );
