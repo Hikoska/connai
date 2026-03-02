@@ -18,6 +18,9 @@ const nextConfig = {
       'stripe': stub,
       '@stripe/stripe-js': stub,
       '@google/generative-ai': stub,
+      // Browser-only PDF libs — too large for serverless bundle; PDF route uses server-side logic only
+      'jspdf': stub,
+      'html2canvas': stub,
     }
     return config
   },
