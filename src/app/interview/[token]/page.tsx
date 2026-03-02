@@ -132,10 +132,10 @@ export default function InterviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#0E1117]">
         <div className="text-center space-y-3">
           <div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto" />
-          <p className="text-gray-400 text-sm">Preparing your interview...</p>
+          <p className="text-slate-500 text-sm">Preparing your interview...</p>
         </div>
       </div>
     )
@@ -143,30 +143,30 @@ export default function InterviewPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-red-500 text-sm">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#0E1117]">
+        <p className="text-red-400 text-sm">{error}</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#0E1117] flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 flex-shrink-0">
+      <div className="bg-[#0E1117]/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center gap-3 flex-shrink-0">
         <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
           <span className="text-white text-xs font-bold">C</span>
         </div>
         <div>
-          <p className="text-sm font-semibold text-gray-800">Connai AI Interviewer</p>
+          <p className="text-sm font-semibold text-slate-200">Connai AI Interviewer</p>
           {orgName && (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-slate-500">
               {orgName}
               {' · '}
               Digital Maturity Assessment
             </p>
           )}
           {messages.length > 0 && (
-            <p className="text-xs text-teal-600 font-medium">
+            <p className="text-xs text-teal-400 font-medium">
               Question {Math.ceil(messages.length / 2)} of 20
             </p>
           )}
@@ -182,7 +182,7 @@ export default function InterviewPage() {
                 className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                   msg.role === 'user'
                     ? 'bg-[#0D5C63] text-white rounded-br-sm'
-                    : 'bg-white text-gray-800 border border-gray-100 shadow-sm rounded-bl-sm'
+                    : 'bg-slate-800/80 text-slate-100 border border-slate-700 rounded-bl-sm'
                 }`}
               >
                 {msg.content}
@@ -192,11 +192,11 @@ export default function InterviewPage() {
 
           {thinking && (
             <div className="flex justify-start">
-              <div className="bg-white border border-gray-100 shadow-sm rounded-2xl rounded-bl-sm px-4 py-3">
+              <div className="bg-slate-800/80 border border-slate-700 rounded-2xl rounded-bl-sm px-4 py-3">
                 <div className="flex gap-1.5 items-center h-4">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" />
+                  <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" />
                 </div>
               </div>
             </div>
@@ -208,22 +208,22 @@ export default function InterviewPage() {
 
       {/* Input bar or done state */}
       {done ? (
-        <div className="bg-white border-t border-gray-100 px-4 py-6 flex-shrink-0">
+        <div className="bg-[#0E1117] border-t border-slate-800 px-4 py-6 flex-shrink-0">
           <div className="max-w-2xl mx-auto space-y-4">
             {submitted ? (
               <div className="text-center space-y-2">
-                <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center mx-auto">
-                  <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 bg-teal-900/30 rounded-full flex items-center justify-center mx-auto">
+                  <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-gray-800 font-semibold">Submitted — taking you to your summary…</p>
+                <p className="text-slate-200 font-semibold">Submitted — taking you to your summary…</p>
               </div>
             ) : (
               <>
                 <div className="text-center">
-                  <p className="text-gray-800 font-semibold">Interview complete</p>
-                  <p className="text-gray-500 text-sm mt-1">
+                  <p className="text-slate-200 font-semibold">Interview complete</p>
+                  <p className="text-slate-400 text-sm mt-1">
                     Anything you&apos;d like to add before we finalise your input? (optional)
                   </p>
                 </div>
@@ -232,7 +232,7 @@ export default function InterviewPage() {
                   onChange={e => setComment(e.target.value)}
                   placeholder="Any additional context, clarifications, or priorities you want the assessment to consider…"
                   rows={3}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
                 />
                 <div className="flex gap-3">
                   <button
@@ -245,7 +245,7 @@ export default function InterviewPage() {
                   {!comment.trim() && (
                     <button
                       onClick={() => { setSubmitted(true); setTimeout(() => { router.push(`/interview/${token}/complete`) }, 800) }}
-                      className="text-sm text-gray-400 hover:text-gray-600 px-3"
+                      className="text-sm text-slate-500 hover:text-slate-300 px-3"
                     >
                       Skip
                     </button>
@@ -256,7 +256,7 @@ export default function InterviewPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-white border-t border-gray-100 px-4 py-3 flex-shrink-0">
+        <div className="bg-[#0E1117] border-t border-slate-800 px-4 py-3 flex-shrink-0">
           <div className="max-w-2xl mx-auto flex gap-3 items-end">
             <textarea
               value={input}
@@ -265,7 +265,7 @@ export default function InterviewPage() {
               placeholder="Type your answer..."
               rows={2}
               disabled={thinking}
-              className="flex-1 resize-none border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 max-h-32 overflow-y-auto disabled:bg-gray-50"
+              className="flex-1 resize-none bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 max-h-32 overflow-y-auto disabled:bg-slate-800"
             />
             <button
               onClick={send}
@@ -277,7 +277,7 @@ export default function InterviewPage() {
               </svg>
             </button>
           </div>
-          <p className="text-xs text-gray-400 text-center mt-2">Enter to send · Shift+Enter for new line</p>
+          <p className="text-xs text-slate-600 text-center mt-2">Enter to send · Shift+Enter for new line</p>
         </div>
       )}
     </div>
