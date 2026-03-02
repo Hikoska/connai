@@ -81,8 +81,8 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <Navbar />
         <AlphaBanner />
+        <Navbar />
         {children}
         <FeedbackWidget />
       </body>
