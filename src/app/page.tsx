@@ -9,6 +9,7 @@ import { ProductScreenshot } from '@/components/ProductScreenshot'
 import { Testimonials } from '@/components/Testimonials'
 import { FAQ } from '@/components/FAQ'
 import Link from 'next/link'
+import HomeConcierge from '@/components/HomeConcierge'
 
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
@@ -17,8 +18,15 @@ const instrumentSerif = Instrument_Serif({
 })
 
 const Hero = () => (
-  <section className="pt-32 pb-24 bg-[#F8F6F2]">
-    <div className="max-w-4xl mx-auto px-6 text-center">
+  <section className="relative pt-24 pb-16 overflow-hidden bg-[#F8F6F2]">
+    {/* Teal depth gradient */}
+    <div className="absolute inset-0 bg-gradient-to-b from-[#0D5C63]/10 to-transparent pointer-events-none" />
+    {/* Subtle dot pattern */}
+    <div
+      className="absolute inset-0 pointer-events-none opacity-40"
+      style={{ backgroundImage: 'radial-gradient(#0D5C6330 1px, transparent 1px)', backgroundSize: '20px 20px' }}
+    />
+    <div className="relative max-w-4xl mx-auto px-6 text-center">
       <div className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 text-sm font-medium px-3 py-1 rounded-full mb-8 border border-teal-100">
         <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
         Beta &middot; Free
@@ -35,15 +43,22 @@ const Hero = () => (
         </StartInterviewButton>
         <span className="text-sm text-gray-400">No consultant required. Free.</span>
       </div>
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-500 border-t border-gray-200 pt-8">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-gray-900 font-mono">30&thinsp;min</span>
-          <span>average completion</span>
-        </div>
-        <div className="hidden sm:block w-px h-6 bg-gray-200" />
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-gray-900 font-mono">8</span>
-          <span>dimensions scored</span>
+      <div className="border border-teal-700/30 rounded-xl px-8 py-5 bg-slate-900/70 backdrop-blur-sm inline-flex">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-slate-300">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-white font-mono">30&thinsp;min</span>
+            <span>average completion</span>
+          </div>
+          <div className="hidden sm:block w-px h-6 bg-slate-600" />
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-white font-mono">8</span>
+            <span>dimensions scored</span>
+          </div>
+          <div className="hidden sm:block w-px h-6 bg-slate-600" />
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-white font-mono">100%</span>
+            <span>AI-driven</span>
+          </div>
         </div>
       </div>
     </div>
@@ -51,7 +66,7 @@ const Hero = () => (
 )
 
 const FinalCTA = () => (
-  <section className="py-20 bg-[#0D5C63] text-white">
+  <section className="py-16 bg-[#0D5C63] text-white">
     <div className="max-w-3xl mx-auto px-6 text-center">
       <h2 className={`${instrumentSerif.variable} font-serif text-4xl md:text-5xl font-bold mb-4`}>Ready to see where you stand?</h2>
       <p className="text-gray-100 text-lg mb-8">Free. 30 minutes. No consultant required.</p>
@@ -63,17 +78,13 @@ const FinalCTA = () => (
 )
 
 const Footer = () => (
-  <footer className="bg-[#F8F6F2] text-gray-500 py-10 px-6 border-t border-gray-200">
+  <footer className="bg-[#F8F6F2] text-gray-500 py-8 px-6 border-t border-gray-200">
     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
       <div className="flex items-center gap-3">
         <span className="text-xs text-gray-600 uppercase tracking-widest font-medium">Built by</span>
         <div className="bg-white rounded px-2 py-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/linkgrow-logo.png"
-            alt="Linkgrow"
-            style={{ height: '18px', width: 'auto', display: 'block' }}
-          />
+          <img src="/linkgrow-logo.png" alt="Linkgrow" style={{ height: '18px', width: 'auto', display: 'block' }} />
         </div>
       </div>
       <div className="flex gap-6 text-sm">
@@ -91,7 +102,10 @@ export default function Home() {
       <Hero />
       <SocialProof />
       <HowItWorks />
-      <ProductScreenshot />
+      <section className="relative rounded-2xl overflow-hidden">
+        <ProductScreenshot />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#0D5C6315,transparent_70%)] pointer-events-none" />
+      </section>
       <WhatYouGet />
       <WhoItsFor />
       <Testimonials />
@@ -99,6 +113,7 @@ export default function Home() {
       <FinalCTA />
       <Footer />
       <FloatingAIWidget />
+      <HomeConcierge />
     </main>
   )
 }
