@@ -169,7 +169,7 @@ export async function POST(request: Request) {
   const reportLeadId: string = (savedReport as any)?.lead_id ?? interview[0].lead_id ?? interview_id
 
   // Step 4: Placeholder for PDF generation and upload
-  const pdf_url = `https://example.com/reports/${interview_id}.pdf`
+  const pdf_url = 'https://connai.linkgrow.io/api/report/' + reportLeadId + '/pdf'
 
   // Step 5: Send email notification
   if (RESEND_API_KEY) {
