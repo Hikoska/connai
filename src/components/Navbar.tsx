@@ -1,187 +1,147 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { StartInterviewButton } from '@/components/StartInterviewButton'
 
-// Connai logomark — geometric neural-node mark
+// Connai logomark — teal growth bars (brand-aligned, visible on dark bg)
 const ConnaiMark = ({ size = 28, className = '' }: { size?: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
-    <defs>
-      <linearGradient id="connai-g1" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#0D5C63" />
-        <stop offset="100%" stopColor="#0ab8ca" />
-      </linearGradient>
-    </defs>
-    <line x1="7.2" y1="7.5" x2="12.2" y2="12.2" stroke="url(#connai-g1)" strokeWidth="1.3" strokeLinecap="round" opacity="0.65" />
-    <line x1="20.8" y1="7.5" x2="15.8" y2="12.2" stroke="url(#connai-g1)" strokeWidth="1.3" strokeLinecap="round" opacity="0.65" />
-    <line x1="14" y1="17" x2="14" y2="21.5" stroke="url(#connai-g1)" strokeWidth="1.3" strokeLinecap="round" opacity="0.65" />
-    <circle cx="5.5" cy="6" r="2.2" fill="url(#connai-g1)" opacity="0.8" />
-    <circle cx="22.5" cy="6" r="2.2" fill="url(#connai-g1)" opacity="0.8" />
-    <circle cx="14" cy="23.5" r="2.2" fill="url(#connai-g1)" opacity="0.8" />
-    <circle cx="14" cy="14" r="3.2" fill="url(#connai-g1)" />
-    <circle cx="14" cy="14" r="1.4" fill="white" opacity="0.45" />
+  <svg width={Math.round(size * 1.14)} height={size} viewBox="0 0 32 28" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
+    <rect x="1" y="16" width="8" height="12" rx="4" fill="#0ab8ca" />
+    <rect x="12" y="8" width="8" height="20" rx="4" fill="#0791a0" />
+    <rect x="23" y="1" width="8" height="27" rx="4" fill="#0D5C63" />
   </svg>
 )
 
 export function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [user, setUser] = useState<{ email: string } | null>(null)
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const userMenuRef = useRef<HTMLDivElement>(null)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const pathname = usePathname()
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', handleScroll, { passive: true })
+    const handleScroll = () => setIsScrolled(window.scrollY > 10)
+    window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Check auth state client-side
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const { createClient } = await import('@supabase/supabase-js')
-        const sb = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
         const { data: { session } } = await sb.auth.getSession()
-        if (session?.user?.email) {
-          setUser({ email: session.user.email })
-        }
-        // Listen for auth changes
-        sb.auth.onAuthStateChange((_event, session) => {
-          setUser(session?.user?.email ? { email: session.user.email } : null)
-        })
+        setIsLoggedIn(!!session)
       } catch {}
     }
     checkAuth()
-  }, [])
+  }, [pathname])
 
-  // Close user menu on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  const handleLogout = async () => {
-    try {
-      const { createClient } = await import('@supabase/supabase-js')
-      const sb = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
-      await sb.auth.signOut()
-      setUser(null)
-      setUserMenuOpen(false)
-      window.location.href = '/'
-    } catch {}
-  }
-
-  const initials = user?.email ? user.email[0].toUpperCase() : ''
+  const isActivePath = (path: string) => pathname === path
 
   return (
-    <header className={`sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 transition-shadow duration-300 ${
-      scrolled ? 'shadow-sm' : 'shadow-none'
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      isScrolled ? 'bg-[#0E1117]/95 backdrop-blur-sm border-b border-white/10' : 'bg-transparent'
     }`}>
-      <nav className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <ConnaiMark size={28} className="transition-transform duration-300 group-hover:scale-110 drop-shadow-sm" />
-          <span className="text-xl font-bold tracking-tight select-none" style={{ background: 'linear-gradient(135deg, #0D5C63 0%, #0ab8ca 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            Connai
-          </span>
-        </Link>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 group">
+            <ConnaiMark size={24} className="transition-opacity group-hover:opacity-80" />
+            <span className="text-white font-bold text-lg tracking-tight">Connai</span>
+          </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-8">
-          <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-            How it works
-          </a>
-          {user ? (
-            <>
-              <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-6">
+            <Link
+              href="/#how-it-works"
+              className="text-white/60 hover:text-white text-sm transition-colors"
+            >
+              How it works
+            </Link>
+            {isLoggedIn && (
+              <Link
+                href="/dashboard"
+                className={`text-sm transition-colors ${
+                  isActivePath('/dashboard') ? 'text-white font-medium' : 'text-white/60 hover:text-white'
+                }`}
+              >
                 Dashboard
               </Link>
-              {/* User avatar + dropdown */}
-              <div className="relative" ref={userMenuRef}>
+            )}
+            {isLoggedIn ? (
+              <div className="relative">
                 <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="w-8 h-8 rounded-full bg-[#0D5C63] text-white text-sm font-semibold flex items-center justify-center hover:bg-[#0a4a50] transition-colors shadow-sm"
+                  className="flex items-center gap-2 text-white/60 hover:text-white text-sm transition-colors"
                   aria-label="Account menu"
                 >
-                  {initials}
-                </button>
-                {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50">
-                    <div className="px-4 py-2.5 border-b border-gray-100">
-                      <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                    </div>
-                    <Link href="/dashboard" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => setUserMenuOpen(false)}>
-                      My Audits
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                    >
-                      Sign out
-                    </button>
+                  <div className="w-7 h-7 rounded-full bg-teal-600/30 border border-teal-500/40 flex items-center justify-center">
+                    <span className="text-teal-400 text-xs font-medium">L</span>
                   </div>
-                )}
+                </button>
               </div>
-            </>
-          ) : (
-            <>
-              {!pathname?.startsWith('/auth') && (
-                <Link href="/auth/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                  Sign in
-                </Link>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="text-sm text-white/60 hover:text-white transition-colors"
+              >
+                Sign in
+              </Link>
+            )}
+            <Link
+              href={isLoggedIn ? '/audit/new' : '#'}
+              onClick={!isLoggedIn ? (e) => { e.preventDefault(); document.getElementById('start-audit-btn')?.click() } : undefined}
+              className="bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+            >
+              Start free audit
+            </Link>
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden text-white/60 hover:text-white"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {isMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               )}
-              <StartInterviewButton className="bg-[#0D5C63] text-white text-sm font-semibold px-5 py-2 rounded-full hover:bg-[#0a4a50] transition-colors">
-                Start free audit
-              </StartInterviewButton>
-            </>
-          )}
+            </svg>
+          </button>
         </div>
 
-        {/* Mobile hamburger */}
-        <button className="md:hidden flex flex-col gap-1.5 p-2" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
-          <span className={`block w-5 h-0.5 bg-gray-800 transition-all ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-          <span className={`block w-5 h-0.5 bg-gray-800 transition-all ${menuOpen ? 'opacity-0' : ''}`} />
-          <span className={`block w-5 h-0.5 bg-gray-800 transition-all ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
-        </button>
-      </nav>
-
-      {/* Mobile menu */}
-      {menuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-6 py-4 space-y-4">
-          <a href="#how-it-works" className="block text-sm text-gray-700" onClick={() => setMenuOpen(false)}>How it works</a>
-          {user ? (
-            <>
-              <Link href="/dashboard" className="block text-sm text-gray-700" onClick={() => setMenuOpen(false)}>My Audits</Link>
-              <p className="text-xs text-gray-400 truncate">{user.email}</p>
-              <button onClick={handleLogout} className="block text-sm text-red-500">Sign out</button>
-            </>
-          ) : (
-            <>
-              {!pathname?.startsWith('/auth') && (
-                <Link href="/auth/login" className="block text-sm text-gray-700" onClick={() => setMenuOpen(false)}>Sign in</Link>
-              )}
-              <StartInterviewButton className="w-full bg-[#0D5C63] text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-[#0a4a50] transition-colors text-center block">
+        {/* Mobile menu */}
+        {isMenuOpen && (
+          <div className="md:hidden border-t border-white/10 py-4 space-y-3">
+            <Link href="/#how-it-works" className="block text-white/60 hover:text-white text-sm py-2 transition-colors"
+              onClick={() => setIsMenuOpen(false)}>
+              How it works
+            </Link>
+            {isLoggedIn && (
+              <Link href="/dashboard" className="block text-white/60 hover:text-white text-sm py-2 transition-colors"
+                onClick={() => setIsMenuOpen(false)}>
+                Dashboard
+              </Link>
+            )}
+            {isLoggedIn ? (
+              <Link href="/audit/new" className="block bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors text-center"
+                onClick={() => setIsMenuOpen(false)}>
                 Start free audit
-              </StartInterviewButton>
-            </>
-          )}
-        </div>
-      )}
-    </header>
+              </Link>
+            ) : (
+              <Link href="/auth/login" className="block text-white/60 hover:text-white text-sm py-2 transition-colors"
+                onClick={() => setIsMenuOpen(false)}>
+                Sign in
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
+    </nav>
   )
 }
+
+export default Navbar
