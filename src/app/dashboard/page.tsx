@@ -75,43 +75,24 @@ export default function DashboardPage() {
 
       if (session?.user) {
         setUser(session.user)
-        const userEmail = session.user.email?.toLowerCase()
+        const accessToken = session.access_token
 
-        const { data: leadsData, error: leadsError } = await supabase
-          .from('leads')
-          .select('id, org_name, email, status, captured_at')
-          .eq('email', userEmail)
-          .order('captured_at', { ascending: false })
+        // Use server-side route to fetch audits (avoids anon client session issues)
+        const res = await fetch('/api/me/audits', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
 
-        if (leadsError) {
-          console.error('Error fetching leads:', leadsError)
+        if (!res.ok) {
           setLoading(false)
           return
         }
 
-        const leadIds = (leadsData || []).map((l: any) => l.id)
-        let interviews: Interview[] = []
-        let reports: Report[] = []
-
-        if (leadIds.length > 0) {
-          const [intRes, repRes] = await Promise.all([
-            supabase
-              .from('interviews')
-              .select('id, lead_id, stakeholder_name, stakeholder_role, interview_token, status')
-              .in('lead_id', leadIds),
-            supabase
-              .from('reports')
-              .select('lead_id, overall_score')
-              .in('lead_id', leadIds),
-          ])
-          interviews = intRes.data || []
-          reports = repRes.data || []
-        }
+        const { leads: leadsData, interviews, reports } = await res.json()
 
         const merged: Lead[] = (leadsData || []).map((lead: any) => ({
           ...lead,
-          interviews: interviews.filter((i) => i.lead_id === lead.id),
-          report: reports.find((r) => r.lead_id === lead.id) ?? null,
+          interviews: (interviews || []).filter((i: any) => i.lead_id === lead.id),
+          report: (reports || []).find((r: any) => r.lead_id === lead.id) ?? null,
         }))
 
         setLeads(merged)
