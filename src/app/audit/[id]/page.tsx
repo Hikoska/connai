@@ -3,7 +3,6 @@
 import React from 'react'
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import {
   Copy, Check, ExternalLink, RefreshCw, BarChart2,
@@ -85,38 +84,23 @@ export default function AuditDetailPage() {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
 
   const fetchData = useCallback(async () => {
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { router.push('/auth/login'); return }
-
-    const { data, error } = await supabase
-      .from('leads')
-      .select(`
-        id, org_name, email, captured_at, status,
-        interviews ( id, status, stakeholder_name, stakeholder_role, stakeholder_email, token, sent_at, link_opened_at, first_message_at, completed_at )
-      `)
-      .eq('id', id)
-      .single()
-
-    if (!error && data) {
-      setLead(data as Lead)
-      // Check for report
-      const { data: rep } = await supabase
-        .from('reports')
-        .select('lead_id, overall_score')
-        .eq('lead_id', id)
-        .maybeSingle()
-      setReport(rep)
-    }
+    try {
+      const res = await fetch(`/api/audit/${id}`)
+      if (res.status === 404) { setLoading(false); return }
+      if (!res.ok) { setLoading(false); return }
+      const data = await res.json()
+      const { report, ...lead } = data
+      setLead(lead as Lead)
+      if (report) setReport(report)
+    } catch {}
     setLoading(false)
-  }, [id, router])
+  }, [id])
 
   useEffect(() => { fetchData() }, [fetchData])
 
   const resendInvite = async (interview: Interview) => {
     setResending(interview.id)
     try {
-      // Re-trigger the invite email by calling invites/generate with just this stakeholder
       await fetch('/api/invites/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
