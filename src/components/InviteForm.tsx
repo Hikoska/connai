@@ -31,11 +31,13 @@ export function InviteForm({ leadId, onInviteSent }: { leadId: string; onInviteS
         throw new Error(data.error || 'Failed to add stakeholder')
       }
 
-      setSuccess(email.trim() ? `Invite link sent to ${email.trim()}` : 'Stakeholder added')
+      const msg = email.trim() ? `Invite sent to ${email.trim()}` : 'Stakeholder added ✔'
+      setSuccess(msg)
       setName('')
       setRole('')
       setEmail('')
-      onInviteSent()
+      // Delay parent refresh so success message stays visible for 1.5s
+      setTimeout(() => onInviteSent(), 1500)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred')
     } finally {
@@ -81,7 +83,9 @@ export function InviteForm({ leadId, onInviteSent }: { leadId: string; onInviteS
         {loading ? 'Adding...' : 'Add stakeholder'}
       </button>
       {error && <p className="text-red-400 text-xs text-center">{error}</p>}
-      {success && <p className="text-teal-400 text-xs text-center">{success}</p>}
+      {success && (
+        <p className="text-teal-400 text-sm font-medium text-center py-1 bg-teal-500/10 rounded-md">{success}</p>
+      )}
     </form>
   )
 }
