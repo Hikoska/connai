@@ -77,7 +77,7 @@ export default function NewAuditPage() {
     <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <h1 className="text-2xl font-bold text-white mb-2">Start a new audit</h1>
-        <p className="text-white/50 text-sm mb-8">
+        <p className="text-white/60 text-sm mb-8">
           Enter the organisation you want to assess.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -91,17 +91,17 @@ export default function NewAuditPage() {
               value={orgName}
               onChange={e => setOrgName(e.target.value)}
               placeholder="Company name"
-              className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder:text-white/30"
+              className="w-full bg-white/5 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 placeholder:text-white/30 transition-colors"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-white/70 mb-1">
-              Industry <span className="text-white/30 font-normal">(optional)</span>
+              Industry <span className="text-white/40 font-normal">(optional)</span>
             </label>
             <select
               value={industry}
               onChange={e => setIndustry(e.target.value)}
-              className="w-full bg-[#0E1117] border border-white/10 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full bg-[#0E1117] border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 transition-colors"
             >
               <option value="">Select industry</option>
               {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
@@ -109,12 +109,12 @@ export default function NewAuditPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-white/70 mb-1">
-              Your role <span className="text-white/30 font-normal">(optional)</span>
+              Your role <span className="text-white/40 font-normal">(optional)</span>
             </label>
             <select
               value={role}
               onChange={e => setRole(e.target.value)}
-              className="w-full bg-[#0E1117] border border-white/10 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full bg-[#0E1117] border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 transition-colors"
             >
               <option value="">Select role</option>
               {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
@@ -124,7 +124,7 @@ export default function NewAuditPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50"
+            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
           >
             {loading ? 'Creating...' : 'Start audit →'}
           </button>
