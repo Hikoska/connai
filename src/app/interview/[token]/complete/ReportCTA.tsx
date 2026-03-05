@@ -110,15 +110,15 @@ export default function ReportCTA({ leadId }: ReportCTAProps) {
 
   if (timedOut) {
     return (
-      <div className="mt-2 p-6 bg-white/5 border border-white/10 rounded-xl text-left">
+      <div className="mt-2 p-6 bg-white/5 border border-white/20 rounded-xl text-left">
         <AIProgressStepper phase="analysing" />
         <h2 className="text-lg font-semibold text-white mb-1">Still processing</h2>
-        <p className="text-sm text-white/50 mb-4">
+        <p className="text-sm text-white/60 mb-4">
           Your report is taking a little longer. You can check back — it will be ready shortly.
         </p>
         <Link
           href={`/report/${leadId}`}
-          className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors hover:bg-white/20"
+          className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-semibold px-6 py-3 rounded-lg transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
         >
           Check report &rarr;
         </Link>
@@ -128,7 +128,7 @@ export default function ReportCTA({ leadId }: ReportCTAProps) {
 
   if (!ready) {
     return (
-      <div className="mt-2 p-6 bg-white/5 border border-white/10 rounded-xl text-left">
+      <div className="mt-2 p-6 bg-white/5 border border-white/20 rounded-xl text-left">
         <AIProgressStepper phase="analysing" />
         {/* Skeleton lines */}
         <div className="space-y-2 mb-5">
@@ -147,12 +147,12 @@ export default function ReportCTA({ leadId }: ReportCTAProps) {
     <div className="mt-2 p-6 bg-white/5 border border-teal-500/30 rounded-xl text-left transition-all duration-300">
       <AIProgressStepper phase="ready" />
       <h2 className="text-lg font-semibold text-white mb-1">Your report is ready</h2>
-      <p className="text-sm text-white/50 mb-4">
+      <p className="text-sm text-white/60 mb-4">
         Your digital maturity report is complete. Click below to view it.
       </p>
       <Link
         href={`/report/${leadId}`}
-        className="inline-flex items-center gap-2 bg-teal-500 hover:bg-teal-400 text-white font-bold px-6 py-2.5 rounded-lg transition-colors shadow-lg shadow-teal-900/30"
+        className="inline-flex items-center gap-2 bg-teal-500 hover:bg-teal-400 text-white font-bold px-6 py-3 rounded-lg transition-colors shadow-lg shadow-teal-900/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
       >
         View my report &rarr;
       </Link>
