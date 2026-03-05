@@ -58,7 +58,7 @@ export const FeedbackWidget = () => {
         <div className="fixed bottom-36 right-4 w-80 bg-white rounded-lg shadow-2xl z-50 border">
           <div className="p-4 border-b flex justify-between items-center">
             <h3 className="font-bold">Submit Feedback</h3>
-            <button onClick={toggleOpen} className="font-bold">&times;</button>
+            <button onClick={toggleOpen} className="font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded" aria-label="Close feedback">&times;</button>
           </div>
           <form onSubmit={handleSubmit} className="p-4 space-y-4">
             <div>
@@ -84,7 +84,7 @@ export const FeedbackWidget = () => {
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Your message..."
                 required
-                className="w-full p-2 border rounded-md text-sm"
+                className="w-full p-2 border rounded-md text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
                 rows={4}
               />
             </div>
@@ -94,13 +94,13 @@ export const FeedbackWidget = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email (optional)"
-                className="w-full p-2 border rounded-md text-sm"
+                className="w-full p-2 border rounded-md text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
               />
             </div>
             <button
               type="submit"
               disabled={isPending}
-              className="w-full bg-teal-600 text-white font-bold py-2 rounded-md hover:bg-teal-700 disabled:bg-gray-400"
+              className="w-full bg-teal-600 text-white font-bold py-2 rounded-md hover:bg-teal-700 disabled:bg-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
             >
               {isPending ? 'Submitting...' : 'Submit'}
             </button>
