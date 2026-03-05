@@ -10,12 +10,12 @@ export default function TermsPage() {
   return (
     <div className="bg-[#F8F6F2] min-h-screen">
       <div className="max-w-3xl mx-auto px-4 py-16">
-        <Link href="/" className="text-teal-600 hover:underline text-sm mb-8 block">
+        <Link href="/" className="text-teal-600 hover:underline text-sm mb-8 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded">
           ← Back to Connai
         </Link>
 
         <h1 className="text-4xl font-bold mb-2">Terms of Service</h1>
-        <p className="text-gray-500 text-sm mb-10">Last updated: February 2026</p>
+        <p className="text-gray-600 text-sm mb-10">Last updated: February 2026</p>
 
         <div className="prose prose-gray max-w-none space-y-8">
 
@@ -82,7 +82,7 @@ export default function TermsPage() {
             <h2 className="text-xl font-semibold mb-3">8. Contact</h2>
             <p className="text-gray-700">
               Questions about these terms?{' '}
-              <a href="mailto:legal@linkgrow.io" className="text-teal-600 hover:underline">legal@linkgrow.io</a>
+              <a href="mailto:legal@linkgrow.io" className="text-teal-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded">legal@linkgrow.io</a>
             </p>
           </section>
 
