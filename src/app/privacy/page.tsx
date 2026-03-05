@@ -10,12 +10,12 @@ export default function PrivacyPage() {
   return (
     <div className="bg-[#F8F6F2] min-h-screen">
       <div className="max-w-3xl mx-auto px-4 py-16">
-        <Link href="/" className="text-teal-600 hover:underline text-sm mb-8 block">
+        <Link href="/" className="text-teal-600 hover:underline text-sm mb-8 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded">
           ← Back to Connai
         </Link>
 
         <h1 className="text-4xl font-bold mb-2">Privacy Policy</h1>
-        <p className="text-gray-500 text-sm mb-10">Last updated: February 2026</p>
+        <p className="text-gray-600 text-sm mb-10">Last updated: February 2026</p>
 
         <div className="prose prose-gray max-w-none space-y-8">
 
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
               Connai is operated by Linkgrow Ltd, a company registered in Mauritius.
               We provide an AI-powered digital maturity audit platform.
               For any privacy-related questions, contact us at{' '}
-              <a href="mailto:privacy@linkgrow.io" className="text-teal-600 hover:underline">privacy@linkgrow.io</a>.
+              <a href="mailto:privacy@linkgrow.io" className="text-teal-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded">privacy@linkgrow.io</a>.
             </p>
           </section>
 
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
             <p className="text-gray-700">
               Under GDPR, you have the right to access, correct, or delete your personal data.
               To exercise any of these rights, email{' '}
-              <a href="mailto:privacy@linkgrow.io" className="text-teal-600 hover:underline">privacy@linkgrow.io</a>.
+              <a href="mailto:privacy@linkgrow.io" className="text-teal-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded">privacy@linkgrow.io</a>.
             </p>
           </section>
 
