@@ -42,7 +42,8 @@ export const FAQ = () => {
             <div key={index} className="border-b border-gray-200 pb-4">
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full flex justify-between items-center text-lg font-semibold text-gray-800 text-left"
+                className="w-full flex justify-between items-center text-lg font-semibold text-gray-800 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
+                aria-expanded={openIndex === index}
               >
                 <span>{item.q}</span>
                 <span className="text-2xl text-teal-500">{openIndex === index ? '\u2212' : '+'}</span>
@@ -57,7 +58,7 @@ export const FAQ = () => {
           Have a different question?{' '}
           <button
             onClick={openChat}
-            className="font-semibold text-teal-600 hover:text-teal-500 underline underline-offset-2 transition-colors"
+            className="font-semibold text-teal-600 hover:text-teal-500 underline underline-offset-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
           >
             Ask Connai →
           </button>
