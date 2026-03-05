@@ -62,7 +62,7 @@ export default function HomeConcierge() {
 
   return (
     <div
-      className={`fixed bottom-24 right-5 z-50 w-[300px] transition-all duration-500 ease-out
+      className={`fixed bottom-24 right-5 z-40 w-[300px] transition-all duration-500 ease-out
         ${visible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
     >
       <div className="bg-slate-900 border border-teal-600/40 rounded-2xl shadow-2xl shadow-black/40 overflow-hidden">
