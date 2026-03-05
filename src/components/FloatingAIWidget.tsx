@@ -88,7 +88,7 @@ export function FloatingAIWidget() {
             <button
               onClick={() => setIsOpen(false)}
               aria-label="Close chat"
-              className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+              className="text-gray-400 hover:text-gray-600 text-lg leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
             >
               ×
             </button>
@@ -135,12 +135,13 @@ export function FloatingAIWidget() {
                 value={input}
                 onChange={handleInputChange}
                 placeholder="Type a message…"
-                className="flex-1 text-sm px-3 py-1.5 rounded-full border border-gray-200 focus:outline-none focus:border-[#0D5C63]"
+                className="flex-1 text-sm px-3 py-1.5 rounded-full border border-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-[#0D5C63] transition-colors"
               />
               <button
                 type="submit"
                 disabled={isLoading || !input.trim()}
-                className="w-7 h-7 bg-[#0D5C63] text-white rounded-full flex items-center justify-center disabled:opacity-40 hover:bg-[#0a4a50] transition-colors"
+                className="w-7 h-7 bg-[#0D5C63] text-white rounded-full flex items-center justify-center disabled:opacity-40 hover:bg-[#0a4a50] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+              aria-label="Send"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
                   <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
@@ -152,7 +153,7 @@ export function FloatingAIWidget() {
       ) : (
         <button
           onClick={() => setIsOpen(true)}
-          className="w-14 h-14 bg-[#0D5C63] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#0a4a50] transition-colors"
+          className="w-14 h-14 bg-[#0D5C63] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#0a4a50] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2"
           aria-label="Open Connai chat"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
