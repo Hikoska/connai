@@ -17,7 +17,7 @@ export default function LoginPage() {
     setMessage('')
     setError('')
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithOTP({
       email,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
@@ -48,7 +48,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4 bg-[radial-gradient(ellipse_at_top,#0D5C6318,transparent_60%)]">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <Link
@@ -76,9 +76,9 @@ export default function LoginPage() {
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-white/15" />
+          <div className="flex-1 h-px bg-white/30" />
           <span className="text-white/50 text-xs font-medium">or</span>
-          <div className="flex-1 h-px bg-white/15" />
+          <div className="flex-1 h-px bg-white/30" />
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -93,7 +93,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="you@company.com"
-              className="w-full bg-white/5 border border-white/20 text-white placeholder-white/30 rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/60 transition-colors"
+              className="w-full bg-white/5 border border-white/20 text-white placeholder-white/30 rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/60 transition-colors [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_rgba(14,17,23,0.95)] [&:-webkit-autofill]:[caret-color:white] [&:-webkit-autofill]:text-white"
             />
           </div>
           <button
