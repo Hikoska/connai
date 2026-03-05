@@ -46,7 +46,7 @@ export function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
             <ConnaiMark size={24} className="transition-opacity group-hover:opacity-80" />
             <span className="text-white font-bold text-lg tracking-tight">Connai</span>
           </Link>
@@ -55,15 +55,15 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-6">
             <Link
               href="/#how-it-works"
-              className="text-white/60 hover:text-white text-sm transition-colors"
+              className="text-white/70 hover:text-white text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
             >
               How it works
             </Link>
             {isLoggedIn && (
               <Link
                 href="/dashboard"
-                className={`text-sm transition-colors ${
-                  isActivePath('/dashboard') ? 'text-white font-medium' : 'text-white/60 hover:text-white'
+                className={`text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded ${
+                  isActivePath('/dashboard') ? 'text-white font-medium' : 'text-white/70 hover:text-white'
                 }`}
               >
                 Dashboard
@@ -72,7 +72,7 @@ export function Navbar() {
             {isLoggedIn ? (
               <div className="relative">
                 <button
-                  className="flex items-center gap-2 text-white/60 hover:text-white text-sm transition-colors"
+                  className="flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                   aria-label="Account menu"
                 >
                   <div className="w-7 h-7 rounded-full bg-teal-600/30 border border-teal-500/40 flex items-center justify-center">
@@ -83,7 +83,7 @@ export function Navbar() {
             ) : (
               <Link
                 href="/auth/login"
-                className="text-sm text-white/60 hover:text-white transition-colors"
+                className="text-sm text-white/70 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
               >
                 Sign in
               </Link>
@@ -91,7 +91,7 @@ export function Navbar() {
             <Link
               href={isLoggedIn ? '/audit/new' : '#'}
               onClick={!isLoggedIn ? (e) => { e.preventDefault(); document.getElementById('start-audit-btn')?.click() } : undefined}
-              className="bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+              className="bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
             >
               Start free audit
             </Link>
@@ -99,9 +99,10 @@ export function Navbar() {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden text-white/60 hover:text-white"
+            className="md:hidden text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded p-1"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
+            aria-expanded={isMenuOpen}
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {isMenuOpen ? (
@@ -116,23 +117,23 @@ export function Navbar() {
         {/* Mobile menu */}
         {isMenuOpen && (
           <div className="md:hidden border-t border-white/10 py-4 space-y-3">
-            <Link href="/#how-it-works" className="block text-white/60 hover:text-white text-sm py-2 transition-colors"
+            <Link href="/#how-it-works" className="block text-white/70 hover:text-white text-sm py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
               onClick={() => setIsMenuOpen(false)}>
               How it works
             </Link>
             {isLoggedIn && (
-              <Link href="/dashboard" className="block text-white/60 hover:text-white text-sm py-2 transition-colors"
+              <Link href="/dashboard" className="block text-white/70 hover:text-white text-sm py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                 onClick={() => setIsMenuOpen(false)}>
                 Dashboard
               </Link>
             )}
             {isLoggedIn ? (
-              <Link href="/audit/new" className="block bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors text-center"
+              <Link href="/audit/new" className="block bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
                 onClick={() => setIsMenuOpen(false)}>
                 Start free audit
               </Link>
             ) : (
-              <Link href="/auth/login" className="block text-white/60 hover:text-white text-sm py-2 transition-colors"
+              <Link href="/auth/login" className="block text-white/70 hover:text-white text-sm py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                 onClick={() => setIsMenuOpen(false)}>
                 Sign in
               </Link>
