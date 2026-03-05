@@ -47,7 +47,7 @@ export default function AdminReportsPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Reports</h1>
-          <a href="/admin" className="text-sm text-gray-400 hover:text-white transition-colors">
+          <a href="/admin" className="text-sm text-gray-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
             \u2190 Admin
           </a>
         </div>
@@ -78,11 +78,11 @@ export default function AdminReportsPage() {
                       i % 2 === 0 ? '' : 'bg-gray-800/50'
                     }`}
                   >
-                    <td className="px-4 py-3 font-mono text-gray-300">{rep.id.slice(0, 8)}</td>
-                    <td className="px-4 py-3 font-mono text-gray-300">{rep.interview_id.slice(0, 8)}</td>
-                    <td className="px-4 py-3 text-gray-300">{dimCount(rep.dimensions)}</td>
-                    <td className="px-4 py-3 text-gray-300">{rep.pack_type ?? '\u2014'}</td>
-                    <td className="px-4 py-3 text-gray-300">{rep.credits_used ?? '\u2014'}</td>
+                    <td className="px-4 py-3 font-mono text-gray-200">{rep.id.slice(0, 8)}</td>
+                    <td className="px-4 py-3 font-mono text-gray-200">{rep.interview_id.slice(0, 8)}</td>
+                    <td className="px-4 py-3 text-gray-200">{dimCount(rep.dimensions)}</td>
+                    <td className="px-4 py-3 text-gray-200">{rep.pack_type ?? '\u2014'}</td>
+                    <td className="px-4 py-3 text-gray-200">{rep.credits_used ?? '\u2014'}</td>
                     <td className="px-4 py-3 text-gray-400">
                       {new Date(rep.created_at).toLocaleDateString('en-GB', {
                         day: 'numeric', month: 'short', year: 'numeric',
