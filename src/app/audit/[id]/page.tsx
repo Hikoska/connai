@@ -41,7 +41,7 @@ function StatusPill({ status }: { status: string }) {
     in_progress: { label: 'In progress', cls: 'bg-blue-500/15 text-blue-300 border-blue-500/20', icon: <Clock size={11} /> },
     opened:      { label: 'Link opened', cls: 'bg-violet-500/15 text-violet-300 border-violet-500/20', icon: <ExternalLink size={11} /> },
     sent:        { label: 'Sent',       cls: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/20', icon: <Send size={11} /> },
-    pending:     { label: 'Pending',    cls: 'bg-white/8 text-white/40 border-white/10',           icon: <Clock size={11} /> },
+    pending:     { label: 'Pending',    cls: 'bg-white/8 text-white/60 border-white/20',           icon: <Clock size={11} /> },
     cancelled:   { label: 'Cancelled',  cls: 'bg-red-500/15 text-red-400 border-red-500/20',       icon: <Clock size={11} /> },
   }
   const { label, cls, icon } = cfg[status] ?? cfg.pending
@@ -64,7 +64,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={copy}
-      className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors"
+      className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-white/5 border border-white/20 text-white/60 hover:text-white hover:border-white/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0E1117]"
     >
       {copied ? <><Check size={12} className="text-teal-400" /> Copied</> : <><Copy size={12} /> Copy link</>}
     </button>
@@ -131,8 +131,8 @@ export default function AuditDetailPage() {
     return (
       <div className="min-h-screen bg-[#0E1117] text-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white/50 mb-4">Audit not found.</p>
-          <Link href="/dashboard" className="text-teal-400 hover:text-teal-300 text-sm">← Back to dashboard</Link>
+          <p className="text-white/60 mb-4">Audit not found.</p>
+          <Link href="/dashboard" className="text-teal-400 hover:text-teal-300 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">← Back to dashboard</Link>
         </div>
       </div>
     )
@@ -145,10 +145,10 @@ export default function AuditDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#0E1117] text-white">
-      <header className="border-b border-white/10 px-4 sm:px-6 py-4 sticky top-0 bg-[#0E1117]/90 backdrop-blur z-10">
+      <header className="border-b border-white/20 px-4 sm:px-6 py-4 sticky top-0 bg-[#0E1117]/90 backdrop-blur z-10">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="text-white/40 hover:text-white/70 text-xs transition-colors">← Dashboard</Link>
+            <Link href="/dashboard" className="text-white/60 hover:text-white/90 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">← Dashboard</Link>
             <span className="text-white/20 hidden sm:inline">·</span>
             <span className="text-teal-400 font-semibold text-sm hidden sm:inline">{lead.org_name}</span>
           </div>
@@ -178,7 +178,7 @@ export default function AuditDetailPage() {
         {/* Overview */}
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">{lead.org_name}</h1>
-          <p className="text-white/40 text-sm">
+          <p className="text-white/60 text-sm">
             Started {new Date(lead.captured_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}
           </p>
 
@@ -190,7 +190,7 @@ export default function AuditDetailPage() {
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <span className="text-sm text-white/50 shrink-0">
+            <span className="text-sm text-white/60 shrink-0">
               <span className="text-white font-semibold">{completed}</span>/{total} interviews complete
             </span>
           </div>
@@ -198,23 +198,23 @@ export default function AuditDetailPage() {
 
         {/* Stakeholder cards */}
         <div className="space-y-3">
-          <h2 className="text-xs font-semibold text-white/40 uppercase tracking-widest flex items-center gap-2">
+          <h2 className="text-xs font-semibold text-white/60 uppercase tracking-widest flex items-center gap-2">
             <Users size={13} /> Stakeholders
           </h2>
 
           {lead.interviews.length === 0 ? (
-            <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center text-white/40 text-sm">
+            <div className="bg-white/5 border border-white/20 rounded-lg p-6 text-center text-white/60 text-sm">
               No stakeholders added yet.
             </div>
           ) : lead.interviews.map(iv => {
             const interviewUrl = `${baseUrl}/interview/${iv.token}`
             return (
-              <div key={iv.id} className="bg-white/5 border border-white/10 rounded-lg p-4">
+              <div key={iv.id} className="bg-white/5 border border-white/20 rounded-lg p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className="font-semibold text-white text-sm">{iv.stakeholder_name}</span>
-                      <span className="text-white/30 text-xs">{iv.stakeholder_role}</span>
+                      <span className="text-white/60 text-xs">{iv.stakeholder_role}</span>
                     </div>
                     <StatusPill status={iv.status} />
                   </div>
@@ -225,7 +225,7 @@ export default function AuditDetailPage() {
                       <button
                         onClick={() => resendInvite(iv)}
                         disabled={resending === iv.id}
-                        className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
+                        className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-white/5 border border-white/20 text-white/60 hover:text-white hover:border-white/30 transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0E1117]"
                         title="Resend invite email"
                       >
                         {resending === iv.id ? (
@@ -242,8 +242,8 @@ export default function AuditDetailPage() {
 
                 {/* Interview link */}
                 {iv.status !== 'complete' && (
-                  <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-2">
-                    <span className="text-xs text-white/20 truncate flex-1 font-mono">
+                  <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2">
+                    <span className="text-xs text-white/50 truncate flex-1 font-mono">
                       {interviewUrl.replace('https://', '')}
                     </span>
                     <CopyButton text={interviewUrl} />
@@ -251,7 +251,7 @@ export default function AuditDetailPage() {
                       href={interviewUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors"
+                      className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-white/5 border border-white/20 text-white/60 hover:text-white hover:border-white/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0E1117]"
                     >
                       <ExternalLink size={12} /> Open
                     </a>
@@ -287,7 +287,7 @@ export default function AuditDetailPage() {
             </div>
             <Link
               href={`/report/${lead.id}`}
-              className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-4 py-3 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
             >
               <BarChart2 size={15} /> View full report
             </Link>
@@ -296,14 +296,14 @@ export default function AuditDetailPage() {
 
         {/* CTA when all done but no report */}
         {allDone && !report && (
-          <div className="bg-white/5 border border-white/10 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="bg-white/5 border border-white/20 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center gap-4">
             <div>
-              <p className="text-xs text-white/40 font-medium uppercase tracking-wider mb-1">All interviews complete</p>
+              <p className="text-xs text-white/60 font-medium uppercase tracking-wider mb-1">All interviews complete</p>
               <p className="text-white font-semibold">Ready to generate your Digital Maturity Report</p>
             </div>
             <button
               onClick={generateReport}
-              className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-4 py-3 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
             >
               <FileText size={15} /> Generate report
             </button>
