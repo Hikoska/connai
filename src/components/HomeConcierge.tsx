@@ -74,7 +74,7 @@ export default function HomeConcierge() {
           </div>
           <button
             onClick={dismiss}
-            className="text-white/30 hover:text-white/70 transition-colors text-xl leading-none w-6 h-6 flex items-center justify-center"
+            className="text-white/50 hover:text-white/80 transition-colors text-xl leading-none w-6 h-6 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
             aria-label="Dismiss"
           >
             &times;
@@ -92,7 +92,7 @@ export default function HomeConcierge() {
                   <button
                     key={r}
                     onClick={() => selectRole(r)}
-                    className="text-left text-sm text-white/80 hover:text-white bg-white/5 hover:bg-teal-700/40 border border-white/10 hover:border-teal-500/50 px-3 py-2 rounded-lg transition-all duration-150"
+                    className="text-left text-sm text-white/80 hover:text-white bg-white/5 hover:bg-teal-700/40 border border-white/20 hover:border-teal-500/50 px-3 py-2 rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
                   >
                     {r}
                   </button>
@@ -106,13 +106,13 @@ export default function HomeConcierge() {
               <p className="text-white font-semibold text-sm mb-4">{content.headline}</p>
               <a
                 href="/audit/new"
-                className="block w-full text-center bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold px-4 py-2.5 rounded-lg transition-colors"
+                className="block w-full text-center bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold px-4 py-2.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 {content.cta}
               </a>
               <button
                 onClick={() => setStep(1)}
-                className="w-full text-center text-xs text-white/30 hover:text-white/60 mt-2 transition-colors py-1"
+                className="w-full text-center text-xs text-white/50 hover:text-white/80 mt-2 transition-colors py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
               >
                 ← Back
               </button>
