@@ -78,7 +78,7 @@ const FinalCTA = () => (
 )
 
 const Footer = () => (
-  <footer className="bg-[#F8F6F2] text-gray-500 py-8 px-6 border-t border-gray-200">
+  <footer className="bg-[#F8F6F2] text-gray-700 py-8 px-6 border-t border-gray-200">
     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
       <div className="flex items-center gap-3">
         <span className="text-xs text-gray-600 uppercase tracking-widest font-medium">Built by</span>
@@ -88,9 +88,9 @@ const Footer = () => (
         </div>
       </div>
       <div className="flex gap-6 text-sm">
-        <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-        <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-        <a href="mailto:hello@connai.io" className="hover:text-white transition-colors">Contact</a>
+        <Link href="/privacy" className="text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Privacy</Link>
+        <Link href="/terms" className="text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Terms</Link>
+        <a href="mailto:hello@connai.io" className="text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Contact</a>
       </div>
     </div>
   </footer>
