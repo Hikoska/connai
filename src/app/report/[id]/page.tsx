@@ -280,7 +280,7 @@ export default function ReportPage() {
     <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
       <div className="text-center space-y-4">
         <p className="text-slate-400 text-lg">{error}</p>
-        <a href="/" className="text-teal-400 hover:text-teal-300 text-sm underline">← Back to Connai</a>
+        <a href="/" className="text-teal-400 hover:text-teal-300 text-sm underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117] rounded">← Back to Connai</a>
       </div>
     </div>
   );
@@ -305,7 +305,7 @@ export default function ReportPage() {
             <span className="text-slate-500 text-xs">Digital Maturity Report</span>
           </div>
           <div className="flex items-center gap-3 no-print">
-            <a href="/dashboard" className="text-slate-500 hover:text-slate-300 text-xs transition-colors hidden sm:inline">Dashboard</a>
+            <a href="/dashboard" className="text-slate-500 hover:text-slate-300 text-xs transition-colors hidden sm:inline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117] rounded">Dashboard</a>
             <span className="text-slate-700 hidden sm:inline">·</span>
             <span className="text-slate-600 text-xs hidden sm:inline">Built by Linkgrow</span>
             <button
@@ -336,7 +336,7 @@ export default function ReportPage() {
             <p className="font-semibold mb-1">This report reflects one perspective.</p>
             <p className="text-amber-300/80">
               Add more stakeholders for a multi-dimensional view, deeper action plan, and full opportunity register.{' '}
-              <a href={`/audit/${id}`} className="font-bold underline hover:text-white transition-colors">Add stakeholders →</a>
+              <a href={`/audit/${id}`} className="font-bold underline hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117] rounded">Add stakeholders →</a>
             </p>
           </div>
         )}
@@ -743,7 +743,7 @@ export default function ReportPage() {
         </section>
 
         <div className="flex justify-center">
-          <a href={`/report/${id}/share`} className="text-slate-600 hover:text-slate-400 text-sm underline transition-colors">
+          <a href={`/report/${id}/share`} className="text-slate-600 hover:text-slate-400 text-sm underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117] rounded">
             Share this report →
           </a>
         </div>
@@ -758,7 +758,7 @@ export default function ReportPage() {
             <span className="text-slate-700">·</span>
             <span className="text-slate-600 text-xs">Digital Maturity Intelligence</span>
           </div>
-          <a href="https://linkgrow.io" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
+          <a href="https://linkgrow.io" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117] rounded">
             <span className="text-slate-500 text-xs uppercase tracking-widest font-medium">Built by</span>
             <div className="bg-slate-800 rounded px-2 py-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
