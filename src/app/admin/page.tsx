@@ -160,13 +160,13 @@ export default function AdminLeadsPage() {
             onChange={e => setPassword(e.target.value)}
             placeholder="Password"
             autoFocus
-            className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500"
+            className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
             required
           />
           {authError && <p className="text-red-400 text-sm">{authError}</p>}
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition"
+            className="w-full bg-teal-600 hover:bg-teal-500 text-white py-3 rounded-lg font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
           >
             Sign in
           </button>
@@ -207,19 +207,19 @@ export default function AdminLeadsPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={loadLeads}
-            className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5"
+            className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
           >
             <span className="text-base">↻</span> Refresh
           </button>
           <button
             onClick={() => window.open('/api/admin/leads-export', '_blank')}
-            className="text-sm bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg"
+            className="text-sm bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
           >
             Export CSV
           </button>
           <button
             onClick={handleSignOut}
-            className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+            className="text-xs text-gray-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
           >
             Sign out
           </button>
@@ -237,7 +237,7 @@ export default function AdminLeadsPage() {
           <button
             key={stat.key}
             onClick={() => setFilter(stat.key)}
-            className={`text-left bg-gray-900 border rounded-xl px-4 py-3 transition-colors ${
+            className={`text-left bg-gray-900 border rounded-xl px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 ${
               filter === stat.key
                 ? 'border-gray-600 bg-gray-800'
                 : 'border-gray-800 hover:border-gray-700'
@@ -255,7 +255,7 @@ export default function AdminLeadsPage() {
         value={search}
         onChange={e => setSearch(e.target.value)}
         placeholder="Search by organisation or email…"
-        className="w-full sm:w-72 bg-gray-900 border border-gray-800 text-white text-sm px-4 py-2 rounded-lg placeholder-gray-600 focus:outline-none focus:border-gray-600"
+        className="w-full sm:w-72 bg-gray-900 border border-gray-800 text-white text-sm px-4 py-2 rounded-lg placeholder-gray-600 focus:outline-none focus:border-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
       />
 
       {loading && (
@@ -329,7 +329,7 @@ export default function AdminLeadsPage() {
                           <Link
                             href={`/report/${lead.id}`}
                             target="_blank"
-                            className="text-blue-400 hover:text-blue-300 underline text-xs"
+                            className="text-blue-400 hover:text-blue-300 underline text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                           >
                             View ↗
                           </Link>
@@ -343,7 +343,7 @@ export default function AdminLeadsPage() {
                             if (inviteLeadId === lead.id) { closeInvitePanel() }
                             else { closeInvitePanel(); setInviteLeadId(lead.id) }
                           }}
-                          className={`text-xs px-2 py-1 rounded-md border transition-colors ${
+                          className={`text-xs px-2 py-1 rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 ${
                             inviteLeadId === lead.id
                               ? 'bg-teal-600 border-teal-500 text-white'
                               : 'bg-teal-600/10 border-teal-600/30 text-teal-400 hover:bg-teal-600/20'
@@ -363,7 +363,7 @@ export default function AdminLeadsPage() {
             {filter !== 'all' && (
               <button
                 onClick={() => setFilter('all')}
-                className="ml-3 text-gray-400 hover:text-white underline"
+                className="ml-3 text-gray-400 hover:text-white underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
               >
                 Clear filter
               </button>
@@ -383,7 +383,7 @@ export default function AdminLeadsPage() {
               <h2 className="text-sm font-semibold text-teal-300 uppercase tracking-wide">
                 Send Interview Invite — <span className="text-white normal-case">{lead.org_name}</span>
               </h2>
-              <button onClick={closeInvitePanel} className="text-gray-500 hover:text-white text-lg leading-none">×</button>
+              <button onClick={closeInvitePanel} className="text-gray-500 hover:text-white text-lg leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded w-6 h-6 flex items-center justify-center" aria-label="Close">×</button>
             </div>
             {sendOk ? (
               <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-4">
@@ -392,7 +392,7 @@ export default function AdminLeadsPage() {
                 <a href={sendOk} target="_blank" rel="noopener noreferrer"
                   className="text-blue-400 text-xs break-all hover:text-blue-300">{sendOk}</a>
                 <button onClick={() => setSendOk(null)}
-                  className="mt-3 block text-xs text-gray-400 hover:text-white border border-gray-700 px-3 py-1 rounded-md">
+                  className="mt-3 block text-xs text-gray-400 hover:text-white border border-gray-700 px-3 py-1 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
                   Send another
                 </button>
               </div>
@@ -419,7 +419,7 @@ export default function AdminLeadsPage() {
                 <div className="flex flex-col gap-1">
                   {sendErr && <p className="text-red-400 text-xs">{sendErr}</p>}
                   <button type="submit" disabled={sending || !stakeEmail.trim()}
-                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 ${
                       sending || !stakeEmail.trim()
                         ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                         : 'bg-teal-600 hover:bg-teal-500 text-white'
@@ -440,7 +440,7 @@ export default function AdminLeadsPage() {
           {(search || filter !== 'all') && (
             <button
               onClick={() => { setSearch(''); setFilter('all') }}
-              className="mt-3 text-sm text-blue-400 hover:text-blue-300"
+              className="mt-3 text-sm text-blue-400 hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
             >
               Clear filters
             </button>
