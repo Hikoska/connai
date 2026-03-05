@@ -14,19 +14,27 @@ export function PricingModal({ isOpen, onClose, auditId }: { isOpen: boolean; on
         className="bg-[#131920] border border-white/10 text-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold mb-2">Add More Stakeholders</h2>
-        <p className="text-white/50 text-sm mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xl font-bold">Add More Stakeholders</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close pricing modal"
+            className="text-white/50 hover:text-white/90 transition-colors text-2xl leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
+          >&times;</button>
+        </div>
+        <p className="text-white/60 text-sm mb-6">
           Your first interview is always free. Add more perspectives for a richer, multi-dimensional report.
         </p>
 
         <div className="space-y-3 mb-6">
-          <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
-            <p className="font-semibold text-white">$99 <span className="text-white/40 font-normal text-sm">/ stakeholder</span></p>
-            <p className="text-xs text-white/40 mt-0.5">Add perspectives one by one.</p>
+          <div className="bg-white/5 border border-white/20 p-4 rounded-xl">
+            <p className="font-semibold text-white">$99 <span className="text-white/60 font-normal text-sm">/ stakeholder</span></p>
+            <p className="text-xs text-white/60 mt-0.5">Add perspectives one by one.</p>
           </div>
           <div className="bg-teal-900/30 border border-teal-500/20 p-4 rounded-xl">
-            <p className="font-semibold text-white">$899 <span className="text-white/40 font-normal text-sm">for 10 stakeholders</span></p>
-            <p className="text-xs text-white/40 mt-0.5">Best value for a comprehensive audit.</p>
+            <p className="font-semibold text-white">$899 <span className="text-white/60 font-normal text-sm">for 10 stakeholders</span></p>
+            <p className="text-xs text-white/60 mt-0.5">Best value for a comprehensive audit.</p>
           </div>
         </div>
 
@@ -37,7 +45,7 @@ export function PricingModal({ isOpen, onClose, auditId }: { isOpen: boolean; on
         {auditId ? (
           <Link
             href={`/audit/${auditId}`}
-            className="block w-full text-center bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors"
+            className="block w-full text-center bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#131920]"
             onClick={onClose}
           >
             Add Stakeholder (Beta — Free)
@@ -45,7 +53,7 @@ export function PricingModal({ isOpen, onClose, auditId }: { isOpen: boolean; on
         ) : (
           <button
             onClick={onClose}
-            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors"
+            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#131920]"
           >
             Add Stakeholder (Beta — Free)
           </button>
