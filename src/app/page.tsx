@@ -92,9 +92,9 @@ const Footer = () => (
         </div>
       </div>
       <div className="flex gap-6 text-sm">
-        <Link href="/privacy" className="text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Privacy</Link>
-        <Link href="/terms" className="text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Terms</Link>
-        <a href="mailto:hello@connai.io" className="text-gray-600 hover:text-gray-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Contact</a>
+        <Link href="/privacy" className="text-gray-600 underline decoration-gray-300 hover:text-gray-900 hover:decoration-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Privacy</Link>
+        <Link href="/terms" className="text-gray-600 underline decoration-gray-300 hover:text-gray-900 hover:decoration-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Terms</Link>
+        <a href="mailto:hello@connai.io" className="text-gray-600 underline decoration-gray-300 hover:text-gray-900 hover:decoration-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Contact</a>
       </div>
     </div>
   </footer>
