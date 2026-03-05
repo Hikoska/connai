@@ -84,7 +84,7 @@ export function StartInterviewButton({ className, children }: StartInterviewButt
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} className={className}>
+      <button onClick={() => setIsOpen(true)} className={`${className ?? ''} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400`}>
         {children ?? 'Start Free Assessment'}
       </button>
 
@@ -93,8 +93,8 @@ export function StartInterviewButton({ className, children }: StartInterviewButt
           <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Start Your Free Audit</h2>
-              <button type="button" onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+              <button type="button" onClick={() => setIsOpen(false)} aria-label="Close"
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded">&times;</button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -131,7 +131,7 @@ export function StartInterviewButton({ className, children }: StartInterviewButt
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <button type="submit" disabled={isLoading}
-                className="w-full bg-[#0D5C63] text-white font-semibold py-3 rounded-xl hover:bg-[#0a4a50] transition-colors disabled:opacity-50">
+                className="w-full bg-[#0D5C63] text-white font-semibold py-3 rounded-xl hover:bg-[#0a4a50] transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] focus-visible:ring-offset-2">
                 {isLoading ? 'Starting...' : 'Begin Audit →'}
               </button>
             </form>
