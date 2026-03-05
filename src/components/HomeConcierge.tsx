@@ -42,7 +42,7 @@ export default function HomeConcierge() {
       pathname.startsWith('/dashboard')
     )
     if (isAppPage) return
-    const t = setTimeout(() => setVisible(true), 2500)
+    const t = setTimeout(() => setVisible(true), 5000)
     return () => clearTimeout(t)
   }, [pathname])
 
