@@ -21,7 +21,7 @@
   top: -2px;
   height: 10px;
   width: 2px;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.50);
   border-radius: 9999px;
 }
 
@@ -30,7 +30,7 @@
   align-items: center;
   gap: 1rem;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.60);
   margin-top: 1rem;
 }
 
