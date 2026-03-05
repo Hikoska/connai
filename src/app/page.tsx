@@ -41,7 +41,7 @@ const Hero = () => (
         <StartInterviewButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-full hover:bg-[#0a4a50] transition-colors text-lg inline-flex items-center gap-2 shadow-lg shadow-teal-900/20">
           Start my free audit &rarr;
         </StartInterviewButton>
-        <span className="text-sm text-gray-400">No consultant required. Free.</span>
+        <span className="text-sm text-gray-600">No consultant required. Free.</span>
       </div>
       <div className="border border-teal-700/30 rounded-xl px-8 py-5 bg-slate-900/70 backdrop-blur-sm inline-flex">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-slate-300">
@@ -80,6 +80,10 @@ const FinalCTA = () => (
 const Footer = () => (
   <footer className="bg-[#F8F6F2] text-gray-700 py-8 px-6 border-t border-gray-200">
     <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="flex items-center gap-4">
+        <span className="text-xs text-gray-500">&copy; 2026 Connai</span>
+        <span className="text-gray-300">|</span>
+      </div>
       <div className="flex items-center gap-3">
         <span className="text-xs text-gray-600 uppercase tracking-widest font-medium">Built by</span>
         <div className="bg-white rounded px-2 py-1">
