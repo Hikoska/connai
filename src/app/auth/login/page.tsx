@@ -50,18 +50,23 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <Link href="/" className="inline-block text-2xl font-bold text-teal-400 tracking-tight mb-4">Connai</Link>
+        <div className="text-center space-y-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 mb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
+          >
+            <span className="text-2xl font-bold text-teal-400 tracking-tight">Connai</span>
+          </Link>
           <h1 className="text-xl font-semibold text-white">Sign in to your account</h1>
-          <p className="text-white/40 text-sm">Access your digital maturity reports and audits</p>
+          <p className="text-white/60 text-sm">Access your digital maturity reports and audits</p>
         </div>
 
         <button
           onClick={handleGoogleSignIn}
           disabled={googleLoading || loading}
-          className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 font-semibold py-3 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 font-semibold py-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
         >
-          <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+          <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
             <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
             <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
@@ -71,14 +76,16 @@ export default function LoginPage() {
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-white/10" />
-          <span className="text-white/30 text-xs">or</span>
-          <div className="flex-1 h-px bg-white/10" />
+          <div className="flex-1 h-px bg-white/15" />
+          <span className="text-white/50 text-xs font-medium">or</span>
+          <div className="flex-1 h-px bg-white/15" />
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label htmlFor="email" className="sr-only">Email address</label>
+            <label htmlFor="email" className="block text-sm font-medium text-white/70 mb-1.5">
+              Email address
+            </label>
             <input
               id="email"
               type="email"
@@ -86,13 +93,13 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="you@company.com"
-              className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full bg-white/5 border border-white/20 text-white placeholder-white/30 rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/60 transition-colors"
             />
           </div>
           <button
             type="submit"
             disabled={loading || googleLoading}
-            className="w-full bg-teal-600 text-white font-semibold py-3 rounded-lg hover:bg-teal-500 transition-colors disabled:opacity-50"
+            className="w-full bg-teal-600 text-white font-semibold py-3 rounded-lg hover:bg-teal-500 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
           >
             {loading ? 'Sending...' : 'Send Magic Link'}
           </button>
