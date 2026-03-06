@@ -75,9 +75,9 @@ ${transcript.slice(0, 6000)}`
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params
+  const { id } = await params
 
   if (!SB_SVC) {
     return NextResponse.json(
