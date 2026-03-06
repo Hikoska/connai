@@ -15,9 +15,9 @@ async function sbFetch(path: string) {
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params
+  const { id } = await params
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
   const leads = await sbFetch(
