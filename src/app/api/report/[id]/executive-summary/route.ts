@@ -53,9 +53,9 @@ async function withFallback(prompt: string, maxTokens = 512): Promise<string> {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params
+  const { id } = await params
   const key = SB_SVC || SB_ANON
 
   // 1. Fetch lead metadata (org name + industry)
