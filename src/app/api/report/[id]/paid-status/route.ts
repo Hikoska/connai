@@ -4,9 +4,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
   if (!id) return NextResponse.json({ paid: false });
 
   const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
