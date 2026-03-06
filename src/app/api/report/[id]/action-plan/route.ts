@@ -40,9 +40,9 @@ async function isPaid(leadId: string): Promise<boolean> {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params
+  const { id } = await params
 
   // ── Payment gate: disabled until Stripe connected ─────────────────────────
   // const paid = await isPaid(id)
