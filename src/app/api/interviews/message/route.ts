@@ -28,7 +28,7 @@ function isRateLimit(error: unknown): boolean {
 
 async function getInterviewContext(token: string) {
   const ivRes = await fetch(
-    `${SB_URL}/rest/v1/interviews?token=eq.${token}&select=lead_id,stakeholder_name,stakeholder_role&limit=1`,
+    `${SB_URL}/rest/v1/interviews?token=eq.${token}&select=id,lead_id,stakeholder_name,stakeholder_role&limit=1`,
     { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, Accept: 'application/json' } }
   )
   if (!ivRes.ok) return null
@@ -44,6 +44,8 @@ async function getInterviewContext(token: string) {
   const lead = leadRows[0] ?? {}
 
   return {
+    id: iv.id,
+    lead_id: iv.lead_id,
     name: iv.stakeholder_name || 'there',
     role: iv.stakeholder_role || 'team member',
     org: lead.org_name || 'your organisation',
@@ -134,18 +136,6 @@ Format rules:
             body: JSON.stringify({ first_message_at: new Date().toISOString(), status: 'started' }),
           }).catch(() => { /* non-fatal */ })
         }
-        // Fire-and-forget: set first_message_at + status='started' on first user reply
-      if (isFirstMessage) {
-        fetch(`${SB_URL}/rest/v1/interviews?token=eq.${token}&status=eq.opened`, {
-          method: 'PATCH',
-          headers: {
-            apikey: SERVICE_KEY,
-            Authorization: `Bearer ${SERVICE_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ first_message_at: new Date().toISOString(), status: 'started' }),
-        }).catch(() => { /* non-fatal */ })
-      }
       return NextResponse.json({ message: text, done: isDone })
       } catch (err) {
         if (!isRateLimit(err)) throw err

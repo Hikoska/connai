@@ -14,7 +14,7 @@ type Interview = {
   lead_id: string
   stakeholder_name: string
   stakeholder_role: string
-  interview_token: string
+  token: string
   status: string // 'pending' | 'started' | 'complete'
 }
 
@@ -75,24 +75,43 @@ export default function DashboardPage() {
 
       if (session?.user) {
         setUser(session.user)
-        const accessToken = session.access_token
+        const userEmail = session.user.email?.toLowerCase()
 
-        // Use server-side route to fetch audits (avoids anon client session issues)
-        const res = await fetch('/api/me/audits', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
+        const { data: leadsData, error: leadsError } = await supabase
+          .from('leads')
+          .select('id, org_name, email, status, captured_at')
+          .eq('email', userEmail)
+          .order('captured_at', { ascending: false })
 
-        if (!res.ok) {
+        if (leadsError) {
+          console.error('Error fetching leads:', leadsError)
           setLoading(false)
           return
         }
 
-        const { leads: leadsData, interviews, reports } = await res.json()
+        const leadIds = (leadsData || []).map((l: any) => l.id)
+        let interviews: Interview[] = []
+        let reports: Report[] = []
+
+        if (leadIds.length > 0) {
+          const [intRes, repRes] = await Promise.all([
+            supabase
+              .from('interviews')
+              .select('id, lead_id, stakeholder_name, stakeholder_role, token, status')
+              .in('lead_id', leadIds),
+            supabase
+              .from('reports')
+              .select('lead_id, overall_score')
+              .in('lead_id', leadIds),
+          ])
+          interviews = intRes.data || []
+          reports = repRes.data || []
+        }
 
         const merged: Lead[] = (leadsData || []).map((lead: any) => ({
           ...lead,
-          interviews: (interviews || []).filter((i: any) => i.lead_id === lead.id),
-          report: (reports || []).find((r: any) => r.lead_id === lead.id) ?? null,
+          interviews: interviews.filter((i) => i.lead_id === lead.id),
+          report: reports.find((r) => r.lead_id === lead.id) ?? null,
         }))
 
         setLeads(merged)
@@ -121,7 +140,7 @@ export default function DashboardPage() {
           <p className="mb-6 text-white/60">Log in to view your audit dashboard.</p>
           <Link
             href="/auth/login"
-            className="bg-teal-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-teal-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
+            className="bg-teal-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-teal-500 transition-colors"
           >
             Log in
           </Link>
@@ -134,16 +153,16 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-full bg-white/5 border border-white/20 flex items-center justify-center mx-auto mb-5">
+          <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-5">
             <BarChart2 className="text-white/20" size={28} />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">No audits yet</h2>
-          <p className="text-white/60 text-sm mb-6">
+          <p className="text-white/50 text-sm mb-6">
             Start your first digital maturity audit and get a scored report in 30 minutes.
           </p>
           <Link
             href="/audit/new"
-            className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
+            className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-colors"
           >
             <Plus size={15} /> Start your first audit
           </Link>
@@ -159,17 +178,17 @@ export default function DashboardPage() {
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">Your Audits</h1>
-            <p className="text-sm text-white/60">{user.email}</p>
+            <p className="text-sm text-white/40">{user.email}</p>
           </div>
           <Link
             href="/audit/new"
-            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
+            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-colors shrink-0"
           >
             <Plus size={16} /> New Audit
           </Link>
         </div>
 
-        <div className="bg-white/5 border border-white/20 rounded-lg">
+        <div className="bg-white/5 border border-white/10 rounded-lg">
           <div className="divide-y divide-white/10">
             {leads.map(lead => {
               const completed = lead.interviews.filter(i => i.status === 'complete').length
@@ -182,7 +201,7 @@ export default function DashboardPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     {/* Left: org info */}
                     <div className="flex items-start gap-4 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
                         <FileText className="text-white/30" size={16} />
                       </div>
                       <div className="min-w-0">
@@ -192,7 +211,7 @@ export default function DashboardPage() {
                             {lead.status}
                           </span>
                         </div>
-                        <p className="text-xs text-white/60 mt-0.5">
+                        <p className="text-xs text-white/40 mt-0.5">
                           {new Date(lead.captured_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                         </p>
 
@@ -201,7 +220,7 @@ export default function DashboardPage() {
                           <div className="mt-2 flex items-center gap-3">
                             <div className="flex items-center gap-1">
                               <Users size={12} className="text-white/30" />
-                              <span className="text-xs text-white/60">
+                              <span className="text-xs text-white/40">
                                 {completed}/{total} interviews complete
                               </span>
                             </div>
@@ -243,7 +262,7 @@ export default function DashboardPage() {
                         {completed >= 1 && (
                           <button
                             onClick={() => setIsPricingModalOpen(true)}
-                            className="mt-2 inline-flex items-center gap-1.5 text-xs bg-teal-500/10 border border-teal-500/20 text-teal-400 hover:bg-teal-500/20 px-2.5 py-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
+                            className="mt-2 inline-flex items-center gap-1.5 text-xs bg-teal-500/10 border border-teal-500/20 text-teal-400 hover:bg-teal-500/20 px-2.5 py-1 rounded-full transition-colors"
                           >
                             Free interview used — add more from $99
                           </button>
@@ -256,7 +275,7 @@ export default function DashboardPage() {
                       {/* Score badge */}
                       {lead.report && tier && (
                         <div className="text-right hidden sm:block">
-                          <div className="text-xl font-bold text-white">{lead.report.overall_score}<span className="text-sm text-white/60">/100</span></div>
+                          <div className="text-xl font-bold text-white">{lead.report.overall_score}<span className="text-sm text-white/40">/100</span></div>
                           <div className={`text-xs font-medium ${tier.color}`}>{tier.label}</div>
                         </div>
                       )}
@@ -266,14 +285,14 @@ export default function DashboardPage() {
                         {lead.report && (
                           <Link
                             href={`/report/${lead.id}`}
-                            className="flex items-center gap-1.5 text-sm bg-teal-600/20 border border-teal-500/30 text-teal-400 hover:bg-teal-600/30 rounded-md px-3 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
+                            className="flex items-center gap-1.5 text-sm bg-teal-600/20 border border-teal-500/30 text-teal-400 hover:bg-teal-600/30 rounded-md px-3 py-1.5 transition-colors"
                           >
                             <BarChart2 size={14} /> Report
                           </Link>
                         )}
                         <Link
                           href={`/audit/${lead.id}`}
-                          className="flex items-center gap-1.5 text-sm bg-white/10 border border-white/20 rounded-md px-3 py-1.5 hover:bg-white/20 text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
+                          className="flex items-center gap-1.5 text-sm bg-white/10 border border-white/20 rounded-md px-3 py-1.5 hover:bg-white/20 text-white transition-colors"
                         >
                           <PlayCircle size={14} />
                           {allDone ? 'View' : 'Manage'}
