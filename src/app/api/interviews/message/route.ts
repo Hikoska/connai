@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     const system = `You are Connai, an expert conducting a Digital Maturity Assessment for ${ctx.org}${ctx.industry}.
 You are speaking with ${ctx.name}, ${ctx.role}.
 
-Your mission: build a complete picture of this organisation through conversation, not interrogation. Use HUMINT elicitation principles throughout.
+Your mission is to build a complete picture of this organisation through conversation. Use HUMINT elicitation principles to guide your questions and responses.
 
 8 dimensions to cover naturally (never name them explicitly):
 1. Digital Strategy & Leadership
