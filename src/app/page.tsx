@@ -46,7 +46,7 @@ const Hero = () => (
       <div className="border border-teal-700/30 rounded-xl px-8 py-5 bg-slate-900/70 backdrop-blur-sm inline-flex">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-slate-300">
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-white font-mono">30&thinsp;min</span>
+            <span className="text-2xl font-bold text-white font-mono">45&thinsp;min</span>
             <span>average completion</span>
           </div>
           <div className="hidden sm:block w-px h-6 bg-slate-600" />
