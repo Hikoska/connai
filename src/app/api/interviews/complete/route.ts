@@ -89,7 +89,7 @@ export async function PATCH(req: NextRequest) {
     fetch(`${APP_URL}/api/report/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ lead_id: leadId }),
     }).catch(() => { /* ignore — background task */ });
   }
 

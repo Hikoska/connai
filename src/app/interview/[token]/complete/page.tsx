@@ -22,7 +22,7 @@ export default function InterviewCompletePage() {
       const { data: interview } = await supabase
         .from('interviews')
         .select('lead_id, leads(org_name)')
-        .eq('interview_token', token)
+        .eq('token', token)
         .single()
       if (interview) {
         setLeadId(interview.lead_id)
