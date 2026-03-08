@@ -87,7 +87,7 @@ Let's explore how your organization approaches these key areas:
 4. Data and analytics: How do you collect, analyze, and use data to inform decisions?
 5. Technology infrastructure: What systems and tools do you use to support your operations?
 6. Talent and culture: How do you develop and support your team's digital skills?
-7. Innovation and agility: How do you encourage experimentation and adapt to change?
+7. Innovation and agility: How do you foster innovation and maintain agility within your organisation?ow do you encourage experimentation and adapt to change?
 8. Cybersecurity and risk: How do you protect your organization from digital threats?
 
 Elicitation techniques - rotate through these:
