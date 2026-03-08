@@ -70,11 +70,54 @@ const FinalCTA = () => (
     <div className="max-w-3xl mx-auto px-6 text-center">
       <h2 className={`${instrumentSerif.variable} font-serif text-4xl md:text-5xl font-bold mb-4`}>Ready to see where you stand?</h2>
       <p className="text-gray-100 text-lg mb-8">Free. 30 minutes. No consultant required.</p>
-      <StartInterviewButton className="bg-teal-500 hover:bg-teal-400 text-white font-bold py-4 px-10 rounded-full text-lg transition-colors shadow-lg shadow-teal-900/20">
-        Start my free audit →
+      <StartInterviewButton className="bg-teal-500 hover:bg-teal-400 text-white font-bold py-4 px-10 rounded-full text-lg transition-colors shadow-lg shadow-teal-900/30">
+        Get Your Free Report &rarr;
       </StartInterviewButton>
     </div>
   </section>
 )
 
 const Footer = () => (
+  <footer className="bg-[#F8F6F2] text-gray-700 py-8 px-6 border-t border-gray-200">
+    <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="flex items-center gap-4">
+        <span className="text-xs text-gray-500">&copy; 2026 Connai</span>
+        <span className="text-gray-300">|</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="text-xs text-gray-600 uppercase tracking-widest font-medium">Built by</span>
+        <div className="bg-white rounded px-2 py-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/linkgrow-logo.png" alt="Linkgrow" style={{ height: '18px', width: 'auto', display: 'block' }} />
+        </div>
+      </div>
+      <div className="flex gap-6 text-sm">
+        <Link href="/privacy" className="text-gray-600 underline decoration-gray-300 hover:text-gray-900 hover:decoration-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Privacy</Link>
+        <Link href="/terms" className="text-gray-600 underline decoration-gray-300 hover:text-gray-900 hover:decoration-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Terms</Link>
+        <a href="mailto:hello@connai.io" className="text-gray-600 underline decoration-gray-300 hover:text-gray-900 hover:decoration-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D5C63] rounded-sm">Contact</a>
+      </div>
+    </div>
+  </footer>
+)
+
+export default function Home() {
+  return (
+    <main className="min-h-screen">
+      <Hero />
+      <SocialProof />
+      <HowItWorks />
+      <section className="relative rounded-2xl overflow-hidden">
+        <ProductScreenshot />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#0D5C6315,transparent_70%)] pointer-events-none" />
+      </section>
+      <WhatYouGet />
+      <WhoItsFor />
+      <Testimonials />
+      <FAQ />
+      <FinalCTA />
+      <Footer />
+      <FloatingAIWidget />
+      <HomeConcierge />
+    </main>
+  )
+}
