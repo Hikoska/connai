@@ -21,7 +21,7 @@ type Interview = {
 function ivStatusLabel(status: string): { label: string; dot: string } {
   if (status === 'complete') return { label: 'Completed', dot: 'bg-teal-400' }
   if (status === 'started')  return { label: 'In progress', dot: 'bg-yellow-400' }
-  return { label: 'Sent', dot: 'bg-white/30' }
+  return { label: 'Pending', dot: 'bg-white/30' }
 }
 
 type Report = {
