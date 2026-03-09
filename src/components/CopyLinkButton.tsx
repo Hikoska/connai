@@ -23,6 +23,7 @@ export default function CopyLinkButton() {
 
   return (
     <button
+      type="button"
       onClick={handleCopy}
       className="no-print flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors border border-slate-700/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
     >
