@@ -28,7 +28,7 @@ export function SocialProof() {
           });
         }
       } catch (err) {
-        console.error(err);
+
       }
     };
     fetchStats();
