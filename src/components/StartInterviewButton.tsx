@@ -84,7 +84,7 @@ export function StartInterviewButton({ className, children }: StartInterviewButt
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} className={`${className ?? ''} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400`}>
+      <button type="button" onClick={() => setIsOpen(true)} className={`${className ?? ''} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400`}>
         {children ?? 'Start Free Assessment'}
       </button>
 
