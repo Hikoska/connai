@@ -52,6 +52,7 @@ export function InviteForm({ leadId, onInviteSent }: { leadId: string; onInviteS
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
+          aria-label="Stakeholder Name"
           placeholder="Stakeholder Name"
           required
           className="w-full bg-white/10 border border-white/20 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -60,6 +61,7 @@ export function InviteForm({ leadId, onInviteSent }: { leadId: string; onInviteS
           type="text"
           value={role}
           onChange={e => setRole(e.target.value)}
+          aria-label="Role"
           placeholder="Role (e.g., CTO, Head of Ops)"
           required
           className="w-full bg-white/10 border border-white/20 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -70,6 +72,7 @@ export function InviteForm({ leadId, onInviteSent }: { leadId: string; onInviteS
           type="email"
           value={email}
           onChange={e => setEmail(e.target.value)}
+          aria-label="Email address"
           placeholder="Email address (optional)"
           className="w-full bg-white/10 border border-white/20 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
         />
@@ -87,5 +90,5 @@ export function InviteForm({ leadId, onInviteSent }: { leadId: string; onInviteS
         <p className="text-teal-400 text-sm font-medium text-center py-1 bg-teal-500/10 rounded-md">{success}</p>
       )}
     </form>
-  )
+ )
 }
