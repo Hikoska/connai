@@ -259,7 +259,7 @@ export default function DashboardPage() {
 
                         {/* Free-tier teaser */}
                         {completed >= 1 && (
-                          <button
+                          <button type="button"
                             onClick={() => setIsPricingModalOpen(true)}
                             className="mt-2 inline-flex items-center gap-1.5 text-xs bg-teal-500/10 border border-teal-500/20 text-teal-400 hover:bg-teal-500/20 px-2.5 py-1 rounded-full transition-colors"
                           >
