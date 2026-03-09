@@ -73,6 +73,7 @@ export default function HomeConcierge() {
             <span className="text-xs font-semibold text-teal-400 uppercase tracking-wide">Connai Guide</span>
           </div>
           <button
+            type="button"
             onClick={dismiss}
             className="text-white/50 hover:text-white/80 transition-colors text-xl leading-none w-6 h-6 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
             aria-label="Dismiss"
@@ -111,6 +112,7 @@ export default function HomeConcierge() {
                 {content.cta}
               </a>
               <button
+                type="button"
                 onClick={() => setStep(1)}
                 className="w-full text-center text-xs text-white/50 hover:text-white/80 mt-2 transition-colors py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
               >
