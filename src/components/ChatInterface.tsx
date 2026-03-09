@@ -41,13 +41,19 @@ export function ChatInterface({
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [started, setStarted] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
   const [captureState, setCaptureState] = useState<'idle' | 'capturing' | 'captured' | 'error'>('idle')
   const [capturedEmail, setCapturedEmail] = useState('')
   const captureAttempted = useRef(false)
 
   useEffect(() => {
+    const timer = setTimeout(() => setIsInitializing(false), 1200)
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading, captureState])
+  }, [messages, isLoading, captureState, isInitializing])
 
   useEffect(() => {
     if (!isLoading && started) inputRef.current?.focus()
@@ -106,24 +112,39 @@ export function ChatInterface({
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
-        {messages.map((m) => (
-          <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
-            {m.role === 'assistant' && (
-              <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-0.5">
-                C
+        {isInitializing ? (
+          <div className="flex justify-start items-end gap-2">
+            <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-0.5">
+              C
+            </div>
+            <div className="bg-gray-50 rounded-2xl rounded-bl-sm px-4 py-3 border border-gray-100">
+              <div className="flex gap-1 items-center h-4">
+                <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            )}
-            <div
-              className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                m.role === 'user'
-                  ? 'bg-teal-500 text-white rounded-br-sm'
-                  : 'bg-gray-50 text-gray-800 rounded-bl-sm border border-gray-100'
-              }`}
-            >
-              {stripCaptureTag(m.content)}
             </div>
           </div>
-        ))}
+        ) : (
+          messages.map((m) => (
+            <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
+              {m.role === 'assistant' && (
+                <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-0.5">
+                  C
+                </div>
+              )}
+              <div
+                className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  m.role === 'user'
+                    ? 'bg-teal-500 text-white rounded-br-sm'
+                    : 'bg-gray-50 text-gray-800 rounded-bl-sm border border-gray-100'
+                }`}
+              >
+                {stripCaptureTag(m.content)}
+              </div>
+            </div>
+          ))
+        )}
 
         {isLoading && (
           <div className="flex justify-start items-end gap-2">
@@ -185,12 +206,12 @@ export function ChatInterface({
               onChange={handleInputChange}
               placeholder={placeholder || 'Type your answer…'}
               className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent placeholder-gray-400 transition"
-              disabled={isLoading || captureState === 'capturing'}
+              disabled={isLoading || captureState === 'capturing' || isInitializing}
               autoComplete="off"
             />
             <button
               type="submit"
-              disabled={isLoading || !input.trim() || captureState === 'capturing'}
+              disabled={isLoading || !input.trim() || captureState === 'capturing' || isInitializing}
               className="bg-teal-500 hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl w-10 h-10 flex items-center justify-center transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400" aria-label="Send message"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
