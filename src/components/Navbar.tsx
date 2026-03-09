@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 
 // Connai logomark — teal growth bars (brand-aligned, visible on dark bg)
 const ConnaiMark = ({ size = 28, className = '' }: { size?: number; className?: string }) => (
@@ -17,7 +17,10 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isAccountOpen, setIsAccountOpen] = useState(false)
+  const accountRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
+  const router = useRouter()
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10)
@@ -36,6 +39,28 @@ export function Navbar() {
     }
     checkAuth()
   }, [pathname])
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setIsAccountOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSignOut = async () => {
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      await sb.auth.signOut()
+      setIsLoggedIn(false)
+      setIsAccountOpen(false)
+      router.push('/')
+    } catch {}
+  }
 
   const isActivePath = (path: string) => pathname === path
 
@@ -70,15 +95,35 @@ export function Navbar() {
               </Link>
             )}
             {isLoggedIn ? (
-              <div className="relative">
+              <div className="relative" ref={accountRef}>
                 <button
+                  onClick={() => setIsAccountOpen(!isAccountOpen)}
                   className="flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                   aria-label="Account menu"
+                  aria-expanded={isAccountOpen}
                 >
                   <div className="w-7 h-7 rounded-full bg-teal-600/30 border border-teal-500/40 flex items-center justify-center">
                     <span className="text-teal-400 text-xs font-medium">L</span>
                   </div>
                 </button>
+                {isAccountOpen && (
+                  <div className="absolute right-0 mt-2 w-44 bg-[#151B23] border border-white/10 rounded-lg shadow-xl py-1 z-50">
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsAccountOpen(false)}
+                      className="block px-4 py-2 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      Dashboard
+                    </Link>
+                    <div className="border-t border-white/10 my-1" />
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full text-left px-4 py-2 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <Link
@@ -128,10 +173,18 @@ export function Navbar() {
               </Link>
             )}
             {isLoggedIn ? (
-              <Link href="/audit/new" className="block bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
-                onClick={() => setIsMenuOpen(false)}>
-                Start free audit
-              </Link>
+              <>
+                <button
+                  onClick={handleSignOut}
+                  className="block w-full text-left text-white/70 hover:text-white text-sm py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
+                >
+                  Sign out
+                </button>
+                <Link href="/audit/new" className="block bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+                  onClick={() => setIsMenuOpen(false)}>
+                  Start free audit
+                </Link>
+              </>
             ) : (
               <Link href="/auth/login" className="block text-white/70 hover:text-white text-sm py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                 onClick={() => setIsMenuOpen(false)}>
