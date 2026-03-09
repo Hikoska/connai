@@ -24,7 +24,6 @@ export function FeedbackBar({ reportId }: FeedbackBarProps) {
 
       setSubmitted(true)
     } catch (err) {
-      console.error(err)
       setError('Failed to submit feedback')
     }
   }
@@ -36,12 +35,14 @@ export function FeedbackBar({ reportId }: FeedbackBarProps) {
   return (
     <div className="flex justify-center gap-4 py-4 border-t border-slate-800">
       <button
+        type="button"
         onClick={() => handleSubmit(true)}
         className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
       >
         👍 Helpful
       </button>
       <button
+        type="button"
         onClick={() => handleSubmit(false)}
         className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
       >
