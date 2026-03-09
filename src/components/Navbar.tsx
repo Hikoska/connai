@@ -96,7 +96,7 @@ export function Navbar() {
             )}
             {isLoggedIn ? (
               <div className="relative" ref={accountRef}>
-                <button
+                <button type="button"
                   onClick={() => setIsAccountOpen(!isAccountOpen)}
                   className="flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                   aria-label="Account menu"
@@ -116,7 +116,7 @@ export function Navbar() {
                       Dashboard
                     </Link>
                     <div className="border-t border-white/10 my-1" />
-                    <button
+                    <button type="button"
                       onClick={handleSignOut}
                       className="w-full text-left px-4 py-2 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
                     >
@@ -143,7 +143,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile menu button */}
-          <button
+          <button type="button"
             className="md:hidden text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded p-1"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
@@ -174,7 +174,7 @@ export function Navbar() {
             )}
             {isLoggedIn ? (
               <>
-                <button
+                <button type="button"
                   onClick={handleSignOut}
                   className="block w-full text-left text-white/70 hover:text-white text-sm py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                 >
