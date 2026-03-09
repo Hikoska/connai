@@ -92,6 +92,7 @@ export default function HomeConcierge() {
                 {ROLES.map((r) => (
                   <button
                     key={r}
+                    type="button"
                     onClick={() => selectRole(r)}
                     className="text-left text-sm text-white/80 hover:text-white bg-white/5 hover:bg-teal-700/40 border border-white/20 hover:border-teal-500/50 px-3 py-2 rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
                   >
