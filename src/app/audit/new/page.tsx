@@ -82,23 +82,25 @@ export default function NewAuditPage() {
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">
+            <label htmlFor="audit-org-name" className="block text-sm font-medium text-white/70 mb-1">
               Organisation name
             </label>
             <input
               type="text"
               required
               value={orgName}
+              id="audit-org-name"
               onChange={e => setOrgName(e.target.value)}
               placeholder="Company name"
               className="w-full bg-white/5 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 placeholder:text-white/30 transition-colors"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">
+            <label htmlFor="audit-industry" className="block text-sm font-medium text-white/70 mb-1">
               Industry <span className="text-white/40 font-normal">(optional)</span>
             </label>
             <select
+              id="audit-industry"
               value={industry}
               onChange={e => setIndustry(e.target.value)}
               className="w-full bg-[#0E1117] border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 transition-colors"
@@ -108,10 +110,11 @@ export default function NewAuditPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">
+            <label htmlFor="audit-role" className="block text-sm font-medium text-white/70 mb-1">
               Your role <span className="text-white/40 font-normal">(optional)</span>
             </label>
             <select
+              id="audit-role"
               value={role}
               onChange={e => setRole(e.target.value)}
               className="w-full bg-[#0E1117] border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 transition-colors"
