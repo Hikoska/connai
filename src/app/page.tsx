@@ -32,7 +32,7 @@ const Hero = () => (
         Beta &middot; Free
       </div>
       <h1 className={`${instrumentSerif.variable} font-serif text-5xl md:text-7xl font-bold leading-[1.1] mb-6 text-gray-900`}>
-        Know exactly where your organisation stands &mdash; within a concise 45-minute audit.
+        Know exactly where your organization stands &mdash; within a concise 45-minute audit.
       </h1>
       <p className="text-xl text-gray-500 mb-10 leading-relaxed max-w-2xl mx-auto">
         Connai runs an AI-powered digital maturity audit and delivers a scored report your leadership team can act on.
