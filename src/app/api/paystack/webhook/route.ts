@@ -32,7 +32,6 @@ export async function POST(request: Request) {
     // 2. Look up the transaction in your database using the reference
     // 3. Update the order/user status to 'paid'
     // 4. Grant access to the report
-    console.log(`Payment successful for reference: ${reference}. Fulfilling order...`)
   }
 
   // Acknowledge receipt of the event
