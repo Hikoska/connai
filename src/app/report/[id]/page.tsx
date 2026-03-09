@@ -286,7 +286,7 @@ export default function ReportPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div id="report-root" className="min-h-screen bg-slate-950 text-white">
 
       <style>{`
         @media print {
