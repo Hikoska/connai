@@ -48,7 +48,7 @@ export const FeedbackWidget = () => {
   return (
     <>
       <button 
-        onClick={toggleOpen}
+        type="button" onClick={toggleOpen}
         className="fixed bottom-20 right-4 bg-teal-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-teal-700 transition-colors z-50 font-semibold text-sm"
       >
         Feedback
@@ -58,7 +58,7 @@ export const FeedbackWidget = () => {
         <div className="fixed bottom-36 right-4 w-80 bg-white rounded-lg shadow-2xl z-50 border">
           <div className="p-4 border-b flex justify-between items-center">
             <h3 className="font-bold">Submit Feedback</h3>
-            <button onClick={toggleOpen} className="font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded" aria-label="Close feedback">&times;</button>
+            <button type="button" onClick={toggleOpen} className="font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded" aria-label="Close feedback">&times;</button>
           </div>
           <form onSubmit={handleSubmit} className="p-4 space-y-4">
             <div>
