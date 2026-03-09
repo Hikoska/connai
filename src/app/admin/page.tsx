@@ -206,19 +206,19 @@ export default function AdminLeadsPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={loadLeads}
+            type="button" onClick={loadLeads}
             className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
           >
             <span className="text-base">↻</span> Refresh
           </button>
           <button
-            onClick={() => window.open('/api/admin/leads-export', '_blank')}
+            type="button" onClick={() => window.open('/api/admin/leads-export', '_blank')}
             className="text-sm bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
           >
             Export CSV
           </button>
           <button
-            onClick={handleSignOut}
+            type="button" onClick={handleSignOut}
             className="text-xs text-gray-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
           >
             Sign out
@@ -339,7 +339,7 @@ export default function AdminLeadsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          onClick={() => {
+                          type="button" onClick={() => {
                             if (inviteLeadId === lead.id) { closeInvitePanel() }
                             else { closeInvitePanel(); setInviteLeadId(lead.id) }
                           }}
@@ -362,7 +362,7 @@ export default function AdminLeadsPage() {
             Showing {visible.length} of {leads.length} lead{leads.length !== 1 ? 's' : ''}
             {filter !== 'all' && (
               <button
-                onClick={() => setFilter('all')}
+                type="button" onClick={() => setFilter('all')}
                 className="ml-3 text-gray-400 hover:text-white underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
               >
                 Clear filter
@@ -383,7 +383,7 @@ export default function AdminLeadsPage() {
               <h2 className="text-sm font-semibold text-teal-300 uppercase tracking-wide">
                 Send Interview Invite — <span className="text-white normal-case">{lead.org_name}</span>
               </h2>
-              <button onClick={closeInvitePanel} className="text-gray-500 hover:text-white text-lg leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded w-6 h-6 flex items-center justify-center" aria-label="Close">×</button>
+              <button type="button" onClick={closeInvitePanel} className="text-gray-500 hover:text-white text-lg leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded w-6 h-6 flex items-center justify-center" aria-label="Close">×</button>
             </div>
             {sendOk ? (
               <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-4">
@@ -391,7 +391,7 @@ export default function AdminLeadsPage() {
                 <p className="text-gray-400 text-xs mb-1">Interview link:</p>
                 <a href={sendOk} target="_blank" rel="noopener noreferrer"
                   className="text-blue-400 text-xs break-all hover:text-blue-300">{sendOk}</a>
-                <button onClick={() => setSendOk(null)}
+                <button type="button" onClick={() => setSendOk(null)}
                   className="mt-3 block text-xs text-gray-400 hover:text-white border border-gray-700 px-3 py-1 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
                   Send another
                 </button>
@@ -439,7 +439,7 @@ export default function AdminLeadsPage() {
           </p>
           {(search || filter !== 'all') && (
             <button
-              onClick={() => { setSearch(''); setFilter('all') }}
+              type="button" onClick={() => { setSearch(''); setFilter('all') }}
               className="mt-3 text-sm text-blue-400 hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
             >
               Clear filters
