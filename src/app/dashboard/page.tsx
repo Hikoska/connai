@@ -84,7 +84,6 @@ export default function DashboardPage() {
           .order('captured_at', { ascending: false })
 
         if (leadsError) {
-          console.error('Error fetching leads:', leadsError)
           setLoading(false)
           return
         }
