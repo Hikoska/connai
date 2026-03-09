@@ -37,7 +37,6 @@ export async function generateInterviewLink(companyId: string, role: string) {
       .single();
 
     if (sessError || !session) {
-      console.error('Session creation failed:', sessError);
       return { error: 'Failed to create interview session' };
     }
 
@@ -49,7 +48,6 @@ export async function generateInterviewLink(companyId: string, role: string) {
     
     return { success: true, link };
   } catch (error: any) {
-    console.error('Internal Server Action Error:', error);
-    return { error: error.message || 'An unexpected error occurred.' };
+    return { error: (error as Error).message || 'An unexpected error occurred.' };
   }
 }
