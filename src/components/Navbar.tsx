@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
@@ -65,14 +66,14 @@ export function Navbar() {
   const isActivePath = (path: string) => pathname === path
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
       isScrolled ? 'bg-[#0E1117]/95 backdrop-blur-sm border-b border-white/10' : 'bg-transparent'
     }`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
-            <ConnaiMark size={24} className="transition-opacity group-hover:opacity-80" />
+            <Image src="/linkgrow-logo.png" alt="Linkgrow" width={32} height={32} className="dark:invert" />
             <span className="text-white font-bold text-lg tracking-tight">Connai</span>
           </Link>
 
@@ -107,7 +108,7 @@ export function Navbar() {
                   </div>
                 </button>
                 {isAccountOpen && (
-                  <div className="absolute right-0 mt-2 w-44 bg-[#151B23] border border-white/10 rounded-lg shadow-xl py-1 z-50">
+                  <div className="absolute right-0 mt-2 w-44 bg-[#151B23] border border-white/10 rounded-lg shadow-xl py-1 z-[100]">
                     <Link
                       href="/dashboard"
                       onClick={() => setIsAccountOpen(false)}
