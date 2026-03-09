@@ -2,6 +2,7 @@
 
 export const CTAButton = ({ className }: { className?: string }) => (
   <button
+    type="button"
     className={className}
     onClick={() => {
       if (typeof window !== 'undefined') {
