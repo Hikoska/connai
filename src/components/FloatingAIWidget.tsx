@@ -86,6 +86,7 @@ export function FloatingAIWidget() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="font-semibold text-gray-800">Connai</span>
             <button
+              type="button"
               onClick={() => setIsOpen(false)}
               aria-label="Close chat"
               className="text-gray-400 hover:text-gray-600 text-lg leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
@@ -152,6 +153,7 @@ export function FloatingAIWidget() {
         </div>
       ) : (
         <button
+          type="button"
           onClick={() => setIsOpen(true)}
           className="w-14 h-14 bg-[#0D5C63] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#0a4a50] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2"
           aria-label="Open Connai chat"
