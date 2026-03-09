@@ -40,7 +40,7 @@ export const FAQ = () => {
         <div className="space-y-4">
           {(faqItems ?? []).map((item, index) => (
             <div key={index} className="border-b border-gray-200 pb-4">
-              <button
+              <button type="button"
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
                 className="w-full flex justify-between items-center text-lg font-semibold text-gray-800 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                 aria-expanded={openIndex === index}
@@ -56,7 +56,7 @@ export const FAQ = () => {
         </div>
         <p className="text-center mt-8 text-gray-500">
           Have a different question?{' '}
-          <button
+          <button type="button"
             onClick={openChat}
             className="font-semibold text-teal-600 hover:text-teal-500 underline underline-offset-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
           >
