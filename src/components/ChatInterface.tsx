@@ -41,13 +41,13 @@ export function ChatInterface({
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [started, setStarted] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
   const [captureState, setCaptureState] = useState<'idle' | 'capturing' | 'captured' | 'error'>('idle')
   const [capturedEmail, setCapturedEmail] = useState('')
   const captureAttempted = useRef(false)
-  const [isInitializing, setIsInitializing] = useState(true)
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsInitializing(false), 800)
+    const timer = setTimeout(() => setIsInitializing(false), 1200)
     return () => clearTimeout(timer)
   }, [])
 
@@ -56,8 +56,8 @@ export function ChatInterface({
   }, [messages, isLoading, captureState, isInitializing])
 
   useEffect(() => {
-    if (!isLoading && started && !isInitializing) inputRef.current?.focus()
-  }, [isLoading, started, isInitializing])
+    if (!isLoading && started) inputRef.current?.focus()
+  }, [isLoading, started])
 
   // Detect CONNAI_CAPTURE tag after streaming completes (interview mode only)
   useEffect(() => {
@@ -114,7 +114,7 @@ export function ChatInterface({
       <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
         {isInitializing ? (
           <div className="flex justify-start items-end gap-2">
-            <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-0.5">
               C
             </div>
             <div className="bg-gray-50 rounded-2xl rounded-bl-sm px-4 py-3 border border-gray-100">
@@ -146,7 +146,7 @@ export function ChatInterface({
           ))
         )}
 
-        {isLoading && !isInitializing && (
+        {isLoading && (
           <div className="flex justify-start items-end gap-2">
             <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
               C
@@ -206,12 +206,12 @@ export function ChatInterface({
               onChange={handleInputChange}
               placeholder={placeholder || 'Type your answer…'}
               className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent placeholder-gray-400 transition"
-              disabled={isLoading || isInitializing || captureState === 'capturing'}
+              disabled={isLoading || captureState === 'capturing' || isInitializing}
               autoComplete="off"
             />
             <button
               type="submit"
-              disabled={isLoading || isInitializing || !input.trim() || captureState === 'capturing'}
+              disabled={isLoading || !input.trim() || captureState === 'capturing' || isInitializing}
               className="bg-teal-500 hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl w-10 h-10 flex items-center justify-center transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400" aria-label="Send message"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
