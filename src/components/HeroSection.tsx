@@ -19,7 +19,7 @@ export function HeroSection() {
             href="/interview"
             className="inline-block bg-[#0D5C63] hover:bg-[#0a4a50] text-white font-bold px-8 py-4 rounded-full transition-colors text-base"
           >
-            Get my free audit →
+            Get my free digital maturity audit →
           </a>
         </div>
         <div className="shrink-0">
