@@ -63,6 +63,7 @@ function CopyButton({ text }: { text: string }) {
   }
   return (
     <button
+              type="button"
       onClick={copy}
       className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-white/5 border border-white/20 text-white/60 hover:text-white hover:border-white/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0E1117]"
     >
@@ -163,6 +164,7 @@ export default function AuditDetailPage() {
             )}
             {allDone && !report && (
               <button
+              type="button"
                 onClick={generateReport}
                 className="flex items-center gap-1.5 text-xs bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-md px-3 py-1.5 transition-colors"
               >
@@ -223,6 +225,7 @@ export default function AuditDetailPage() {
                   {iv.status !== 'complete' && (
                     <div className="flex items-center gap-2 shrink-0">
                       <button
+              type="button"
                         onClick={() => resendInvite(iv)}
                         disabled={resending === iv.id}
                         className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-white/5 border border-white/20 text-white/60 hover:text-white hover:border-white/30 transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0E1117]"
@@ -266,6 +269,7 @@ export default function AuditDetailPage() {
         {/* Invite new stakeholder */}
         <div className="space-y-3">
           <button
+              type="button"
             onClick={() => setShowInviteForm(!showInviteForm)}
             className="flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors"
           >
@@ -302,6 +306,7 @@ export default function AuditDetailPage() {
               <p className="text-white font-semibold">Ready to generate your Digital Maturity Report</p>
             </div>
             <button
+              type="button"
               onClick={generateReport}
               className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-4 py-3 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
             >
