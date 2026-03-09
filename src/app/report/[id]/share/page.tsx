@@ -51,7 +51,7 @@ const INDUSTRY_MEDIANS: Record<string, number> = {
   'Data & Analytics': 47,
   'Technology Infrastructure': 53,
   'Talent & Digital Culture': 41,
-  'Innovation & Agile Delivery': 38,
+  'Innovation': 38,
   'Cybersecurity & Risk': 46,
 };
 
