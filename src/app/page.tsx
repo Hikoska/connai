@@ -100,6 +100,11 @@ const Footer = () => (
   </footer>
 )
 
+export const metadata = {
+  title: "Connai — AI-Powered Digital Maturity Audits",
+  description: "Connai helps African SMEs understand and improve their digital maturity with AI-powered audits and actionable recommendations.",
+};
+
 export default function Home() {
   return (
     <main className="min-h-screen">
