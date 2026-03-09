@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
@@ -73,7 +72,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
-            <Image src="/linkgrow-logo.png" alt="Linkgrow" width={32} height={32} className="dark:invert" />
+            <ConnaiMark size={24} className="transition-opacity group-hover:opacity-80" />
             <span className="text-white font-bold text-lg tracking-tight">Connai</span>
           </Link>
 
@@ -108,7 +107,7 @@ export function Navbar() {
                   </div>
                 </button>
                 {isAccountOpen && (
-                  <div className="absolute right-0 mt-2 w-44 bg-[#151B23] border border-white/10 rounded-lg shadow-xl py-1 z-[100]">
+                  <div className="absolute right-0 mt-2 w-44 bg-[#151B23] border border-white/10 rounded-lg shadow-xl py-1 z-50">
                     <Link
                       href="/dashboard"
                       onClick={() => setIsAccountOpen(false)}
