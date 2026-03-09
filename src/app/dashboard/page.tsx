@@ -1,8 +1,3 @@
-export const metadata = {
-  title: "Dashboard | Connai",
-  description: "Manage your digital maturity audits and leads.",
-};
-
 'use client'
 
 export const dynamic = 'force-dynamic'
