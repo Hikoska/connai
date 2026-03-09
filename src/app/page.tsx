@@ -70,7 +70,7 @@ const FinalCTA = () => (
     <div className="max-w-3xl mx-auto px-6 text-center">
       <h2 className={`${instrumentSerif.variable} font-serif text-4xl md:text-5xl font-bold mb-4`}>Ready to see where you stand?</h2>
       <p className="text-gray-100 text-lg mb-8">Free. 30 minutes. No consultant required.</p>
-      <StartInterviewButton className="bg-teal-500 hover:bg-teal-400 text-white font-bold py-4 px-10 rounded-full text-lg transition-colors shadow-lg shadow-teal-900/20">
+      <StartInterviewButton className="bg-teal-500 hover:bg-teal-400 text-white font-bold py-4 px-10 rounded-full text-lg transition-colors"dow-lg shadow-teal-900/20">
         Get Your Free Report &rarr;
       </StartInterviewButton>
     </div>
