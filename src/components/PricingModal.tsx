@@ -51,7 +51,7 @@ export function PricingModal({ isOpen, onClose, auditId }: { isOpen: boolean; on
             Add Stakeholder (Beta — Free)
           </Link>
         ) : (
-          <button
+          <button type="button"
             onClick={onClose}
             className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#131920]"
           >
