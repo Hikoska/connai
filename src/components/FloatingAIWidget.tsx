@@ -54,7 +54,7 @@ export function FloatingAIWidget() {
             .then(res => { if (res.token) { setLeadId(res.token); router.push('/dashboard') } })
             .catch(e => console.error('[CONNAI_CAPTURE] fetch failed', e))
         } catch (e) {
-          console.error('[CONNAI_CAPTURE] parse error', e)
+
         }
         continue
       }
@@ -73,7 +73,7 @@ export function FloatingAIWidget() {
             .then(res => { if (res.audit_url) setAuditUrl(res.audit_url) })
             .catch(e => console.error('[CONNAI_STAKEHOLDERS] fetch failed', e))
         } catch (e) {
-          console.error('[CONNAI_STAKEHOLDERS] parse error', e)
+
         }
       }
     }
