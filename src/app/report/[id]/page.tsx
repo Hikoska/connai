@@ -168,6 +168,7 @@ export default function ReportPage() {
       const slug = (orgName || 'report').replace(/[^a-z0-9]/gi, '-').toLowerCase()
       pdf.save(`connai-${slug}.pdf`)
     } catch (err) {
+      console.error('PDF generation failed:', err)
       window.print()
     }
     setDownloading(false)
@@ -296,7 +297,7 @@ export default function ReportPage() {
       `}</style>
 
       {/* Header */}
-      <header className="border-b border-slate-800/60 px-6 py-4 sticky top-0 bg-slate-950/90 backdrop-blur z-10">
+      <header className="border-b border-slate-800/60 px-6 py-4 sticky top-0 bg-slate-950/90 backdrop-blur z-50">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-teal-400 font-bold text-base tracking-tight">Connai</span>
@@ -579,7 +580,7 @@ export default function ReportPage() {
               <h2 className="text-base font-semibold text-white">Opportunity Register</h2>
               <span className="text-xs text-slate-500 font-mono">Highest-impact gaps · named tools</span>
             </div>
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-visible">
               <div className="px-6 py-4 border-b border-slate-800/50">
                 <p className="text-xs text-slate-500 leading-relaxed">
                   The following dimensions show the largest improvement potential relative to your current maturity.
@@ -658,7 +659,7 @@ export default function ReportPage() {
             </div>
 
           ) : !paid ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-visible">
               <div className="px-8 py-6 border-b border-slate-800/50">
                 <p className="text-slate-400 text-sm leading-relaxed">
                   Your full action plan includes prioritised recommendations across all {report?.dimensions.length ?? 8} dimensions —
@@ -703,7 +704,7 @@ export default function ReportPage() {
                   const items = plan[key] ?? [];
                   if (!items.length) return null;
                   return (
-                    <div key={key} className={`border ${meta.border} rounded-2xl overflow-hidden`}>
+                    <div key={key} className={`border ${meta.border} rounded-2xl overflow-visible`}>
                       <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
                         <div>
                           <p className={`font-semibold text-sm ${meta.color}`}>{meta.label}</p>
