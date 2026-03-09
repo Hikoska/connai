@@ -311,13 +311,16 @@ export default function ReportPage() {
             <button
               onClick={handleCopy}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors border border-slate-700"
-            >
+            
+              type="button">
               {copied ? '✓ Copied!' : 'Share'}
             </button>
             <button
               onClick={downloadPdf} disabled={downloading}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors border border-slate-700"
               title="Download as PDF"
+              type="button"
+              aria-label="Download report as PDF"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -686,7 +689,8 @@ export default function ReportPage() {
                   onClick={handleUpgrade}
                   disabled={checkoutLoading}
                   className="mt-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-semibold px-8 py-3 rounded-xl transition-colors text-sm"
-                >
+                
+              type="button">
                   {checkoutLoading ? 'Processing…' : 'Get Full Report — $49'}
                 </button>
               </div>
