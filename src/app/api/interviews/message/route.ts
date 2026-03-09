@@ -23,7 +23,7 @@ function isRateLimit(error: unknown): boolean {
   const e = error as Record<string, unknown>
   const msg = String(e?.message ?? error).toLowerCase()
   const status = (e?.status ?? (e?.cause as Record<string, unknown>)?.status) as number | undefined
-  return status === 429 || msg.includes('rate limit') || msg.includes('429')
+  return status === 429 || msg.includes('rate limit') || msg.toLowerCase().includes('429')
 }
 
 async function getInterviewContext(token: string) {
