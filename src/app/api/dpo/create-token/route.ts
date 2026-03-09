@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 const DPO_COMPANY_TOKEN = process.env.DPO_COMPANY_TOKEN
-const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL
 const DPO_API_URL = 'https://secure.3gdirectpay.com/dpopay.php'
 
 const getXmlValue = (xml: string, tag: string): string => {
