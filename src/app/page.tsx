@@ -38,7 +38,7 @@ const Hero = () => (
         Connai runs an AI-powered digital maturity audit and delivers a scored report your leadership team can act on.
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-        <StartInterviewButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-full hover:bg-[#0a4a50] transition-colors text-lg inline-flex items-center gap-2 shadow-lg shadow-teal-900/20 animate-pulse">
+        <StartInterviewButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-full hover:bg-[#0a4a50] transition-colors text-lg inline-flex items-center gap-2 shadow-lg shadow-teal-900/20eal-900/20 animate-pulse">
           Start a free audit &rarr;
         </StartInterviewButton>
         <span className="text-sm text-gray-600">No consultant required. Free.</span>
