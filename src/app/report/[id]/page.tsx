@@ -168,7 +168,6 @@ export default function ReportPage() {
       const slug = (orgName || 'report').replace(/[^a-z0-9]/gi, '-').toLowerCase()
       pdf.save(`connai-${slug}.pdf`)
     } catch (err) {
-      console.error('PDF generation failed:', err)
       window.print()
     }
     setDownloading(false)
