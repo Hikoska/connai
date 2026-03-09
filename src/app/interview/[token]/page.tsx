@@ -236,6 +236,7 @@ export default function InterviewPage() {
                 />
                 <div className="flex gap-3">
                   <button
+                    type="button"
                     onClick={submitWithComment}
                     disabled={submitting}
                     className="flex-1 bg-[#0D5C63] hover:bg-[#0a4a50] text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
@@ -244,6 +245,7 @@ export default function InterviewPage() {
                   </button>
                   {!comment.trim() && (
                     <button
+                      type="button"
                       onClick={() => { setSubmitted(true); setTimeout(() => { router.push(`/interview/${token}/complete`) }, 800) }}
                       className="text-sm text-slate-500 hover:text-slate-300 px-3"
                     >
@@ -268,6 +270,8 @@ export default function InterviewPage() {
               className="flex-1 resize-none bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 max-h-32 overflow-y-auto disabled:bg-slate-800"
             />
             <button
+              type="button"
+              aria-label="Send message"
               onClick={send}
               disabled={!input.trim() || thinking}
               className="w-10 h-10 bg-[#0D5C63] hover:bg-[#0a4a50] text-white rounded-xl flex items-center justify-center disabled:opacity-40 transition-colors flex-shrink-0"
