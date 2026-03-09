@@ -3,8 +3,8 @@ import { useState } from 'react'
 
 const faqItems = [
   {
-    q: "What is a digital maturity assessment?",
-    a: "It's a 'health check' for your business. We analyse how well you're using digital tools and technology to meet your goals, showing you what's working, what's not, and how you compare to others in your industry.",
+    q: "What is Connai?",
+    a: "Connai is an AI-powered interview platform that helps professionals showcase their soft skills — communication, leadership, problem-solving — through a 30-minute conversational interview. You get a scored report your employer or hiring manager can actually act on.",
   },
   {
     q: "How is Connai different from other tools?",
