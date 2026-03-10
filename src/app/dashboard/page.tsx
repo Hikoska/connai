@@ -95,15 +95,23 @@ export default function DashboardPage() {
         if (leadIds.length > 0) {
           const [intRes, repRes] = await Promise.all([
             supabase
-              .from('interviews')
-              .select('id, lead_id, stakeholder_name, stakeholder_role, token, status')
-              .in('lead_id', leadIds),
+              .from('interview_sessions')
+              .select('*')
+              .in('company_id', leadIds),
             supabase
               .from('reports')
               .select('lead_id, overall_score')
               .in('lead_id', leadIds),
           ])
-          interviews = intRes.data || []
+
+          interviews = (intRes.data || []).map((session: any) => ({
+            id: session.id,
+            lead_id: session.company_id || session.lead_id,
+            stakeholder_name: session.stakeholder_name || session.stakeholder_email || '',
+            stakeholder_role: session.role || session.stakeholder_role || 'Stakeholder',
+            token: session.token,
+            status: session.status || 'pending'
+          }))
           reports = repRes.data || []
         }
 
