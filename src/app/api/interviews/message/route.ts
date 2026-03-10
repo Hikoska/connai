@@ -10,7 +10,8 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 const groq = createOpenAI({
   baseURL: 'https://api.groq.com/openai/v1',
-  apiKey: process.env.GROQ_API_KEY,\n})
+  apiKey: process.env.GROQ_API_KEY,
+})
 
 const cerebras = createOpenAI({
   baseURL: 'https://api.cerebras.ai/v1',
@@ -110,7 +111,7 @@ Format rules:
     }))
 
     // Groq primary
-    if (process.env.GRO	_API_KEY) {
+    if (process.env.GROQ_API_KEY) {
       try {
         const { text } = await generateText({
           model: groq('llama-3.3-70b-versatile'),
