@@ -34,10 +34,9 @@ Critical style rules for ALL modes:
 // Both are OpenAI-compatible APIs on free tiers.
 // Strategy: work continues at lower latency rather than stopping cold.
 
-// Primary: Groq — 300+ tok/s, llama-3.3-70b-versatile, 1K RPD free
-const groq = createOpenAI({
-  baseURL: 'https://api.groq.com/openai/v1',
-  apiKey: process.env.GROQ_API_KEY,
+// Primary: OpenAI — gpt-4o-mini fast and cost-effective
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY || '',
 })
 
 // Fallback: Cerebras — OpenAI-compatible, llama3.1-8b (~2200 tok/s), 14.4K RPD free tier
@@ -58,21 +57,21 @@ function isRateLimit(error: any): boolean {
 export async function POST(req: Request) {
   const { messages } = await req.json()
 
-  // Try Groq first
-  if (process.env.GROQ_API_KEY) {
+  // Try OpenAI first
+  if (process.env.OPENAI_API_KEY) {
     try {
       const result = await streamText({
-        model: groq('llama-3.3-70b-versatile'),
+        model: openai('gpt-4o-mini'),
         system: SYSTEM_PROMPT,
         messages,
       })
       return result.toDataStreamResponse()
     } catch (error: any) {
       if (!isRateLimit(error)) {
-        console.error('Groq error (non-429):', error)
+        console.error('OpenAI error (non-429):', error)
         throw error
       }
-      console.warn('Groq RPD exhausted — cascading to Cerebras')
+      console.warn('OpenAI rate limit exhausted — cascading to Cerebras')
     }
   }
 
