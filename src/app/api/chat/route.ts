@@ -29,115 +29,27 @@ Your goal is to uncover the root causes of operational bottlenecks using active 
 
 **Phase 4: Stakeholder Expansion**
 - Ask (1–2 sentences): "To get a complete picture of [org name]'s operations and address those bottlenecks, we typically gather input from 2–3 others in your team. Who are the key people involved in your digital operations? (e.g., IT lead, operations manager — just list their names and roles)."
+- Once provided by the user, emit:
+  <CONNAI_STAKEHOLDERS>{"stakeholders": [{"name": "Name", "role": "Role"}]}</CONNAI_STAKEHOLDERS>
 
-**Phase 5: The Stakeholders Payload (CRITICAL)**
-- After the user lists stakeholders, you MUST emit this tag EXACTLY:
-<CONNAI_STAKEHOLDERS>[{"name":"NAME1","role":"ROLE1"},{"name":"NAME2","role":"ROLE2"}]</CONNAI_STAKEHOLDERS>
-- Then reply (max 2 sentences): "Perfect. I've noted the stakeholders — their interview links will appear on your audit page in a moment. Let's get started on solving those bottlenecks."
+// ACTION: Force redeploy Vercel with definitive prompt architecture update
+`
 
-**Critical Style Rules for all Phases:**
-- Be conversational, validating, and empathetic. 
-- Avoid rigid interrogations. Synthesize before asking the next question.
-- Always end your conversational turns with exactly one question to keep the momentum going (except in Phase 5).`
-
-export const maxDuration = 60
-
-function isRateLimit(error: any): boolean {
-  if (!error) return false
-  const msg = String(error?.message ?? error).toLowerCase()
-  const status = error?.status ?? error?.cause?.status ?? error?.cause?.response?.status
-  return status === 429 || msg.includes('rate limit') || msg.includes('429')
-}
+const groq = createOpenAI({
+  baseURL: 'https://api.groq.com/openai/v1',
+  apiKey: process.env.GROQ_API_KEY,
+})
 
 export async function POST(req: Request) {
   const { messages } = await req.json()
 
-  // 1. Try OpenAI natively
-  const openAiKey = process.env.OPENAI_API_KEY?.trim()
-  if (openAiKey) {
-    try {
-      const openai = createOpenAI({ apiKey: openAiKey })
-      const result = await streamText({
-        model: openai('gpt-4o-mini'),
-        system: SYSTEM_PROMPT,
-        messages,
-      })
-      return result.toDataStreamResponse()
-    } catch (error: any) {
-      if (!isRateLimit(error)) {
-        console.error('OpenAI error (non-429):', error)
-        throw error
-      }
-      console.warn('OpenAI rate limit exhausted.')
-    }
-  }
+  const result = streamText({
+    model: groq('llama-3.3-70b-versatile'),
+    messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
+    maxTokens: 500,
+  })
 
-  // 2. Fallback to OpenRouter for gpt-4o-mini if OPENAI key is missing
-  const openRouterKey = process.env.OPENROUTER_API_KEY?.trim()
-  if (openRouterKey) {
-    try {
-      const openRouter = createOpenAI({
-        baseURL: 'https://openrouter.ai/api/v1',
-        apiKey: openRouterKey,
-      })
-      const result = await streamText({
-        model: openRouter('openai/gpt-4o-mini'),
-        system: SYSTEM_PROMPT,
-        messages,
-      })
-      return result.toDataStreamResponse()
-    } catch (error: any) {
-      if (!isRateLimit(error)) {
-        console.error('OpenRouter error (non-429):', error)
-      }
-    }
-  }
-
-  // 3. Fallback to Groq
-  const groqKey = process.env.GROQ_API_KEY?.trim()
-  if (groqKey) {
-    try {
-      const groq = createOpenAI({
-        baseURL: 'https://api.groq.com/openai/v1',
-        apiKey: groqKey,
-      })
-      const result = await streamText({
-        model: groq('llama-3.3-70b-versatile'),
-        system: SYSTEM_PROMPT,
-        messages,
-      })
-      return result.toDataStreamResponse()
-    } catch (error: any) {
-      if (!isRateLimit(error)) {
-        console.error('Groq error (non-429):', error)
-      }
-    }
-  }
-
-  // 4. Fallback: Cerebras
-  const cerebrasKey = process.env.CEREBRAS_API_KEY?.trim()
-  if (cerebrasKey) {
-    try {
-      const cerebras = createOpenAI({
-        baseURL: 'https://api.cerebras.ai/v1',
-        apiKey: cerebrasKey,
-      })
-      const result = await streamText({
-        model: cerebras('llama3.1-8b'),
-        system: SYSTEM_PROMPT,
-        messages,
-      })
-      return result.toDataStreamResponse()
-    } catch (error: any) {
-      console.error('Cerebras error:', error)
-      throw error
-    }
-  }
-
-  // All exhausted or not configured
-  console.error('All LLM providers unavailable or keys missing.')
-  return Response.json(
-    { error: 'Service temporarily at capacity. Please try again in a few minutes.' },
-    { status: 503 }
-  )
+  return result.toDataStreamResponse()
 }
+
+// Real commit force push - triggers deployment
