@@ -8,6 +8,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const GROQ_API_KEY = process.env.GROQ_API_KEY
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
 const resend = new Resend(RESEND_API_KEY)
 
@@ -39,7 +40,34 @@ ${transcript.slice(0, 8000)}
 Respond ONLY with a valid JSON object like this (no explanation, no markdown):
 {"strategy": 72, "technology": 58, "data": 45, "operations": 63, "customer": 80, "culture": 55}`
 
-  // Try Groq first, fall back to OpenRouter
+
+  // Try OpenAI first with gpt-4o (heavy model)
+  if (OPENAI_API_KEY) {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.2,
+          max_tokens: 200,
+        }),
+      })
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content
+      if (content) {
+        return JSON.parse(content.trim())
+      }
+    } catch (err) {
+      console.error('OpenAI scoring failed, trying Groq:', err)
+    }
+  }
+
+  // Then try Groq
   if (GROQ_API_KEY) {
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -75,7 +103,7 @@ Respond ONLY with a valid JSON object like this (no explanation, no markdown):
           'HTTP-Referer': 'https://connai.linkgrow.io',
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-3.3-70b-instruct',
+          model: 'anthropic/claude-3.5-sonnet',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.2,
           max_tokens: 200,
