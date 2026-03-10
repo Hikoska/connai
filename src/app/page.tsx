@@ -8,6 +8,7 @@ import { WhoItsFor } from '@/components/WhoItsFor'
 import { ProductScreenshot } from '@/components/ProductScreenshot'
 import { Testimonials } from '@/components/Testimonials'
 import { FAQ } from '@/components/FAQ'
+import Image from 'next/image'
 import Link from 'next/link'
 import HomeConcierge from '@/components/HomeConcierge'
 
@@ -87,8 +88,7 @@ const Footer = () => (
       <div className="flex items-center gap-3">
         <span className="text-xs text-gray-600 uppercase tracking-widest font-medium">Built by</span>
         <div className="bg-white rounded px-2 py-1">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/linkgrow-logo.png" alt="Linkgrow" style={{ height: '18px', width: 'auto', display: 'block' }} />
+          <Image src="/linkgrow-logo.png" alt="Linkgrow" width={72} height={18} className="object-contain" />
         </div>
       </div>
       <div className="flex gap-6 text-sm">
