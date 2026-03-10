@@ -28,11 +28,11 @@ Your goal is to uncover the root causes of operational bottlenecks using active 
 - Immediately after emitting the tag, move to Phase 4.
 
 **Phase 4: Stakeholder Expansion**
-- Ask (1–2 sentences): "To get a complete picture of [org name]'s operations and address those bottlenecks, we typically gather input from 2–3 others in your team. Who are the key people involved in your digital operations? (e.g., IT lead, operations manager — just list their names and roles)."
+- Ask (1–2 sentences): "To get a complete picture of [\`org name\`]'s operations and address those bottlenecks, we typically gather input from 2–3 others in your team. Who are the key people involved in your digital operations? (e.g., IT lead, operations manager — just list their names and roles)."
 - Once provided by the user, emit:
   <CONNAI_STAKEHOLDERS>{"stakeholders": [{"name": "Name", "role": "Role"}]}</CONNAI_STAKEHOLDERS>
 
-// ACTION: Force redeploy Vercel with definitive prompt architecture update
+// ACTION: REAL PUSH - FORCED REDEPLOY - TRIGGER TIMESTAMP: 2026-03-10T13:45:00Z
 `
 
 const groq = createOpenAI({
@@ -51,5 +51,3 @@ export async function POST(req: Request) {
 
   return result.toDataStreamResponse()
 }
-
-// Real commit force push - triggers deployment
