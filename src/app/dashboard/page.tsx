@@ -75,50 +75,32 @@ export default function DashboardPage() {
 
       if (session?.user) {
         setUser(session.user)
-        const userEmail = session.user.email?.toLowerCase()
 
-        const { data: leadsData, error: leadsError } = await supabase
-          .from('leads')
-          .select('id, org_name, email, status, captured_at')
-          .eq('email', userEmail)
-          .order('captured_at', { ascending: false })
+        // Use server-side API route to bypass RLS — service role reads all leads by email
+        const apiRes = await fetch('/api/me/audits', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
 
-        if (leadsError) {
+        if (!apiRes.ok) {
           setLoading(false)
           return
         }
 
-        const leadIds = (leadsData || []).map((l: any) => l.id)
-        let interviews: Interview[] = []
-        let reports: Report[] = []
+        const { leads: leadsData, interviews: rawInterviews, reports } = await apiRes.json()
 
-        if (leadIds.length > 0) {
-          const [intRes, repRes] = await Promise.all([
-            supabase
-              .from('interview_sessions')
-              .select('*')
-              .in('company_id', leadIds),
-            supabase
-              .from('reports')
-              .select('lead_id, overall_score')
-              .in('lead_id', leadIds),
-          ])
-
-          interviews = (intRes.data || []).map((session: any) => ({
-            id: session.id,
-            lead_id: session.company_id || session.lead_id,
-            stakeholder_name: session.stakeholder_name || session.stakeholder_email || '',
-            stakeholder_role: session.role || session.stakeholder_role || 'Stakeholder',
-            token: session.token,
-            status: session.status || 'pending'
-          }))
-          reports = repRes.data || []
-        }
+        const interviews: Interview[] = (rawInterviews || []).map((session: any) => ({
+          id: session.id,
+          lead_id: session.company_id || session.lead_id,
+          stakeholder_name: session.stakeholder_name || session.stakeholder_email || '',
+          stakeholder_role: session.role || session.stakeholder_role || 'Stakeholder',
+          token: session.token,
+          status: session.status || 'pending',
+        }))
 
         const merged: Lead[] = (leadsData || []).map((lead: any) => ({
           ...lead,
           interviews: interviews.filter((i) => i.lead_id === lead.id),
-          report: reports.find((r) => r.lead_id === lead.id) ?? null,
+          report: (reports || []).find((r: any) => r.lead_id === lead.id) ?? null,
         }))
 
         setLeads(merged)
@@ -141,7 +123,7 @@ export default function DashboardPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0E1117] p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0E1117] p4">
         <div className="text-center max-w-sm">
           <h1 className="text-2xl font-bold text-white mb-2">Your audits</h1>
           <p className="mb-6 text-white/60">Log in to view your audit dashboard.</p>
@@ -208,7 +190,7 @@ export default function DashboardPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     {/* Left: org info */}
                     <div className="flex items-start gap-4 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w9 h9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
                         <FileText className="text-white/30" size={16} />
                       </div>
                       <div className="min-w-0">
@@ -268,8 +250,8 @@ export default function DashboardPage() {
                         {/* Free-tier teaser */}
                         {completed >= 1 && (
                           <button type="button"
-                            onClick={() => setIsPricingModalOpen(true)}
-                            className="mt-2 inline-flex items-center gap-1.5 text-xs bg-teal-500/10 border border-teal-500/20 text-teal-400 hover:bg-teal-500/20 px-2.5 py-1 rounded-full transition-colors"
+                              onClick={() => setIsPricingModalOpen(true)}
+                              className="mt-2 inline-flex items-center gap-1.5 text-xs bg-teal-500/10 border border-teal-500/20 text-teal-400 hover:bg-teal-500/20 px-2.5 py-1 rounded-full transition-colors"
                           >
                             Free interview used — add more from $99
                           </button>
