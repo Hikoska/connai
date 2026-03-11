@@ -26,7 +26,7 @@ body {
   @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
 }
 
-/* ─── Scroll Reveal ──────────────────────────────────────── */
+/* ━━━ Scroll Reveal ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .scroll-hidden {
   opacity: 0;
   transform: translateY(32px);
@@ -39,7 +39,7 @@ body {
   transform: translateY(0);
 }
 
-/* Staggered children — each direct child delays slightly */
+/* Staggered children – each direct child delays slightly */
 .scroll-stagger > * {
   opacity: 0;
   transform: translateY(28px);
@@ -67,7 +67,7 @@ body {
   transform: translateY(0);
 }
 
-/* ━━━━ Print / PDF ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+/* ┌─ Print / PDF ──────────────────────────────────────────────────────────┐ */
 @media print {
   .no-print { display: none !important; }
   body {
@@ -76,4 +76,9 @@ body {
     print-color-adjust: exact;
   }
   @page { size: A4 portrait; margin: 12mm; }
+}
+
+/* ── Keyboard focus-visible ring ──────────────────────────── */
+*:focus-visible {
+  @apply outline-none ring-2 ring-teal-400;
 }
