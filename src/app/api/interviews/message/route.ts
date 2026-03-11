@@ -87,9 +87,8 @@ Let's explore how your organization approaches these key areas:
 4. Data and analytics: How do you collect, analyze, and use data to inform decisions?
 5. Technology infrastructure: What systems and tools do you use to support your operations?
 6. Talent and culture: How do you develop and support your team's digital skills?
-7. Innovation & Agile Delivery & Agile Delivery& Agile Delivery: How do you approach innovation and agile delivery in your organization?
-8. Cybersecurity & Risk: How do you approach cybersecurity and manage risk? & Agile Delivery & Agile Deliveryand agility: How does your organization approach innovation and agility in its digital initiatives?and agility: How do you foster innovation and maintain agility within your organisation?ow do you encourage experimentation and adapt to change?
-8. Cybersecurity and risk: How do you protect your organization from digital threats?
+7. Innovation & Agile Delivery: How do you approach innovation and agile delivery in your organisation?
+8. Cybersecurity & Risk: How do you protect your organisation from digital threats and manage risk?
 
 Elicitation techniques - rotate through these:
 - Provocative assumption: state a reasonable assumption they will want to correct. Example: "I imagine like most companies your size, most of your team coordination still runs through WhatsApp..." Wrong assumptions generate richer, more candid responses than open questions.
