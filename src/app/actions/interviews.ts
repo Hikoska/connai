@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 export async function generateInterviewLink(companyId: string, role: string) {
   try {
     const supabase = await createClient();
-    
+
     // Verify user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -40,12 +40,12 @@ export async function generateInterviewLink(companyId: string, role: string) {
       return { error: 'Failed to create interview session' };
     }
 
-    const baceUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://connai.vercel.app';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://connai.linkgrow.io';
     const link = `${baseUrl}/interview/${session.token}`;
 
     // Revalidate dashboard so any session lists update automatically
     revalidatePath('/dashboard');
-    
+
     return { success: true, link };
   } catch (error: any) {
     return { error: (error as Error).message || 'An unexpected error occurred.' };
