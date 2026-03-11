@@ -109,13 +109,14 @@ Format rules:
       content: m.content,
     }))
 
-    // Groq primary
+    // Tier 1: Groq 70B primary
     if (process.env.GROQ_API_KEY) {
       try {
         const { text } = await generateText({
           model: groq('llama-3.3-70b-versatile'),
           system,
           messages: formatted,
+          maxTokens: 400,
         })
         // Fire-and-forget: set first_message_at + status='started' on first user reply
         if (isFirstMessage) {
@@ -129,19 +130,36 @@ Format rules:
             body: JSON.stringify({ first_message_at: new Date().toISOString(), status: 'started' }),
           }).catch(() => { /* non-fatal */ })
         }
-      return NextResponse.json({ message: text, done: isDone })
+        return NextResponse.json({ message: text, done: isDone })
       } catch (err) {
         if (!isRateLimit(err)) throw err
-        console.warn('Groq rate limit — cascading to Cerebras')
+        console.warn('Groq 70B rate limit — cascading to Cerebras 8B')
       }
     }
 
-    // Cerebras fallback
+    // Tier 2: Cerebras 8B fallback
     if (process.env.CEREBRAS_API_KEY) {
+      try {
+        const { text } = await generateText({
+          model: cerebras('llama3.1-8b'),
+          system,
+          messages: formatted,
+          maxTokens: 400,
+        })
+        return NextResponse.json({ message: text, done: isDone })
+      } catch (err) {
+        if (!isRateLimit(err)) throw err
+        console.warn('Cerebras rate limit — cascading to Groq 8B')
+      }
+    }
+
+    // Tier 3: Groq 8B last resort
+    if (process.env.GROQ_API_KEY) {
       const { text } = await generateText({
-        model: cerebras('llama3.1-8b'),
+        model: groq('llama-3.1-8b-instant'),
         system,
         messages: formatted,
+        maxTokens: 400,
       })
       return NextResponse.json({ message: text, done: isDone })
     }
