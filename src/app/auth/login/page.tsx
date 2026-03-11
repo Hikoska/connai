@@ -49,7 +49,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4 bg-[radial-gradient(ellipse_at_top,#0D5C6318,transparent_60%)]">
-      <div className="w-full max-w-sm space-y-6">
+      <div className="w-full max-w-sm space-y-6 border border-[#0D5C63]/50 rounded-xl p-8 bg-white/5 backdrop-blur-sm">
         <div className="text-center space-y-2">
           <Link
             href="/"
