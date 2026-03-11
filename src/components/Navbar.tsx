@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
@@ -73,7 +72,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
-            <Image src="/linkgrow-logo.png" alt="Linkgrow" width={120} height={40} className="object-contain" priority />
+            <ConnaiMark size={28} />
             <span className="text-white font-bold text-lg tracking-tight">Connai</span>
           </Link>
 
@@ -127,20 +126,22 @@ export function Navbar() {
                 )}
               </div>
             ) : (
-              <Link
-                href="/auth/login"
-                className="text-sm text-white/70 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
-              >
-                Sign in
-              </Link>
+              <>
+                <Link
+                  href="/auth/login"
+                  className="text-sm text-white/70 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); document.getElementById('start-audit-btn')?.click() }}
+                  className="bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
+                >
+                  Start free audit
+                </Link>
+              </>
             )}
-            <Link
-              href={isLoggedIn ? '/audit/new' : '#'}
-              onClick={!isLoggedIn ? (e) => { e.preventDefault(); document.getElementById('start-audit-btn')?.click() } : undefined}
-              className="bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
-            >
-              Start free audit
-            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -174,23 +175,24 @@ export function Navbar() {
               </Link>
             )}
             {isLoggedIn ? (
+              <button type="button"
+                onClick={handleSignOut}
+                className="block w-full text-left text-white/70 hover:text-white text-sm py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
+              >
+                Sign out
+              </button>
+            ) : (
               <>
-                <button type="button"
-                  onClick={handleSignOut}
-                  className="block w-full text-left text-white/70 hover:text-white text-sm py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
-                >
-                  Sign out
-                </button>
-                <Link href="/audit/new" className="block bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+                <Link href="/auth/login" className="block text-white/70 hover:text-white text-sm py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                   onClick={() => setIsMenuOpen(false)}>
+                  Sign in
+                </Link>
+                <Link href="#"
+                  onClick={(e) => { e.preventDefault(); document.getElementById('start-audit-btn')?.click(); setIsMenuOpen(false) }}
+                  className="block bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
                   Start free audit
                 </Link>
               </>
-            ) : (
-              <Link href="/auth/login" className="block text-white/70 hover:text-white text-sm py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
-                onClick={() => setIsMenuOpen(false)}>
-                Sign in
-              </Link>
             )}
           </div>
         )}
