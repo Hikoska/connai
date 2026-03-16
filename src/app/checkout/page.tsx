@@ -1,10 +1,11 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const reportId = searchParams.get('reportId')
@@ -107,7 +108,7 @@ export default function CheckoutPage() {
                 Redirecting to payment…
               </>
             ) : (
-              'Pay $49 • Secure checkout'
+              'Pay $49 · Secure checkout'
             )}
           </button>
 
@@ -132,5 +133,17 @@ export default function CheckoutPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0E1117] flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-teal-400/30 border-t-teal-400 rounded-full animate-spin" />
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   )
 }
