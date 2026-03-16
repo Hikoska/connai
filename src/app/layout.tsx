@@ -60,7 +60,7 @@ const jsonLd = {
   '@type': 'SoftwareApplication',
   name: 'Connai',
   applicationCategory: 'BusinessApplication',
-  description: "AI-powered digital maturity audits for SMEs. Get a clear picture of your organisation\'s digital health in minutes, not months.",
+  description: "AI-powered digital maturity audits for SMEs. Get a clear picture of your organisation's digital health in minutes, not months.",
   url: 'https://connai.linkgrow.io',
   offers: {
     '@type': 'Offer',
@@ -76,14 +76,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${instrumentSerif.variable} font-sans bg-[#F8F6F2]`}>
+      <body className={`${inter.variable} ${instrumentSerif.variable} font-sans bg-[#0D2738]`}>
+        {/* Skip to main content — WCAG 2.4.1 */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-[#0D5C63] focus:text-white focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-teal-400 focus:outline-none"
+        >
+          Skip to main content
+        </a>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <AlphaBanner />
         <Navbar />
-        {children}
+        <main id="main-content">
+          {children}
+        </main>
         <FeedbackWidget />
       </body>
     </html>
