@@ -1,22 +1,114 @@
 import { Instrument_Serif } from 'next/font/google'
-import { FloatingAIWidget } from '@/components/FloatingAIWidget'
+import dynamic from 'next/dynamic'
 import { StartInterviewButton } from '@/components/StartInterviewButton'
 import { SocialProof } from '@/components/SocialProof'
-import { HowItWorks } from '@/components/HowItWorks'
-import { WhatYouGet } from '@/components/WhatYouGet'
-import { WhoItsFor } from '@/components/WhoItsFor'
-import { ProductScreenshot } from '@/components/ProductScreenshot'
-import { Testimonials } from '@/components/Testimonials'
-import { FAQ } from '@/components/FAQ'
 import Image from 'next/image'
 import Link from 'next/link'
-import HomeConcierge from '@/components/HomeConcierge'
 
+// ─── Above-fold: eager ────────────────────────────────────────────────────────
+// Hero, SocialProof, and StartInterviewButton load immediately.
+// SocialProof is kept eager: it appears just below the fold and carries
+// trust-signal data that benefits from early fetch.
+
+// ─── Below-fold: lazy-loaded ──────────────────────────────────────────────────
+// All components below the first viewport are wrapped with Next.js dynamic()
+// so their JS chunks are deferred until after the critical path renders.
+// ssr:false is set on components that use client-only APIs (localStorage,
+// usePathname, useChat) or heavy third-party hooks (ai/react).
+
+const HowItWorks = dynamic(
+  () => import('@/components/HowItWorks').then(m => ({ default: m.HowItWorks })),
+  {
+    loading: () => <SectionSkeleton height="h-64" />,
+    ssr: false,
+  }
+)
+
+const ProductScreenshot = dynamic(
+  () => import('@/components/ProductScreenshot').then(m => ({ default: m.ProductScreenshot })),
+  {
+    loading: () => <SectionSkeleton height="h-80" />,
+    ssr: false,
+  }
+)
+
+const WhatYouGet = dynamic(
+  () => import('@/components/WhatYouGet').then(m => ({ default: m.WhatYouGet })),
+  {
+    loading: () => <SectionSkeleton height="h-64" />,
+    ssr: false,
+  }
+)
+
+const WhoItsFor = dynamic(
+  () => import('@/components/WhoItsFor').then(m => ({ default: m.WhoItsFor })),
+  {
+    loading: () => <SectionSkeleton height="h-64" />,
+    ssr: false,
+  }
+)
+
+const Testimonials = dynamic(
+  () => import('@/components/Testimonials').then(m => ({ default: m.Testimonials })),
+  {
+    loading: () => <SectionSkeleton height="h-48" />,
+    ssr: false,
+  }
+)
+
+const FAQ = dynamic(
+  () => import('@/components/FAQ').then(m => ({ default: m.FAQ })),
+  {
+    loading: () => <SectionSkeleton height="h-64" />,
+    ssr: false,
+  }
+)
+
+// FloatingAIWidget: highest priority lazy-load.
+// Uses useChat (ai/react), useRouter, SSE streaming — heaviest client bundle
+// on the homepage. ssr:false ensures it never blocks the server render.
+const FloatingAIWidget = dynamic(
+  () => import('@/components/FloatingAIWidget').then(m => ({ default: m.FloatingAIWidget })),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+)
+
+// HomeConcierge: role-personalisation widget.
+// Uses localStorage, usePathname, and client-side state — client-only.
+const HomeConcierge = dynamic(
+  () => import('@/components/HomeConcierge'),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+)
+
+// ─── Skeleton placeholder ─────────────────────────────────────────────────────
+// Minimal skeleton to prevent layout shift during lazy-load hydration.
+// Uses the same background as the page so there is no flash of white.
+function SectionSkeleton({ height = 'h-48' }: { height?: string }) {
+  return (
+    <div
+      className={`w-full ${height} bg-[#0D2738] animate-pulse`}
+      aria-hidden="true"
+      role="presentation"
+    />
+  )
+}
+
+// ─── Font ─────────────────────────────────────────────────────────────────────
+// Note: Instrument_Serif is also loaded in layout.tsx (global). This local
+// instance provides the CSS variable for Hero & FinalCTA which are inlined
+// in this file. next/font deduplicates the network request automatically.
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
   weight: '400',
   variable: '--font-instrument-serif',
 })
+
+// ─── Inline components (tiny, no heavy deps) ─────────────────────────────────
 
 const Hero = () => (
   <section className="relative pt-24 pb-16 overflow-hidden bg-[#0D2738]">
@@ -108,8 +200,11 @@ export const metadata = {
 export default function Home() {
   return (
     <main className="min-h-screen">
+      {/* ── Above fold: eager ─────────────────────────── */}
       <Hero />
       <SocialProof />
+
+      {/* ── Below fold: lazy-loaded ───────────────────── */}
       <HowItWorks />
       <section className="relative rounded-2xl overflow-hidden">
         <ProductScreenshot />
@@ -121,6 +216,8 @@ export default function Home() {
       <FAQ />
       <FinalCTA />
       <Footer />
+
+      {/* ── Client-only widgets: no SSR ───────────────── */}
       <FloatingAIWidget />
       <HomeConcierge />
     </main>
