@@ -40,6 +40,12 @@ interface InterviewRow {
   leads: { org_name: string; industry?: string; role?: string } | null
 }
 
+// --- RACE CONDITION FIX: In-memory generation lock per lead_id ---
+// Prevents concurrent requests for the same lead_id from triggering duplicate AI generation
+// and duplicate DB writes. Server-side; stateless across Vercel instances but covers the
+// most common single-origin burst case (e.g. double-submit from interview complete page).
+const generationLocks = new Set<string>()
+
 async function generateWithFallback(prompt: string, maxTokens = 1200): Promise<string> {
   const models = [
     { client: groq, model: 'qwen-qwq-32b' },
@@ -171,9 +177,27 @@ function buildReportEmail(orgName: string, overallScore: number, tier: string, r
 
 export async function POST(req: Request) {
   try {
-    const { lead_id } = await req.json()
-    if (!lead_id) return NextResponse.json({ error: 'lead_id required' }, { status: 400 })
+    // --- NULL GUARD: parse body safely ---
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    }
+
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: 'Request body must be a JSON object' }, { status: 400 })
+    }
+
+    const { lead_id } = body as Record<string, unknown>
+
+    // --- NULL GUARD: lead_id ---
+    if (!lead_id || typeof lead_id !== 'string' || !lead_id.trim()) {
+      return NextResponse.json({ error: 'lead_id required' }, { status: 400 })
+    }
     if (!SERVICE_KEY) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+
+    const trimmedLeadId = lead_id.trim()
 
     const headers = {
       apikey: SERVICE_KEY,
@@ -181,36 +205,73 @@ export async function POST(req: Request) {
       'Content-Type': 'application/json',
     }
 
-    const interviewsRes = await fetch(
-      `${SB_URL}/rest/v1/interviews?lead_id=eq.${lead_id}&select=id,lead_id,messages,stakeholder_role,leads(org_name,industry,role)`,
+    // --- RACE CONDITION FIX (Part 1): Idempotency check — bail if report already exists ---
+    // This covers the multi-instance / Vercel cold-start case where the in-memory lock
+    // would not be shared across instances.
+    const existingReportRes = await fetch(
+      `${SB_URL}/rest/v1/reports?lead_id=eq.${trimmedLeadId}&select=id,overall_score,status&limit=1`,
       { headers }
     )
-    const interviews: InterviewRow[] = await interviewsRes.json()
-    if (!interviews || interviews.length === 0) {
-      return NextResponse.json({ error: 'No interviews found' }, { status: 404 })
+    if (existingReportRes.ok) {
+      const existingReports = await existingReportRes.json()
+      if (Array.isArray(existingReports) && existingReports.length > 0) {
+        const existing = existingReports[0]
+        // Report already exists — return it without regenerating
+        return NextResponse.json({
+          success: true,
+          report_id: existing.id,
+          lead_id: trimmedLeadId,
+          overall_score: existing.overall_score,
+          already_existed: true,
+        })
+      }
     }
 
-    const primary = interviews[0]
-    const allMessages = interviews.flatMap(i => i.messages || [])
-    const orgName = primary.leads?.org_name || 'the organisation'
-    const industry = primary.leads?.industry || 'their industry'
+    // --- RACE CONDITION FIX (Part 2): In-memory lock for same-process concurrent requests ---
+    if (generationLocks.has(trimmedLeadId)) {
+      return NextResponse.json(
+        { error: 'Report generation already in progress for this lead', code: 'GENERATION_IN_PROGRESS' },
+        { status: 409 }
+      )
+    }
+    generationLocks.add(trimmedLeadId)
 
-    const transcript = allMessages
-      .map(m => `${m.role === 'user' ? 'Stakeholder' : 'Interviewer'}: ${m.content}`)
-      .join('\n\n')
+    try {
+      const interviewsRes = await fetch(
+        `${SB_URL}/rest/v1/interviews?lead_id=eq.${trimmedLeadId}&select=id,lead_id,messages,stakeholder_role,leads(org_name,industry,role)`,
+        { headers }
+      )
+      const interviews: InterviewRow[] = await interviewsRes.json()
+      if (!Array.isArray(interviews) || interviews.length === 0) {
+        return NextResponse.json({ error: 'No interviews found' }, { status: 404 })
+      }
 
-    const dimensionScores = await scoreDimensions(transcript, orgName, industry)
-    const scoreValues = Object.values(dimensionScores) as number[]
-    const overallScore = Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length)
-    const tier = getMaturityTier(overallScore)
+      const primary = interviews[0]
+      // --- NULL GUARD: messages array on each interview row ---
+      const allMessages = interviews.flatMap(i =>
+        Array.isArray(i.messages)
+          ? i.messages.filter(m => m && typeof m.role === 'string' && typeof m.content === 'string')
+          : []
+      )
+      const orgName = primary.leads?.org_name || 'the organisation'
+      const industry = primary.leads?.industry || 'their industry'
 
-    const topGaps = Object.entries(dimensionScores)
-      .sort(([, a], [, b]) => (a as number) - (b as number))
-      .slice(0, 2)
-      .map(([k]) => k)
-      .join(' and ')
+      const transcript = allMessages
+        .map(m => `${m.role === 'user' ? 'Stakeholder' : 'Interviewer'}: ${m.content}`)
+        .join('\n\n')
 
-    const summaryPrompt = `You are a digital transformation expert writing an executive summary for ${orgName}'s digital maturity assessment.
+      const dimensionScores = await scoreDimensions(transcript, orgName, industry)
+      const scoreValues = Object.values(dimensionScores) as number[]
+      const overallScore = Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length)
+      const tier = getMaturityTier(overallScore)
+
+      const topGaps = Object.entries(dimensionScores)
+        .sort(([, a], [, b]) => (a as number) - (b as number))
+        .slice(0, 2)
+        .map(([k]) => k)
+        .join(' and ')
+
+      const summaryPrompt = `You are a digital transformation expert writing an executive summary for ${orgName}'s digital maturity assessment.
 
 Overall Score: ${overallScore}/100 (${tier})
 Top gaps: ${topGaps}
@@ -220,49 +281,60 @@ ${transcript.slice(0, 3000)}
 
 Write a direct 2-paragraph executive summary (150-180 words). Para 1: current state with specific strengths and gaps. Para 2: highest-leverage next steps. Use their actual language. No bullets.`
 
-    const recommendationsPrompt = `Write 5 specific actionable recommendations for ${orgName}.
+      const recommendationsPrompt = `Write 5 specific actionable recommendations for ${orgName}.
 Score: ${overallScore}/100 (${tier})
 Scores: ${Object.entries(dimensionScores).map(([k, v]) => `${k}: ${v}`).join(', ')}
 Format: numbered list. Each: one action sentence + one business impact sentence.`
 
-    const [summaryText, recommendationsText] = await Promise.all([
-      generateWithFallback(summaryPrompt, 400).catch(() => ''),
-      generateWithFallback(recommendationsPrompt, 600).catch(() => ''),
-    ])
+      const [summaryText, recommendationsText] = await Promise.all([
+        generateWithFallback(summaryPrompt, 400).catch(() => ''),
+        generateWithFallback(recommendationsPrompt, 600).catch(() => ''),
+      ])
 
-    const reportRes = await fetch(`${SB_URL}/rest/v1/reports`, {
-      method: 'POST',
-      headers: { ...headers, Prefer: 'return=representation' },
-      body: JSON.stringify({
-        lead_id,
-        overall_score: overallScore,
-        dimension_scores: dimensionScores,
-        executive_summary: summaryText,
-        recommendations: recommendationsText,
-        status: 'complete',
-      }),
-    })
-    const reportData = await reportRes.json()
-    if (!reportRes.ok) {
-      return NextResponse.json({ error: 'Failed to save report', details: reportData }, { status: 500 })
+      // --- NULL GUARD: DB insert with Prefer: return=representation validation ---
+      const reportRes = await fetch(`${SB_URL}/rest/v1/reports`, {
+        method: 'POST',
+        headers: { ...headers, Prefer: 'return=representation' },
+        body: JSON.stringify({
+          lead_id: trimmedLeadId,
+          overall_score: overallScore,
+          dimension_scores: dimensionScores,
+          executive_summary: summaryText,
+          recommendations: recommendationsText,
+          status: 'complete',
+        }),
+      })
+      const reportData = await reportRes.json()
+      if (!reportRes.ok) {
+        return NextResponse.json({ error: 'Failed to save report', details: reportData }, { status: 500 })
+      }
+
+      // --- NULL GUARD: reportData shape ---
+      const reportId = Array.isArray(reportData) ? reportData[0]?.id : reportData?.id
+      if (!reportId) {
+        console.error('Report saved but ID not returned:', reportData)
+      }
+
+      const leadRes = await fetch(`${SB_URL}/rest/v1/leads?id=eq.${trimmedLeadId}&select=email,org_name`, { headers })
+      const leads = await leadRes.json()
+      const lead = Array.isArray(leads) ? leads[0] : null
+      if (lead?.email && resend) {
+        const reportUrl = `https://connai.linkgrow.io/report/${trimmedLeadId}`
+        try {
+          await resend.emails.send({
+            from: 'Connai <noreply@connai.linkgrow.io>',
+            to: lead.email,
+            subject: `Your Digital Maturity Report - ${lead.org_name || 'Your Organisation'} scored ${overallScore}/100`,
+            html: buildReportEmail(lead.org_name || 'Your Organisation', overallScore, tier, reportUrl),
+          })
+        } catch { /* email is best-effort */ }
+      }
+
+      return NextResponse.json({ success: true, report_id: reportId, lead_id: trimmedLeadId, overall_score: overallScore, tier })
+    } finally {
+      // --- RACE CONDITION FIX: Always release the lock ---
+      generationLocks.delete(trimmedLeadId)
     }
-
-    const leadRes = await fetch(`${SB_URL}/rest/v1/leads?id=eq.${lead_id}&select=email,org_name`, { headers })
-    const leads = await leadRes.json()
-    const lead = leads?.[0]
-    if (lead?.email && resend) {
-      const reportUrl = `https://connai.linkgrow.io/report/${lead_id}`
-      try {
-        await resend.emails.send({
-          from: 'Connai <noreply@connai.linkgrow.io>',
-          to: lead.email,
-          subject: `Your Digital Maturity Report - ${lead.org_name || 'Your Organisation'} scored ${overallScore}/100`,
-          html: buildReportEmail(lead.org_name || 'Your Organisation', overallScore, tier, reportUrl),
-        })
-      } catch { /* email is best-effort */ }
-    }
-
-    return NextResponse.json({ success: true, report_id: reportData[0]?.id, lead_id, overall_score: overallScore, tier })
   } catch (err) {
     console.error('Report generation error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

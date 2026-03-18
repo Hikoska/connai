@@ -33,15 +33,16 @@ async function getInterviewContext(token: string) {
   )
   if (!ivRes.ok) return null
   const ivRows = await ivRes.json()
-  if (!ivRows.length) return null
+  if (!Array.isArray(ivRows) || !ivRows.length) return null
   const iv = ivRows[0]
+  if (!iv?.id || !iv?.lead_id) return null
 
   const leadRes = await fetch(
     `${SB_URL}/rest/v1/leads?id=eq.${iv.lead_id}&select=org_name,industry&limit=1`,
     { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, Accept: 'application/json' } }
   )
   const leadRows = leadRes.ok ? await leadRes.json() : []
-  const lead = leadRows[0] ?? {}
+  const lead = (Array.isArray(leadRows) ? leadRows[0] : null) ?? {}
 
   return {
     id: iv.id,
@@ -55,14 +56,54 @@ async function getInterviewContext(token: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { token, messages } = await req.json()
-    if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 })
+    // --- NULL GUARD: parse body safely ---
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    }
 
-    const ctx = await getInterviewContext(token)
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: 'Request body must be a JSON object' }, { status: 400 })
+    }
+
+    const { token, messages } = body as Record<string, unknown>
+
+    // --- NULL GUARD: token ---
+    if (!token || typeof token !== 'string' || !token.trim()) {
+      return NextResponse.json({ error: 'Missing or invalid token' }, { status: 400 })
+    }
+
+    // --- NULL GUARD: messages shape ---
+    if (messages !== undefined && !Array.isArray(messages)) {
+      return NextResponse.json({ error: 'messages must be an array' }, { status: 400 })
+    }
+
+    const rawMessages = (messages as Array<unknown> | undefined) ?? []
+
+    // --- NULL GUARD: validate each message item ---
+    const formatted: Array<{ role: 'user' | 'assistant'; content: string }> = []
+    for (const m of rawMessages) {
+      if (!m || typeof m !== 'object') continue
+      const msg = m as Record<string, unknown>
+      const role = msg.role
+      const content = msg.content
+      if (
+        (role === 'user' || role === 'assistant') &&
+        typeof content === 'string' &&
+        content.trim().length > 0
+      ) {
+        formatted.push({ role, content: content.trim() })
+      }
+    }
+
+    // --- NULL GUARD: interview context ---
+    const ctx = await getInterviewContext(token.trim())
     if (!ctx) return NextResponse.json({ error: 'Interview not found' }, { status: 404 })
 
-    const count = (messages ?? []).length
-    const isFirstMessage = count === 1  // 1 = first user message just arrived
+    const count = formatted.length
+    const isFirstMessage = count === 1
     const isDone = count >= 20
     const isStart = count === 0
 
@@ -103,11 +144,6 @@ Format rules:
 - Sound like a thoughtful senior consultant having a real conversation, not a chatbot running a survey
 - Never use survey language: no "on a scale of", "which of the following", "how would you rate"
 - Vary your question style - don't always ask the same type of question${doneInstruction}${startInstruction}`
-
-    const formatted = (messages ?? []).map((m: { role: string; content: string }) => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
-    }))
 
     // Tier 1: Groq 70B primary
     if (process.env.GROQ_API_KEY) {
