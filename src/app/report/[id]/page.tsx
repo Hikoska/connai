@@ -256,7 +256,8 @@ export default function ReportPage() {
   const critical   = report?.dimensions.filter(d => d.score < 40) ?? [];
 
   if (loading) return (
-    <div id="report-root" className="min-h-screen bg-slate-950 text-white">
+    // A11y: aria-busy + role="status" announces loading to screen readers
+    <div id="report-root" className="min-h-screen bg-slate-950 text-white" aria-busy="true" aria-label="Loading your Digital Maturity Report, please wait">
       <div className="border-b border-slate-800 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="h-6 w-20 bg-slate-800 rounded animate-pulse" />
@@ -309,11 +310,14 @@ export default function ReportPage() {
             <a href="/dashboard" className="text-slate-500 hover:text-slate-300 text-xs transition-colors hidden sm:inline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117] rounded">Dashboard</a>
             <span className="text-slate-700 hidden sm:inline">·</span>
             <span className="text-slate-600 text-xs hidden sm:inline">Built by Linkgrow</span>
+            {/* A11y: aria-live announces copied state; aria-label describes action */}
             <button
               onClick={handleCopy}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors border border-slate-700"
-            
-              type="button">
+              type="button"
+              aria-label={copied ? "Link copied to clipboard" : "Copy link to share report"}
+              aria-live="polite"
+              aria-atomic="true">
               {copied ? '✓ Copied!' : 'Share'}
             </button>
             <button
@@ -364,8 +368,13 @@ export default function ReportPage() {
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 flex flex-col items-center gap-4">
-            <div className="relative w-40 h-40">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+            {/* A11y: aria-label announces score value to screen readers */}
+          <div
+            className="relative w-40 h-40"
+            role="img"
+            aria-label={`Overall maturity score: ${overallScore} out of 100`}
+          >
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120" aria-hidden="true">
                 <circle cx="60" cy="60" r="50" fill="none" stroke="#1e293b" strokeWidth="10" />
                 <circle
                   cx="60" cy="60" r="50" fill="none"
@@ -376,7 +385,8 @@ export default function ReportPage() {
                   style={{ transition: 'stroke-dasharray 0.8s ease-out' }}
                 />
               </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
+              {/* A11y: aria-hidden - score already announced by parent role="img" */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center" aria-hidden="true">
                 <span className="text-5xl font-bold tabular-nums">{overallScore}</span>
                 <span className="text-slate-500 text-xs">/ 100</span>
               </div>
@@ -400,9 +410,15 @@ export default function ReportPage() {
                 <span>{overallScore}/100</span>
               </div>
               <div className="h-1.5 bg-slate-700/60 rounded-full overflow-hidden">
+                {/* A11y: role="progressbar" + aria-valuenow makes score bar accessible */}
                 <div
                   className={`h-full rounded-full ${barColor(overallScore)}`}
                   style={{ width: barAnimated ? `${overallScore}%` : '0%', transition: 'width 0.7s ease-out' }}
+                  role="progressbar"
+                  aria-valuenow={overallScore}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`Overall score: ${overallScore} out of 100`}
                 />
               </div>
             </div>
@@ -413,17 +429,21 @@ export default function ReportPage() {
         {!report?.partial && (
           <section className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
             <p className="text-xs font-mono uppercase tracking-widest text-slate-500 mb-4">Executive Summary</p>
+            {/* A11y: aria-live="polite" announces when summary content loads */}
+            <div aria-live="polite" aria-atomic="true">
             {summaryLoading ? (
-              <div className="space-y-2.5">
+              <div className="space-y-2.5" role="status" aria-label="Loading executive summary">
                 {['w-full', 'w-5/6', 'w-4/5', 'w-full', 'w-3/4'].map((w, i) => (
-                  <div key={i} className={`h-4 bg-slate-800 rounded animate-pulse ${w}`} />
+                  <div key={i} className={`h-4 bg-slate-800 rounded animate-pulse ${w}`} aria-hidden="true" />
                 ))}
+                <span className="sr-only">Loading executive summary…</span>
               </div>
             ) : summary ? (
               <div className="text-slate-300 text-[15px] leading-relaxed whitespace-pre-line">{summary}</div>
             ) : (
-              <p className="text-slate-600 text-sm italic">Generating summary…</p>
+              <p className="text-slate-600 text-sm italic" role="status">Generating summary…</p>
             )}
+            </div>
           </section>
         )}
 
@@ -496,9 +516,15 @@ export default function ReportPage() {
                       </div>
                       <div className="space-y-2">
                         <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          {/* A11y: role="progressbar" makes dimension scores accessible */}
                           <div
                             className={`h-full ${barColor(d.score)} rounded-full`}
                             style={{ width: barAnimated ? `${d.score}%` : '0%', transition: `width 0.6s ease-out ${i * 60}ms` }}
+                            role="progressbar"
+                            aria-valuenow={d.score}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-label={`${d.name}: ${d.score} out of 100`}
                           />
                         </div>
                         <div className="flex justify-between items-center text-xs">
@@ -551,15 +577,21 @@ export default function ReportPage() {
                       </span>
                     </div>
                     <div className="relative h-4 rounded-full bg-slate-800 overflow-hidden">
-                      {/* Industry median marker */}
+                      {/* Industry median marker - decorative */}
                       <div
                         className="absolute top-0 bottom-0 w-0.5 bg-slate-500/70 z-10"
                         style={{ left: `${median}%` }}
+                        aria-hidden="true"
                       />
-                      {/* Organisation score bar */}
+                      {/* A11y: role="progressbar" makes benchmark bars accessible */}
                       <div
                         className={`absolute top-0.5 bottom-0.5 left-0.5 rounded-full transition-all duration-700 ${isAbove ? 'bg-teal-500' : 'bg-amber-500'}`}
                         style={{ width: barAnimated ? `calc(${d.score}% - 4px)` : '0%' }}
+                        role="progressbar"
+                        aria-valuenow={d.score}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`${d.name}: score ${d.score}, industry median ${median}`}
                       />
                     </div>
                     <div className="flex justify-between text-[10px] text-slate-600">
@@ -689,9 +721,9 @@ export default function ReportPage() {
                 <button
                   onClick={handleUpgrade}
                   disabled={checkoutLoading}
+                  aria-busy={checkoutLoading}
                   className="mt-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-semibold px-8 py-3 rounded-xl transition-colors text-sm"
-                
-              type="button">
+                  type="button">
                   {checkoutLoading ? 'Processing…' : 'Get Full Report — $49'}
                 </button>
               </div>

@@ -81,13 +81,16 @@ export function InviteForm({ leadId, onInviteSent }: { leadId: string; onInviteS
       <button
         type="submit"
         disabled={loading}
+        aria-busy={loading}
         className="w-full bg-teal-600 text-white font-semibold py-2 rounded-md hover:bg-teal-500 transition-colors disabled:opacity-50"
       >
         {loading ? 'Adding...' : 'Add stakeholder'}
       </button>
-      {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+      {/* A11y: role="alert" announces errors immediately to screen readers */}
+      {error && <p className="text-red-400 text-xs text-center" role="alert" aria-live="assertive">{error}</p>}
+      {/* A11y: role="status" politely announces success to screen readers */}
       {success && (
-        <p className="text-teal-400 text-sm font-medium text-center py-1 bg-teal-500/10 rounded-md">{success}</p>
+        <p className="text-teal-400 text-sm font-medium text-center py-1 bg-teal-500/10 rounded-md" role="status" aria-live="polite">{success}</p>
       )}
     </form>
  )

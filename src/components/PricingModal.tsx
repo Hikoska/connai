@@ -1,22 +1,82 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useRef } from 'react'
 
 export function PricingModal({ isOpen, onClose, auditId }: { isOpen: boolean; onClose: () => void; auditId?: string }) {
+  const closeBtnRef = useRef<HTMLButtonElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  // A11y: move focus to close button when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => closeBtnRef.current?.focus(), 20)
+    }
+  }, [isOpen])
+
+  // A11y: trap focus within modal and close on Escape
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab') return
+
+      const modal = modalRef.current
+      if (!modal) return
+
+      const focusable = modal.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last?.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first?.focus()
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
+  const modalTitleId = 'pricing-modal-title'
+
   return (
+    // A11y: backdrop click closes modal; inert background via aria-hidden on siblings
+    // is handled by the parent at render time if needed
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={onClose}
+      // A11y: role="presentation" on backdrop so screen readers focus the dialog
+      role="presentation"
     >
+      {/* A11y: role="dialog" + aria-modal + aria-labelledby for proper modal semantics */}
       <div
+        ref={modalRef}
         className="bg-[#131920] border border-white/10 text-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl"
         onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={modalTitleId}
       >
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-bold">Add More Stakeholders</h2>
+          <h2 id={modalTitleId} className="text-xl font-bold">Add More Stakeholders</h2>
           <button
+            ref={closeBtnRef}
             type="button"
             onClick={onClose}
             aria-label="Close pricing modal"

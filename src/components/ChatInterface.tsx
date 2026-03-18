@@ -46,6 +46,9 @@ export function ChatInterface({
   const [capturedEmail, setCapturedEmail] = useState('')
   const captureAttempted = useRef(false)
 
+  // A11y: unique IDs for aria-describedby
+  const inputLabelId = 'chat-input-label'
+
   useEffect(() => {
     const timer = setTimeout(() => setIsInitializing(false), 1200)
     return () => clearTimeout(timer)
@@ -95,14 +98,15 @@ export function ChatInterface({
   return (
     <div className="flex flex-col bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden" style={{ height: '580px' }}>
       {/* Header bar */}
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-50 bg-gradient-to-r from-teal-500 to-teal-600">
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-50 bg-gradient-to-r from-teal-500 to-teal-600" aria-hidden="true">
         <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
-          <span className="text-white text-lg">🔭</span>
+          <span className="text-white text-lg" aria-hidden="true">🔭</span>
         </div>
         <div>
           <div className="text-white font-semibold text-sm">Connai AI</div>
           <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 bg-green-300 rounded-full"></div>
+            {/* A11y: purely decorative status dot hidden from screen readers */}
+            <div className="w-1.5 h-1.5 bg-green-300 rounded-full" aria-hidden="true"></div>
             <span className="text-teal-100 text-xs">
               {mode === 'brief' ? 'Briefing assistant' : 'Interview specialist'}
             </span>
@@ -111,25 +115,35 @@ export function ChatInterface({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+      {/* A11y: role="log" + aria-live="polite" makes messages announced as they arrive */}
+      <div
+        className="flex-1 overflow-y-auto px-5 py-5 space-y-4"
+        role="log"
+        aria-label="Conversation with Connai AI"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-relevant="additions"
+      >
         {isInitializing ? (
+          // A11y: hide animated dots from screen readers; sr-only text provides status
           <div className="flex justify-start items-end gap-2">
-            <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-0.5">
+            <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-0.5" aria-hidden="true">
               C
             </div>
-            <div className="bg-gray-50 rounded-2xl rounded-bl-sm px-4 py-3 border border-gray-100">
+            <div className="bg-gray-50 rounded-2xl rounded-bl-sm px-4 py-3 border border-gray-100" aria-hidden="true">
               <div className="flex gap-1 items-center h-4">
                 <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                 <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
+            <span className="sr-only" role="status">Loading conversation…</span>
           </div>
         ) : (
           messages.map((m) => (
             <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
               {m.role === 'assistant' && (
-                <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-0.5">
+                <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-0.5" aria-hidden="true">
                   C
                 </div>
               )}
@@ -146,12 +160,14 @@ export function ChatInterface({
           ))
         )}
 
+        {/* A11y: sr-only text announces typing state; dots are decorative */}
         {isLoading && (
           <div className="flex justify-start items-end gap-2">
-            <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            <span className="sr-only" role="status">Connai is typing…</span>
+            <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" aria-hidden="true">
               C
             </div>
-            <div className="bg-gray-50 rounded-2xl rounded-bl-sm px-4 py-3 border border-gray-100">
+            <div className="bg-gray-50 rounded-2xl rounded-bl-sm px-4 py-3 border border-gray-100" aria-hidden="true">
               <div className="flex gap-1 items-center h-4">
                 <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                 <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -161,15 +177,15 @@ export function ChatInterface({
           </div>
         )}
 
-        {/* Capture success card */}
+        {/* A11y: role="status" announces capture success */}
         {captureState === 'captured' && (
           <div className="flex justify-start items-end gap-2">
-            <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-0.5">
+            <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-0.5" aria-hidden="true">
               C
             </div>
-            <div className="max-w-[78%] bg-teal-50 border border-teal-200 rounded-2xl rounded-bl-sm px-4 py-3">
+            <div className="max-w-[78%] bg-teal-50 border border-teal-200 rounded-2xl rounded-bl-sm px-4 py-3" role="status">
               <div className="flex items-center gap-1.5 mb-1">
-                <svg className="w-3.5 h-3.5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <svg className="w-3.5 h-3.5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
                 <span className="text-teal-700 text-xs font-semibold">Audit registered</span>
@@ -182,8 +198,9 @@ export function ChatInterface({
           </div>
         )}
 
+        {/* A11y: role="alert" announces connection errors immediately */}
         {error && captureState === 'idle' && (
-          <div className="text-center">
+          <div className="text-center" role="alert">
             <span className="text-xs text-red-400 bg-red-50 px-3 py-1.5 rounded-full">
               Connection issue — please try again
             </span>
@@ -199,22 +216,31 @@ export function ChatInterface({
           onSubmit={(e) => { setStarted(true); handleSubmit(e) }}
           className="px-4 py-4 border-t border-gray-100 bg-white"
         >
+          {/* A11y: visually-hidden label for the input */}
+          <label id={inputLabelId} className="sr-only">
+            Your message to Connai AI
+          </label>
           <div className="flex gap-2">
             <input
               ref={inputRef}
               value={input}
               onChange={handleInputChange}
               placeholder={placeholder || 'Type your answer…'}
+              // A11y: aria-labelledby links to the visually-hidden label
+              aria-labelledby={inputLabelId}
               className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent placeholder-gray-400 transition"
               disabled={isLoading || captureState === 'capturing' || isInitializing}
+              aria-disabled={isLoading || captureState === 'capturing' || isInitializing}
               autoComplete="off"
             />
             <button
               type="submit"
               disabled={isLoading || !input.trim() || captureState === 'capturing' || isInitializing}
-              className="bg-teal-500 hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl w-10 h-10 flex items-center justify-center transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400" aria-label="Send message"
+              aria-disabled={isLoading || !input.trim() || captureState === 'capturing' || isInitializing}
+              className="bg-teal-500 hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl w-10 h-10 flex items-center justify-center transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+              aria-label="Send message"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4" aria-hidden="true">
                 <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.896 28.896 0 0015.293-7.154.75.75 0 000-1.115A28.897 28.897 0 003.105 2.289z" />
               </svg>
             </button>

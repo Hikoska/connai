@@ -36,6 +36,14 @@ export default function InterviewPage() {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
+  // A11y: focus management ref for done-state transition
+  const doneHeadingRef = useRef<HTMLParagraphElement>(null)
+  // A11y: input ref for focus restoration after send
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  // A11y: unique id for textarea ↔ description pairing
+  const commentDescId = 'interview-comment-desc'
+  const inputDescId = 'interview-input-desc'
+
   const submitWithComment = async () => {
     setSubmitting(true)
     if (comment.trim()) {
@@ -91,6 +99,20 @@ export default function InterviewPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, thinking])
 
+  // A11y: move focus to "Interview complete" heading when done state activates
+  useEffect(() => {
+    if (done) {
+      setTimeout(() => doneHeadingRef.current?.focus(), 50)
+    }
+  }, [done])
+
+  // A11y: restore focus to input after AI reply arrives
+  useEffect(() => {
+    if (!thinking && !done && messages.length > 0) {
+      inputRef.current?.focus()
+    }
+  }, [thinking])
+
   async function send() {
     const text = input.trim()
     if (!text || thinking || done) return
@@ -132,10 +154,18 @@ export default function InterviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0E1117]">
+      // A11y: role="status" + aria-label announces loading state to screen readers
+      <div
+        className="min-h-screen flex items-center justify-center bg-[#0E1117]"
+        role="status"
+        aria-label="Preparing your interview, please wait"
+      >
         <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto" />
-          <p className="text-slate-500 text-sm">Preparing your interview...</p>
+          <div
+            className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto"
+            aria-hidden="true"
+          />
+          <p className="text-slate-500 text-sm" aria-hidden="true">Preparing your interview...</p>
         </div>
       </div>
     )
@@ -143,8 +173,9 @@ export default function InterviewPage() {
 
   if (error) {
     return (
+      // A11y: role="alert" announces error immediately to screen readers
       <div className="min-h-screen flex items-center justify-center bg-[#0E1117]">
-        <p className="text-red-400 text-sm">{error}</p>
+        <p className="text-red-400 text-sm" role="alert">{error}</p>
       </div>
     )
   }
@@ -152,8 +183,8 @@ export default function InterviewPage() {
   return (
     <div className="min-h-screen bg-[#0E1117] flex flex-col">
       {/* Header */}
-      <div className="bg-[#0E1117]/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center gap-3 flex-shrink-0">
-        <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
+      <header className="bg-[#0E1117]/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center gap-3 flex-shrink-0">
+        <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0" aria-hidden="true">
           <span className="text-white text-xs font-bold">C</span>
         </div>
         <div>
@@ -165,16 +196,29 @@ export default function InterviewPage() {
               Digital Maturity Assessment
             </p>
           )}
+          {/* A11y: aria-live="polite" announces question progress updates to screen readers */}
           {messages.length > 0 && (
-            <p className="text-xs text-teal-400 font-medium">
+            <p
+              className="text-xs text-teal-400 font-medium"
+              aria-live="polite"
+              aria-atomic="true"
+            >
               Question {Math.ceil(messages.length / 2)} of 20
             </p>
           )}
         </div>
-      </div>
+      </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
+      {/* A11y: role="log" + aria-live="polite" makes chat messages announced as they arrive */}
+      <div
+        className="flex-1 overflow-y-auto px-4 py-6"
+        role="log"
+        aria-label="Interview conversation"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-relevant="additions"
+      >
         <div className="max-w-2xl mx-auto space-y-4">
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -190,9 +234,15 @@ export default function InterviewPage() {
             </div>
           ))}
 
+          {/* A11y: visually-hidden live region announces typing state */}
           {thinking && (
-            <div className="flex justify-start">
-              <div className="bg-slate-800/80 border border-slate-700 rounded-2xl rounded-bl-sm px-4 py-3">
+            <div className="flex justify-start" aria-live="polite" aria-atomic="true">
+              {/* Screen-reader-only text */}
+              <span className="sr-only">Connai is typing…</span>
+              <div
+                className="bg-slate-800/80 border border-slate-700 rounded-2xl rounded-bl-sm px-4 py-3"
+                aria-hidden="true"
+              >
                 <div className="flex gap-1.5 items-center h-4">
                   <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
                   <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -211,9 +261,10 @@ export default function InterviewPage() {
         <div className="bg-[#0E1117] border-t border-slate-800 px-4 py-6 flex-shrink-0">
           <div className="max-w-2xl mx-auto space-y-4">
             {submitted ? (
-              <div className="text-center space-y-2">
-                <div className="w-10 h-10 bg-teal-900/30 rounded-full flex items-center justify-center mx-auto">
-                  <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              // A11y: role="status" announces transition
+              <div className="text-center space-y-2" role="status" aria-live="polite">
+                <div className="w-10 h-10 bg-teal-900/30 rounded-full flex items-center justify-center mx-auto" aria-hidden="true">
+                  <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
@@ -222,14 +273,25 @@ export default function InterviewPage() {
             ) : (
               <>
                 <div className="text-center">
-                  <p className="text-slate-200 font-semibold">Interview complete</p>
-                  <p className="text-slate-400 text-sm mt-1">
+                  {/* A11y: tabIndex=-1 allows programmatic focus to land here on done transition */}
+                  <p
+                    ref={doneHeadingRef}
+                    className="text-slate-200 font-semibold"
+                    tabIndex={-1}
+                    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+                  >
+                    Interview complete
+                  </p>
+                  <p id={commentDescId} className="text-slate-400 text-sm mt-1">
                     Anything you&apos;d like to add before we finalise your input? (optional)
                   </p>
                 </div>
                 <textarea
                   value={comment}
                   onChange={e => setComment(e.target.value)}
+                  // A11y: aria-label + aria-describedby link textarea to its description
+                  aria-label="Additional context or clarifications (optional)"
+                  aria-describedby={commentDescId}
                   placeholder="Any additional context, clarifications, or priorities you want the assessment to consider…"
                   rows={3}
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
@@ -239,6 +301,7 @@ export default function InterviewPage() {
                     type="button"
                     onClick={submitWithComment}
                     disabled={submitting}
+                    aria-busy={submitting}
                     className="flex-1 bg-[#0D5C63] hover:bg-[#0a4a50] text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
                   >
                     {submitting ? 'Submitting…' : 'Submit & view summary'}
@@ -246,6 +309,7 @@ export default function InterviewPage() {
                   {!comment.trim() && (
                     <button
                       type="button"
+                      aria-label="Skip additional comments and continue"
                       onClick={() => { setSubmitted(true); setTimeout(() => { router.push(`/interview/${token}/complete`) }, 800) }}
                       className="text-sm text-slate-500 hover:text-slate-300 px-3"
                     >
@@ -258,15 +322,25 @@ export default function InterviewPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-[#0E1117] border-t border-slate-800 px-4 py-3 flex-shrink-0">
+        // A11y: role="form" + aria-label makes input region a form landmark
+        <div
+          className="bg-[#0E1117] border-t border-slate-800 px-4 py-3 flex-shrink-0"
+          role="form"
+          aria-label="Send your answer"
+        >
           <div className="max-w-2xl mx-auto flex gap-3 items-end">
             <textarea
+              ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={onKeyDown}
+              // A11y: explicit aria-label (not just placeholder)
+              aria-label="Your answer"
+              aria-describedby={inputDescId}
               placeholder="Type your answer..."
               rows={2}
               disabled={thinking}
+              aria-disabled={thinking}
               className="flex-1 resize-none bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 max-h-32 overflow-y-auto disabled:bg-slate-800"
             />
             <button
@@ -274,14 +348,15 @@ export default function InterviewPage() {
               aria-label="Send message"
               onClick={send}
               disabled={!input.trim() || thinking}
+              aria-disabled={!input.trim() || thinking}
               className="w-10 h-10 bg-[#0D5C63] hover:bg-[#0a4a50] text-white rounded-xl flex items-center justify-center disabled:opacity-40 transition-colors flex-shrink-0"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
             </button>
           </div>
-          <p className="text-xs text-slate-600 text-center mt-2">Enter to send · Shift+Enter for new line</p>
+          <p id={inputDescId} className="text-xs text-slate-600 text-center mt-2">Enter to send · Shift+Enter for new line</p>
         </div>
       )}
     </div>
