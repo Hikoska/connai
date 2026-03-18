@@ -25,6 +25,8 @@ interface ActionPlan {
   six_month: ActionItem[];
   long_term: ActionItem[];
   summary: string;
+  executive_summary?: string;
+  industry_benchmark?: string;
 }
 
 const INDUSTRY_MEDIANS: Record<string, number> = {
@@ -130,6 +132,7 @@ export default function ReportPage() {
   const [industry, setIndustry]                   = useState('');
   const [summary, setSummary]                     = useState('');
   const [summaryLoading, setSummaryLoading]       = useState(false);
+  const [benchmarkSentence, setBenchmarkSentence] = useState('');
   const [plan, setPlan]                           = useState<ActionPlan | null>(null);
   const [dimInsights, setDimInsights]             = useState<Record<string, string>>({});
   const [planLoading, setPlanLoading]             = useState(false);
@@ -218,6 +221,7 @@ export default function ReportPage() {
       .then(d => {
         if (d?.summary) setSummary(d.summary);
         if (d?.dimension_insights) setDimInsights(d.dimension_insights);
+        if (d?.industry_benchmark) setBenchmarkSentence(d.industry_benchmark);
       })
       .catch(() => {})
       .finally(() => setSummaryLoading(false));
@@ -412,15 +416,34 @@ export default function ReportPage() {
         {/* Executive Summary */}
         {!report?.partial && (
           <section className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
-            <p className="text-xs font-mono uppercase tracking-widest text-slate-500 mb-4">Executive Summary</p>
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-xs font-mono uppercase tracking-widest text-slate-500">Executive Summary</p>
+              {!summaryLoading && tier && (
+                <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${tier.bg} ${tier.color}`}>
+                  {tier.label}
+                </span>
+              )}
+            </div>
             {summaryLoading ? (
               <div className="space-y-2.5">
-                {['w-full', 'w-5/6', 'w-4/5', 'w-full', 'w-3/4'].map((w, i) => (
+                {['w-full', 'w-5/6', 'w-4/5', 'w-full', 'w-3/4', 'w-full', 'w-4/5'].map((w, i) => (
                   <div key={i} className={`h-4 bg-slate-800 rounded animate-pulse ${w}`} />
                 ))}
               </div>
             ) : summary ? (
-              <div className="text-slate-300 text-[15px] leading-relaxed whitespace-pre-line">{summary}</div>
+              <div className="space-y-4">
+                <div className="text-slate-300 text-[15px] leading-relaxed whitespace-pre-line">{summary}</div>
+                {benchmarkSentence && (
+                  <div className="flex items-start gap-3 mt-4 pt-4 border-t border-slate-800">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-teal-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className="text-slate-400 text-sm leading-relaxed italic">{benchmarkSentence}</p>
+                  </div>
+                )}
+              </div>
             ) : (
               <p className="text-slate-600 text-sm italic">Generating summary…</p>
             )}
@@ -663,37 +686,69 @@ export default function ReportPage() {
             </div>
 
           ) : !paid ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-              <div className="px-8 py-6 border-b border-slate-800/50">
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  Your full action plan includes prioritised recommendations across all {report?.dimensions.length ?? 8} dimensions —
-                  quick wins to start this week, structured 6-month programmes, and 12–24 month strategic initiatives
-                  tailored to your specific gaps.
-                </p>
-                <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-                  {([
-                    { label: 'Quick Wins',    desc: '30-day actions',      color: 'text-teal-400'   },
-                    { label: '6-Month Plan',  desc: 'Structured quarter',   color: 'text-amber-400'  },
-                    { label: 'Strategic',     desc: '12\u201324 month vision', color: 'text-purple-400' },
-                  ] as const).map(t => (
-                    <div key={t.label} className="bg-slate-800/50 rounded-xl p-3">
-                      <p className={`text-xs font-semibold ${t.color}`}>{t.label}</p>
-                      <p className="text-slate-500 text-xs mt-0.5">{t.desc}</p>
-                    </div>
-                  ))}
+            <div className="space-y-5">
+              {/* Quick Wins — free tier preview */}
+              {planLoading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-slate-800 rounded-xl animate-pulse" />)}
                 </div>
-              </div>
-              <div className="px-8 py-8 text-center space-y-3">
-                <p className="text-white font-semibold text-lg">Unlock your full action plan</p>
-                <p className="text-slate-500 text-sm">One-time payment · Instant access · No subscription</p>
-                <button
-                  onClick={handleUpgrade}
-                  disabled={checkoutLoading}
-                  className="mt-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-semibold px-8 py-3 rounded-xl transition-colors text-sm"
-                
-              type="button">
-                  {checkoutLoading ? 'Processing…' : 'Get Full Report — $49'}
-                </button>
+              ) : plan?.quick_wins?.length ? (
+                <div className="border border-teal-500/30 rounded-2xl overflow-hidden">
+                  <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-sm text-teal-400">Quick Wins</p>
+                      <p className="text-slate-600 text-xs">Start in the next 30 days</p>
+                    </div>
+                    <span className="text-xs bg-teal-900/30 text-teal-400 border border-teal-500/20 px-2.5 py-0.5 rounded-full">Free preview</span>
+                  </div>
+                  <div className="divide-y divide-slate-800/50">
+                    {plan.quick_wins.map((item, i) => (
+                      <div key={i} className="px-6 py-4 flex items-start gap-4">
+                        <span className="mt-0.5 text-xs font-mono text-teal-400 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-slate-200 text-sm leading-snug">{item.action}</p>
+                          <p className="text-slate-500 text-xs mt-1">{item.dimension}</p>
+                        </div>
+                        <div className="shrink-0 flex gap-2 text-xs">
+                          <span className="bg-slate-800 text-slate-400 px-2 py-0.5 rounded">{item.impact}</span>
+                          <span className="bg-slate-800 text-slate-400 px-2 py-0.5 rounded">{item.effort}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Upgrade gate for 6-month + strategic tiers */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <div className="px-8 py-6 border-b border-slate-800/50">
+                  <p className="text-white font-semibold text-base mb-1">Unlock your full C-suite action plan</p>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    Get 3 strategic tiers of prioritised recommendations — structured 6-month programmes and
+                    12–24 month transformation initiatives tailored to {orgName || 'your organisation'}'s specific gaps.
+                  </p>
+                  <div className="mt-5 grid grid-cols-2 gap-3 text-center">
+                    {([
+                      { label: '6-Month Plan',  desc: 'Structured quarter programmes', color: 'text-amber-400', border: 'border-amber-500/20'  },
+                      { label: 'Strategic (12–24 mo)', desc: 'C-suite transformation roadmap', color: 'text-purple-400', border: 'border-purple-500/20' },
+                    ] as const).map(t => (
+                      <div key={t.label} className={`bg-slate-800/50 border ${t.border} rounded-xl p-3`}>
+                        <p className={`text-xs font-semibold ${t.color}`}>{t.label}</p>
+                        <p className="text-slate-500 text-xs mt-0.5">{t.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="px-8 py-6 text-center space-y-3">
+                  <p className="text-slate-500 text-sm">One-time payment · Instant access · No subscription</p>
+                  <button
+                    onClick={handleUpgrade}
+                    disabled={checkoutLoading}
+                    className="mt-1 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-semibold px-8 py-3 rounded-xl transition-colors text-sm"
+                    type="button">
+                    {checkoutLoading ? 'Processing…' : 'Get Full Report — $49'}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -704,6 +759,15 @@ export default function ReportPage() {
 
           ) : plan ? (
             <div className="space-y-5">
+              {plan.executive_summary && (
+                <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6">
+                  <p className="text-xs font-mono uppercase tracking-widest text-slate-500 mb-3">C-Suite Briefing</p>
+                  <p className="text-slate-200 text-[15px] leading-relaxed">{plan.executive_summary}</p>
+                  {plan.industry_benchmark && (
+                    <p className="text-slate-500 text-sm mt-3 pt-3 border-t border-slate-700/50 italic">{plan.industry_benchmark}</p>
+                  )}
+                </div>
+              )}
               {(Object.entries(TIER_META) as [keyof typeof TIER_META, (typeof TIER_META)[keyof typeof TIER_META]][])
                 .map(([key, meta]) => {
                   const items = plan[key] ?? [];
@@ -747,6 +811,41 @@ export default function ReportPage() {
           ) : null}
         </section>
 
+        {/* What to do next */}
+        {!report?.partial && (
+          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
+            <p className="text-xs font-mono uppercase tracking-widest text-slate-500 mb-5">What to do next</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <a
+                href={`/report/${id}/share`}
+                className="group flex flex-col gap-2 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 hover:border-teal-500/40 rounded-xl p-5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+              >
+                <span className="text-2xl">📤</span>
+                <p className="text-white font-semibold text-sm">Share your report</p>
+                <p className="text-slate-500 text-xs leading-relaxed">Send this report to your leadership team or board for review.</p>
+              </a>
+              <button
+                onClick={handleUpgrade}
+                disabled={paid || checkoutLoading}
+                type="button"
+                className="group flex flex-col gap-2 bg-teal-900/20 hover:bg-teal-900/30 border border-teal-500/30 hover:border-teal-400/60 rounded-xl p-5 transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 disabled:opacity-60 disabled:cursor-default"
+              >
+                <span className="text-2xl">{paid ? '✅' : '📋'}</span>
+                <p className="text-teal-300 font-semibold text-sm">{paid ? 'Full plan unlocked' : 'Unlock full action plan'}</p>
+                <p className="text-slate-500 text-xs leading-relaxed">{paid ? 'Your 6-month and strategic tiers are now available above.' : 'Get your 6-month programmes and 12–24 month strategic roadmap — $49 one-time.'}</p>
+              </button>
+              <a
+                href="https://connai.linkgrow.io"
+                className="group flex flex-col gap-2 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 rounded-xl p-5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+              >
+                <span className="text-2xl">🔄</span>
+                <p className="text-white font-semibold text-sm">Run another assessment</p>
+                <p className="text-slate-500 text-xs leading-relaxed">Invite a second stakeholder for a multi-dimensional view and richer benchmarking.</p>
+              </a>
+            </div>
+          </section>
+        )}
+
         <div className="flex justify-center">
           <a href={`/report/${id}/share`} className="text-slate-600 hover:text-slate-400 text-sm underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117] rounded">
             Share this report →
@@ -776,3 +875,4 @@ export default function ReportPage() {
     </div>
   );
 }
+

@@ -18,6 +18,8 @@ const cerebras = createOpenAI({
   apiKey:  process.env.CEREBRAS_API_KEY ?? '',
 })
 
+const OVERALL_SECTOR_MEDIAN = 46
+
 async function sbGet(path: string, useService = false) {
   const key = useService ? SB_SVC : SB_ANON
   const res = await fetch(`${SB_URL}/rest/v1${path}`, {
@@ -30,12 +32,21 @@ async function sbGet(path: string, useService = false) {
 
 /** Server-side payment gate — queries report_payments via service role key */
 async function isPaid(leadId: string): Promise<boolean> {
-  if (!SB_SVC) return false // fail closed: no service key = no access
+  if (!SB_SVC) return false
   const rows = await sbGet(
     `/report_payments?lead_id=eq.${encodeURIComponent(leadId)}&limit=1&select=id`,
     true
   )
   return Array.isArray(rows) && rows.length > 0
+}
+
+function getMaturityTier(score: number): string {
+  if (score >= 91) return 'Digital Leader'
+  if (score >= 76) return 'Advanced'
+  if (score >= 61) return 'Established'
+  if (score >= 41) return 'Developing'
+  if (score >= 21) return 'Emerging'
+  return 'Digitally Dormant'
 }
 
 export async function GET(
@@ -56,7 +67,7 @@ export async function GET(
     return NextResponse.json({ error: 'Lead not found.' }, { status: 404 })
   }
 
-  // 2. Scores from reports table (dimension_scores lives here)
+  // 2. Scores from reports table
   const repRows = await sbGet(`/reports?lead_id=eq.${id}&select=overall_score,dimension_scores&order=created_at.desc&limit=1`, true)
   const rep = Array.isArray(repRows) ? repRows[0] : null
   if (!rep?.dimension_scores) {
@@ -66,16 +77,54 @@ export async function GET(
   const scores = rep.dimension_scores as Record<string, number>
   const orgName = lead.org_name ?? 'the organisation'
   const industry = lead.industry ? ` in the ${lead.industry} sector` : ''
+  const industryLabel = lead.industry ?? 'comparable organisations'
+  const vals = Object.values(scores) as number[]
+  const overallScore = rep.overall_score ?? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+  const tier = getMaturityTier(overallScore)
+
+  // Benchmark context for prompt grounding
+  const benchmarkDelta = overallScore - OVERALL_SECTOR_MEDIAN
+  const benchmarkCtx = benchmarkDelta >= 0
+    ? `${benchmarkDelta} points above sector median`
+    : `${Math.abs(benchmarkDelta)} points below sector median`
 
   const dimensionList = Object.entries(scores)
     .sort(([, a], [, b]) => a - b)
     .map(([name, score]) => `- ${name}: ${score}/100`)
     .join('\n')
 
-  const prompt = `You are a senior digital transformation consultant creating a prioritised action plan for ${orgName}${industry}.\n\nDigital Maturity scores (sorted by priority gap):\n${dimensionList}\n\nReturn ONLY valid JSON, no commentary:\n{\n  "summary": "<2-3 sentence executive summary: current maturity level, biggest gap, primary priority>",\n  "quick_wins": [\n    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "Low"}\n  ],\n  "six_month": [\n    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "Medium"}\n  ],\n  "long_term": [\n    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "High"}\n  ]\n}\n\nRules:\n- quick_wins: 3-4 items, 30-day actions, low effort high impact\n- six_month: 3-4 items, structured programmes this quarter\n- long_term: 2-3 items, strategic transformation 12-24 months\n- Be specific to the organisation's gaps, not generic advice`
+  const prompt = `You are a senior digital transformation consultant creating a C-suite action plan for ${orgName}${industry}.
+
+Current maturity: ${overallScore}/100 — ${tier} tier (${benchmarkCtx} among ${industryLabel}).
+
+Digital Maturity scores (sorted by gap priority, lowest first):
+${dimensionList}
+
+Return ONLY valid JSON with this exact structure — no commentary, no markdown:
+{
+  "executive_summary": "<3-sentence C-suite briefing: state current maturity tier, name the single highest-priority gap and its business impact, state the primary value opportunity if addressed in 90 days>",
+  "industry_benchmark": "<1 sentence: how ${orgName} compares to ${industryLabel} benchmark of ${OVERALL_SECTOR_MEDIAN}/100, what this means competitively>",
+  "quick_wins": [
+    {"action": "<specific, immediately actionable item — name a tool or process>", "dimension": "<dimension>", "impact": "High", "effort": "Low"}
+  ],
+  "six_month": [
+    {"action": "<structured programme or initiative, tied to a business outcome>", "dimension": "<dimension>", "impact": "High", "effort": "Medium"}
+  ],
+  "long_term": [
+    {"action": "<strategic transformation initiative with measurable endpoint>", "dimension": "<dimension>", "impact": "High", "effort": "High"}
+  ],
+  "summary": "<consultant closing note: 2 sentences — what reaching the next maturity tier requires and the cost of inaction for ${orgName}>"
+}
+
+Rules:
+- quick_wins: 3–4 items, executable in 0–30 days, specific tools or workshops (not generic advice)
+- six_month: 3–4 items, structured programmes to run this quarter with named deliverables
+- long_term: 2–3 items, 12–24 month strategic transformation with C-suite ownership required
+- executive_summary: direct boardroom language, specific to ${orgName}'s actual scores
+- All actions must be tied to the specific dimension gaps, not generic digital transformation advice`
 
   const tryAI = async (model: ReturnType<typeof groq>) => {
-    const { text } = await generateText({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3 })
+    const { text } = await generateText({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, maxTokens: 1200 })
     return text
   }
 
