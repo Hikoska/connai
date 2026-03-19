@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import { Resend } from 'resend'
+import { rateLimit } from '@/lib/rate-limit'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -120,6 +121,8 @@ export async function POST(req: Request) {
   const timedOut = () => Date.now() - startTime > TIMEOUT_MS
 
   try {
+    const ip = (req as Request & { headers: Headers }).headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+    if (!rateLimit(ip, 10)) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     const { lead_id } = await req.json()
     if (!lead_id) return NextResponse.json({ error: 'lead_id required' }, { status: 400 })
     if (!SERVICE_KEY) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
