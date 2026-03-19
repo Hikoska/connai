@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
@@ -10,6 +10,14 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [cooldown, setCooldown] = useState(0)
+
+  // Countdown timer for magic link cooldown
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const t = setTimeout(() => setCooldown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [cooldown])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,6 +35,7 @@ export default function LoginPage() {
       setError(error.message)
     } else {
       setMessage('Check your email for a magic link to sign in.')
+      setCooldown(60)
     }
     setLoading(false)
   }
@@ -115,10 +124,10 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={loading || googleLoading || !email}
+            disabled={loading || googleLoading || !email || cooldown > 0}
             className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
           >
-            {loading ? 'Sending link...' : 'Send magic link'}
+            {loading ? 'Sending link...' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Send magic link'}
           </button>
         </form>
 
