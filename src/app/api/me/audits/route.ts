@@ -42,7 +42,7 @@ export async function GET(req: Request) {
   // Fetch interviews + reports in parallel
   const [ivRes, repRes] = await Promise.all([
     fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/interviews?lead_id=in.(${leadIds})&select=id,lead_id,stakeholder_name,stakeholder_role,token,status&order=created_at.asc`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/interviews?lead_id=in.(${leadIds})&select=id,lead_id,stakeholder_name,stakeholder_role,stakeholder_email,token,status&order=created_at.asc`,
       {
         headers: {
           apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
