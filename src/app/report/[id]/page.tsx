@@ -69,8 +69,7 @@ function ReportSkeleton() {
           <div key={i} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
             <div className="h-5 w-40 bg-slate-800 rounded animate-pulse" />
             <div className="h-3 w-full bg-slate-800 rounded animate-pulse" />
-            <div className="h-3 w-4/5 bg-slate-800 rounded animate-pulse" />
-            <div className="h-3 w-3/5 bg-slate-800 rounded animate-pulse" />
+            <div className="h-3 w-3/4 bg-slate-800 rounded animate-pulse" />
           </div>
         ))}
       </main>
@@ -78,181 +77,198 @@ function ReportSkeleton() {
   )
 }
 
-// ── Generating state ──
-function GeneratingState({ reportId }: { reportId: string }) {
-  const dots = Array.from({ length: 3 }, (_, i) => (
-    <span key={i} className="inline-block w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-  ))
+function noCacheJson(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+    },
+  })
+}
+
+function GeneratingState({ onPollComplete }: { onPollComplete: (report: ReportData) => void }) {
+  const params = useParams()
+  const id = params?.id as string | undefined
+  const attemptRef = useRef(0)
+
+  useEffect(() => {
+    if (!id) return
+    const interval = setInterval(async () => {
+      attemptRef.current++
+      if (attemptRef.current > POLL_MAX_ATTEMPTS) {
+        clearInterval(interval)
+        return
+      }
+      try {
+        const res = await fetch(`/api/report/${id}/status`)
+        if (!res.ok) return
+        const { ready, report } = await res.json()
+        if (ready && report) {
+          clearInterval(interval)
+          onPollComplete(report)
+        }
+      } catch { /* ignore */ }
+    }, POLL_INTERVAL_MS)
+    return () => clearInterval(interval)
+  }, [id, onPollComplete])
+
   return (
-    <div id="report-root" className="min-h-screen bg-slate-950 text-white flex flex-col">
-      <div className="border-b border-slate-800 px-6 py-4 bg-slate-950/95">
-        <div className="max-w-4xl mx-auto">
-          <span className="text-white font-bold text-lg tracking-tight">Connai</span>
-        </div>
+    <div id="report-root" className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center gap-6 px-4">
+      <div className="text-center space-y-3">
+        <div className="w-12 h-12 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto" />
+        <h2 className="text-xl font-semibold text-white">Generating your report…</h2>
+        <p className="text-slate-400 text-sm max-w-xs">Our AI is analysing the interview responses across 8 dimensions. This takes about 30 seconds.</p>
       </div>
-      <main className="flex-1 flex items-center justify-center px-4">
-        <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-2xl bg-teal-900/30 border border-teal-800/40 flex items-center justify-center mx-auto mb-6">
-            <div className="flex gap-1 items-center">{dots}</div>
-          </div>
-          <h1 className="text-xl font-bold text-white mb-2">Generating your report</h1>
-          <p className="text-slate-400 text-sm mb-6">
-            Our AI is analysing your interview responses across 8 dimensions of
-            digital maturity. This takes 30–60 seconds.
-          </p>
-          <p className="text-slate-600 text-xs">Report ID: {reportId}</p>
-        </div>
-      </main>
+      <div className="text-slate-600 text-xs">Page will update automatically</div>
     </div>
   )
 }
 
 function ReportInner() {
-  const params     = useParams()
+  const params    = useParams()
   const searchParams = useSearchParams()
-  const id         = params?.id as string
-
+  const id        = params?.id as string | undefined
   const forceUnlock = searchParams.get('force') === '1'
 
-  const [report,       setReport]       = useState<ReportData | null>(null)
-  const [loading,      setLoading]      = useState(true)
-  const [generating,   setGenerating]   = useState(false)
-  const [pollCount,    setPollCount]    = useState(0)
-  const pollRef        = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const supabase  = createClient(SB_URL, SB_ANON)
 
-  const [execSummary,   setExecSummary]   = useState<string | null>(null)
-  const [execTier,      setExecTier]      = useState<string | null>(null)
-  const [plan,          setPlan]          = useState<ActionPlan | null>(null)
-  const [planLoading,   setPlanLoading]   = useState(false)
+  const [report,        setReport]        = useState<ReportData | null>(null)
+  const [loading,       setLoading]       = useState(true)
+  const [error,         setError]         = useState<string | null>(null)
+  const [generating,    setGenerating]    = useState(false)
   const [paid,          setPaid]          = useState(false)
   const [paidChecked,   setPaidChecked]   = useState(false)
+  const [actionPlan,    setActionPlan]    = useState<ActionPlan | null>(null)
+  const [planLoading,   setPlanLoading]   = useState(false)
+  const [planError,     setPlanError]     = useState<string | null>(null)
+  const [execSummary,   setExecSummary]   = useState<string | null>(null)
+  const [execLoading,   setExecLoading]   = useState(false)
+  const [copied,        setCopied]        = useState(false)
+  const [shareDropdown, setShareDropdown] = useState(false)
+  const shareRef = useRef<HTMLDivElement>(null)
 
-  const handleDownloadPdf = () => {
-    if (!id) return
-    const a = document.createElement('a')
-    a.href = `/api/report/${id}/pdf`
-    a.download = 'connai-report.pdf'
-    a.click()
-  }
-
-  const handleShare = useCallback(() => {
-    const url = window.location.href
-    navigator.clipboard.writeText(url).catch(() => {})
-    setShareCopied(true)
-    setTimeout(() => setShareCopied(false), 2500)
-  }, [])
-  const [shareCopied,    setShareCopied]    = useState(false)
-  const [regenerating,   setRegeneration]   = useState(false)
-  const [reportDate,     setReportDate]     = useState('')
-
-  const handleRegenerate = useCallback(async () => {
-    if (!id || regenerating) return
-    setRegeneration(true)
-    try {
-      await fetch('/api/report/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: id }) })
-    } finally {
-      setRegeneration(false)
-    }
-  }, [id, regenerating])
-
-  // ── Fetch report ──
-  const fetchReport = useCallback(async () => {
-    if (!id) return
-    const sb = createClient(SB_URL, SB_ANON)
-    const { data } = await sb
-      .from('reports')
-      .select('id, overall_score, dimension_scores, executive_summary, created_at')
-      .eq('lead_id', id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-    return data
-  }, [id])
-
-  // ── Poll for report ──
+  // ── Close share dropdown on outside click ──
   useEffect(() => {
-    let cancelled = false
-    const run = async () => {
-      if (!id) { setLoading(false); return }
-      const data = await fetchReport()
-      if (cancelled) return
-      if (data) {
-        const dims = Object.entries((data.dimension_scores as Record<string, number>) ?? {}).map(([name, score]) => ({ name, score: score as number }))
-        setReport({ id: data.id, overall_score: data.overall_score, dimensions: dims, executive_summary: data.executive_summary ?? undefined })
-        if (data.created_at) setReportDate(new Date(data.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }))
-        setLoading(false)
-        setGenerating(false)
-      } else {
-        setGenerating(true)
-        setLoading(false)
-        setPollCount(c => c + 1)
+    if (!shareDropdown) return
+    const handler = (e: MouseEvent) => {
+      if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
+        setShareDropdown(false)
       }
     }
-    run()
-    return () => { cancelled = true }
-  }, [id, fetchReport])
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [shareDropdown])
 
-  // Re-poll if generating
+  // ── Load report ──
   useEffect(() => {
-    if (!generating) return
-    if (pollCount >= POLL_MAX_ATTEMPTS) return
-    pollRef.current = setTimeout(() => {
-      fetchReport().then(data => {
-        if (data) {
-          const dims = Object.entries((data.dimension_scores as Record<string, number>) ?? {}).map(([name, score]) => ({ name, score: score as number }))
-          setReport({ id: data.id, overall_score: data.overall_score, dimensions: dims, executive_summary: data.executive_summary ?? undefined })
-          setGenerating(false)
+    if (!id) return
+    const loadReport = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('reports')
+          .select('id, overall_score, dimensions, executive_summary')
+          .eq('lead_id', id)
+          .maybeSingle()
+        if (error) throw error
+        if (!data) {
+          // No report yet — check if interviews are complete so we can trigger generation
+          setGenerating(true)
         } else {
-          setPollCount(c => c + 1)
+          setReport(data as ReportData)
         }
-      })
-    }, POLL_INTERVAL_MS)
-    return () => { if (pollRef.current) clearTimeout(pollRef.current) }
-  }, [generating, pollCount, fetchReport])
+      } catch (e) {
+        setError((e as Error).message || 'Failed to load report')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadReport()
+  }, [id])
 
   // ── Check paid status ──
   useEffect(() => {
-    if (!id) return
+    if (!id || forceUnlock) { setPaidChecked(true); return }
     fetch(`/api/report/${id}/paid-status`)
-      .then(r => r.ok ? r.json() : { paid: false })
-      .then(d => { setPaid(!!d.paid); setPaidChecked(true) })
+      .then(r => r.json())
+      .then(({ paid: p }) => { setPaid(!!p); setPaidChecked(true) })
       .catch(() => setPaidChecked(true))
-  }, [id])
+  }, [id, forceUnlock])
 
-  // ── Fetch executive summary ──
-  useEffect(() => {
-    if (!report || !id) return
-    fetch(`/api/report/${id}/executive-summary`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { setExecSummary(d.summary ?? null); setExecTier(d.tier ?? null) } })
-      .catch(() => {})
-  }, [report, id])
+  // ── Load executive summary (once report + paid resolved) ──
+  const loadExecSummary = useCallback(async () => {
+    if (!id || execSummary || execLoading) return
+    setExecLoading(true)
+    try {
+      const res = await fetch(`/api/report/${id}/executive-summary`)
+      if (res.ok) {
+        const { summary } = await res.json()
+        setExecSummary(summary ?? null)
+      }
+    } catch { /* non-fatal */ }
+    setExecLoading(false)
+  }, [id, execSummary, execLoading])
 
-  // ── Fetch action plan (only when paid) ──
   useEffect(() => {
-    if (!report || !id) return
+    if (report) loadExecSummary()
+  }, [report, loadExecSummary])
+
+  // ── Load action plan (paid users only) ──
+  const loadActionPlan = useCallback(async () => {
+    if (!id || actionPlan || planLoading) return
+    setPlanLoading(true)
+    try {
+      const res = await fetch(`/api/report/${id}/action-plan`)
+      if (res.ok) {
+        const data = await res.json()
+        setActionPlan(data)
+      } else {
+        setPlanError('Failed to load action plan')
+      }
+    } catch {
+      setPlanError('Failed to load action plan')
+    }
+    setPlanLoading(false)
+  }, [id, actionPlan, planLoading])
+
+  useEffect(() => {
     if (!paid && !forceUnlock && !paidChecked) return
     if (!paid && !forceUnlock) return
-    setPlanLoading(true)
-    fetch(`/api/report/${id}/action-plan`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setPlan(d); })
-      .catch(() => {})
-      .finally(() => setPlanLoading(false));
-  }, [report, paid, paidChecked, id]);
+    loadActionPlan()
+  }, [paid, forceUnlock, paidChecked, loadActionPlan])
 
-  const dims = report?.dimensions ?? [];
-  const overallScore = dims.length > 0
-    ? Math.round(dims.reduce((s, d) => s + d.score, 0) / dims.length)
-    : 0;
-  const tier = getMaturityTier(overallScore);
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+    setShareDropdown(false)
+  }
+
+  const handleDownloadPDF = () => {
+    window.print()
+  }
 
   if (loading) return <ReportSkeleton />
-  if (generating) return <GeneratingState reportId={id ?? ''} />
+
+  if (generating) {
+    return <GeneratingState onPollComplete={(data) => { setReport(data); setGenerating(false) }} />
+  }
+
+  if (error) {
+    return (
+      <div id="report-root" className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="text-center space-y-4 px-4">
+          <p className="text-red-400">{error}</p>
+          <a href="/dashboard" className="text-teal-400 underline text-sm">Back to dashboard</a>
+        </div>
+      </div>
+    )
+  }
+
   if (!report) {
     return (
       <div id="report-root" className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center space-y-4 px-4">
           <p className="text-slate-400 mb-4">Report not found or still generating.</p>
           <a href="/dashboard" className="text-teal-400 underline text-sm">Go to dashboard</a>
         </div>
@@ -268,33 +284,53 @@ function ReportInner() {
 
       <div className="border-b border-slate-800 px-6 py-4 sticky top-0 z-40 bg-slate-950/95 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <span className="text-white font-bold text-lg">Connai</span>
+          <span className="text-white/60 text-sm font-medium">Digital Maturity Report</span>
           <div className="flex items-center gap-2">
-            <span className="text-slate-500 text-sm hidden sm:block">Digital Maturity Report</span>
-            <button type="button" onClick={handleShare} title="Share report" className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
-              {shareCopied ? <><Check size={13} className="text-teal-400" /><span className="text-teal-400">Copied!</span></> : <><Share2 size={13} /><span>Share</span></>}
-            </button>
-            <a
-              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('I just completed a digital maturity audit for my organisation — here\'s our AI-generated report:')}&url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
-              target="_blank" rel="noopener noreferrer"
-              title="Share on X"
-              className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg transition-colors"
+            {/* Share button */}
+            <div className="relative" ref={shareRef}>
+              <button
+                type="button"
+                onClick={() => setShareDropdown(v => !v)}
+                className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Share2 size={13} /> Share
+              </button>
+              {shareDropdown && (
+                <div className="absolute right-0 top-full mt-1 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="w-full text-left px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 flex items-center gap-2 transition-colors"
+                  >
+                    {copied ? <Check size={14} className="text-teal-400" /> : <Share2 size={14} />}
+                    {copied ? 'Link copied!' : 'Copy link'}
+                  </button>
+                  <a
+                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Just completed my Digital Maturity Assessment with Connai 🚀')}&url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+                  >
+                    Share on X (Twitter)
+                  </a>
+                  <a
+                    href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+                  >
+                    Share on LinkedIn
+                  </a>
+                </div>
+              )}
+            </div>
+            {/* Download PDF */}
+            <button
+              type="button"
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors"
             >
-              <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.737-8.835L1.254 2.25H8.08l4.26 5.637 5.903-5.637zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            </a>
-            <a
-              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
-              target="_blank" rel="noopener noreferrer"
-              title="Share on LinkedIn"
-              className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg transition-colors"
-            >
-              <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-            </a>
-            <button type="button" onClick={handleRegenerate} title="Regenerate report" disabled={regenerating} className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white disabled:opacity-40 px-2.5 py-1.5 rounded-lg transition-colors">
-              <RefreshCw size={13} className={regenerating ? 'animate-spin' : ''} />
-            </button>
-            <button type="button" onClick={handleDownloadPdf} title="Download PDF" className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg transition-colors">
-              <Download size={13} />
+              <Download size={13} /> PDF
             </button>
           </div>
         </div>
@@ -302,94 +338,64 @@ function ReportInner() {
 
       <main id="main-report" className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
-        {/* Overall score card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Digital Maturity Report</h1>
-              {reportDate && <p className="text-slate-500 text-sm">Generated {reportDate}</p>}
-            </div>
-            <div className="text-center sm:text-right">
-              <div className={`text-5xl sm:text-6xl font-black ${tier.color} leading-none`}>{overallScore}</div>
-              <div className="text-slate-500 text-xs mt-1">out of 100</div>
-              <div className={`text-sm font-semibold ${tier.color} mt-1`}>{tier.label}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Dimension scores */}
-        {dims.length > 0 && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
-            <h2 className="text-lg font-semibold text-white mb-5">Dimension Scores</h2>
-            <div className="space-y-3">
-              {[...dims].sort((a, b) => b.score - a.score).map(d => {
-                const pct = Math.min(100, Math.max(0, d.score))
-                const benchmark = INDUSTRY_BENCHMARKS[d.name.toLowerCase()] ?? 55
-                const color = pct >= 70 ? 'bg-teal-500' : pct >= 45 ? 'bg-yellow-500' : 'bg-red-500'
-                return (
-                  <div key={d.name}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-slate-300 capitalize">{d.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500">Benchmark: {benchmark}</span>
-                        <span className="text-sm font-semibold text-white">{d.score}</span>
-                      </div>
-                    </div>
-                    <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div className={`absolute left-0 top-0 h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
-                      <div className="absolute top-0 h-full w-0.5 bg-slate-500 opacity-60" style={{ left: `${benchmark}%` }} />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Executive Summary */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Executive Summary</h2>
-          {execSummary ? (
-            <>
-              <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{execSummary}</p>
-              {execTier && <p className="mt-3 text-xs text-slate-500">Maturity Tier: <span className="text-teal-400 font-medium">{execTier}</span></p>}
-            </>
-          ) : (
-            <div className="flex items-center gap-2 text-slate-500 text-sm">
-              <div className="w-4 h-4 border border-teal-500 border-t-transparent rounded-full animate-spin" />
-              Generating executive summary…
-            </div>
+        {/* Score card */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center space-y-2">
+          <p className="text-slate-400 text-sm">Overall Digital Maturity Score</p>
+          <p className="text-6xl font-bold text-white">{report.overall_score ?? '—'}</p>
+          {report.overall_score != null && (
+            <p className={`text-base font-semibold ${getMaturityTier(report.overall_score).color}`}>
+              {getMaturityTier(report.overall_score).label}
+            </p>
           )}
         </div>
 
-        {/* Dimension insights */}
-        {dims.some(d => d.insight) && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
-            <h2 className="text-lg font-semibold text-white mb-4">Dimension Insights</h2>
-            <div className="space-y-4">
-              {dims.filter(d => d.insight).map(d => (
-                <div key={d.name}>
-                  <h3 className="text-sm font-semibold text-teal-400 capitalize mb-1">{d.name}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed">{d.insight}</p>
-                </div>
-              ))}
+        {/* Executive Summary */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3">
+          <h2 className="text-base font-semibold text-white">Executive Summary</h2>
+          {execLoading ? (
+            <div className="space-y-2">
+              <div className="h-3 bg-slate-800 rounded animate-pulse w-full" />
+              <div className="h-3 bg-slate-800 rounded animate-pulse w-5/6" />
+              <div className="h-3 bg-slate-800 rounded animate-pulse w-4/6" />
             </div>
-          </div>
-        )}
+          ) : execSummary ? (
+            <p className="text-slate-300 text-sm leading-relaxed">{execSummary}</p>
+          ) : (
+            <p className="text-slate-500 text-sm">Summary not available.</p>
+          )}
+        </div>
 
-        {/* Industry comparison */}
-        {dims.length > 0 && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
-            <h2 className="text-lg font-semibold text-white mb-4">vs. Industry Benchmarks</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {dims.map(d => {
-                const benchmark = INDUSTRY_BENCHMARKS[d.name.toLowerCase()] ?? 55
-                const delta = d.score - benchmark
-                const color = delta >= 5 ? 'text-teal-400' : delta >= -5 ? 'text-yellow-400' : 'text-red-400'
+        {/* Dimensions */}
+        {report.dimensions?.length > 0 && (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+            <h2 className="text-base font-semibold text-white">Dimension Scores</h2>
+            <div className="space-y-4">
+              {report.dimensions.map((dim) => {
+                const benchmark = INDUSTRY_BENCHMARKS[dim.name?.toLowerCase()] ?? 55
                 return (
-                  <div key={d.name} className="bg-slate-800/50 rounded-xl p-3 text-center">
-                    <div className={`text-lg font-bold ${color}`}>{delta >= 0 ? '+' : ''}{delta}</div>
-                    <div className="text-xs text-slate-500 capitalize mt-0.5 truncate">{d.name}</div>
+                  <div key={dim.name} className="space-y-1.5">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-sm font-medium text-slate-200 capitalize">{dim.name}</span>
+                      <span className="text-sm font-bold text-white">{dim.score}</span>
+                    </div>
+                    <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{
+                          width: `${dim.score}%`,
+                          background: dim.score >= 70 ? '#2dd4bf' : dim.score >= 50 ? '#38bdf8' : '#f59e0b',
+                        }}
+                      />
+                      {/* Industry benchmark marker */}
+                      <div
+                        className="absolute top-0 h-full w-0.5 bg-white/20"
+                        style={{ left: `${benchmark}%` }}
+                        title={`Industry avg: ${benchmark}`}
+                      />
+                    </div>
+                    {dim.insight && (
+                      <p className="text-xs text-slate-500 leading-relaxed">{dim.insight}</p>
+                    )}
                   </div>
                 )
               })}
@@ -397,108 +403,86 @@ function ReportInner() {
           </div>
         )}
 
-        {/* Priority matrix */}
-        {dims.length > 0 && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
-            <h2 className="text-lg font-semibold text-white mb-4">Priority Matrix</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {(['Critical gaps', 'Strengths'] as const).map((label) => {
-                const isGap = label === 'Critical gaps'
-                const sorted = isGap
-                  ? [...dims].sort((a, b) => a.score - b.score).slice(0, 3)
-                  : [...dims].sort((a, b) => b.score - a.score).slice(0, 3)
-                const color = isGap ? 'text-red-400' : 'text-teal-400'
-                return (
-                  <div key={label} className="bg-slate-800/40 rounded-xl p-4">
-                    <h3 className={`text-sm font-semibold ${color} mb-3`}>{label}</h3>
+        {/* Action Plan — paid gate */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <h2 className="text-base font-semibold text-white">AI Action Plan</h2>
+          {!isPaid ? (
+            <div className="text-center py-6 space-y-4">
+              <p className="text-slate-400 text-sm">Unlock your personalised AI Action Plan to see exactly what to fix, in which order, and why.</p>
+              <button
+                type="button"
+                onClick={async () => {
+                  const res = await fetch('/api/stripe/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reportId: id }),
+                  })
+                  const { url, error } = await res.json()
+                  if (url) window.location.href = url
+                  else alert(error || 'Something went wrong')
+                }}
+                className="bg-teal-600 hover:bg-teal-500 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm"
+              >
+                Unlock Action Plan — $49
+              </button>
+            </div>
+          ) : planLoading ? (
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-3 bg-slate-800 rounded animate-pulse" style={{ width: `${80 - i * 10}%` }} />
+              ))}
+            </div>
+          ) : planError ? (
+            <div className="space-y-2">
+              <p className="text-red-400 text-sm">{planError}</p>
+              <button
+                type="button"
+                onClick={() => { setPlanError(null); loadActionPlan() }}
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+              >
+                <RefreshCw size={12} /> Try again
+              </button>
+            </div>
+          ) : actionPlan ? (
+            <div className="space-y-5">
+              {actionPlan.summary && (
+                <div className="bg-teal-950/40 border border-teal-800/40 rounded-xl p-4">
+                  <p className="text-sm text-teal-200 leading-relaxed">{actionPlan.summary}</p>
+                </div>
+              )}
+              {(['quick_wins', 'six_month', 'long_term'] as const).map(tier => (
+                actionPlan[tier]?.length > 0 && (
+                  <div key={tier} className="space-y-2">
+                    <div className="flex items-baseline gap-2">
+                      <h3 className={`text-sm font-semibold ${TIER_META[tier].color}`}>{TIER_META[tier].label}</h3>
+                      <span className="text-xs text-slate-500">{TIER_META[tier].desc}</span>
+                    </div>
                     <ul className="space-y-1.5">
-                      {sorted.length === 0 ? <p className="text-slate-500 text-xs">None</p> : (
-                        sorted.map(d => (
-                          <li key={d.name} className="text-xs text-slate-300 flex items-start gap-1.5">
-                            <span className={`${color} mt-0.5 flex-shrink-0`}>●</span>
-                            {d.name} <span className="text-slate-500 ml-auto pl-2 flex-shrink-0">{d.score}</span>
-                          </li>
-                        ))
-                      )}
+                      {actionPlan[tier].map((item: string, i: number) => (
+                        <li key={i} className="flex gap-2 text-sm text-slate-300">
+                          <span className="text-slate-600 shrink-0">{i + 1}.</span>
+                          {item}
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )
-              })}
+              ))}
             </div>
-          </div>
-        )}
-
-        {/* AI Action Plan */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
-          {!isPaid ? (
-            <>
-              <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">AI Action Plan</h2>
-                  <p className="text-slate-400 text-sm mt-1">Your digital maturity scores are ready. Unlock the AI action plan and strategic roadmap.</p>
-                </div>
-                <span className="inline-flex items-center gap-1.5 bg-teal-900/30 text-teal-300 text-xs font-semibold px-3 py-1.5 rounded-full border border-teal-700/40 flex-shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />Premium
-                </span>
-              </div>
-              <ul className="space-y-2 mb-6">
-                {['Full 3-tier action plan (Quick Wins / 6-Month / Strategic)', 'Priority improvement roadmap', 'Branded PDF export', 'Shareable report link', `All ${dims.length || 8} dimension scores + industry benchmarks`].map(item => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm text-white/80">
-                    <span className="text-teal-400 mt-0.5 flex-shrink-0">✔</span>{item}
-                  </li>
-                ))}
-              </ul>
-              <button type="button" onClick={() => window.location.href = `/checkout?reportId=${id}`} className="w-full sm:w-auto bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-8 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
-                Unlock for $49 · Secure checkout
-              </button>
-              <p className="text-xs text-slate-500 mt-3">One-time payment · Powered by Stripe · Instant access</p>
-            </>
           ) : (
-            <>
-              <h2 className="text-lg font-semibold text-white mb-5">AI Action Plan</h2>
-              {planLoading ? (
-                <div className="flex items-center gap-2 text-slate-400 text-sm">
-                  <div className="w-4 h-4 border border-teal-500 border-t-transparent rounded-full animate-spin" />
-                  Generating your personalised action plan…
-                </div>
-              ) : plan ? (
-                <div className="space-y-8">
-                  {(['quick_wins', 'six_month', 'long_term'] as const).map(t => {
-                    const meta = TIER_META[t];
-                    const items = plan[t] ?? [];
-                    if (items.length === 0) return null;
-                    return (
-                      <div key={t}>
-                        <div className="flex items-center gap-2 mb-3">
-                          <h3 className={`text-base font-semibold ${meta.color}`}>{meta.label}</h3>
-                          <span className="text-xs text-slate-500">{meta.desc}</span>
-                        </div>
-                        <ul className="space-y-2">
-                          {items.map((item, i) => (
-                            <li key={i} className="flex items-start gap-2.5 text-sm text-slate-300">
-                              <span className={`${meta.color} mt-0.5 flex-shrink-0 font-bold`}>{i + 1}.</span>
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    );
-                  })}
-                  {plan.summary && (
-                    <div className="mt-6 bg-teal-950/40 border border-teal-800/30 rounded-xl px-5 py-4">
-                      <p className="text-xs font-semibold text-teal-400 mb-1.5 uppercase tracking-wider">Key Insight</p>
-                      <p className="text-sm text-slate-300 leading-relaxed">{plan.summary}</p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-slate-500 text-sm">Action plan could not be generated. Try regenerating the report.</p>
-              )}
-            </>
+            <p className="text-slate-500 text-sm">Action plan not available. Try
+              <button
+                type="button"
+                onClick={loadActionPlan}
+                className="ml-1 text-teal-400 underline"
+              >regenerating the report.</button>
+            </p>
           )}
         </div>
 
-        <FeedbackBar reportId={id ?? ''} />
+        <div className="no-print">
+          <FeedbackBar reportId={id ?? ''} />
+        </div>
       </main>
     </div>
   )
