@@ -154,10 +154,9 @@ async function getInterviewContext(token: string): Promise<InterviewContext | nu
 
 export async function POST(req: NextRequest) {
   try {
-    // Rate limiting [SEC-B]
+    // Rate limiting [SEC-B] — rateLimit returns TRUE = allowed, FALSE = blocked
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-    const limited = rateLimit(ip, 'interviews-message', 20, 60_000)
-    if (limited) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    if (!rateLimit(ip, 'interviews-message', 20, 60_000)) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     const { token, messages, stream } = await req.json()
     const wantStream = stream === true
