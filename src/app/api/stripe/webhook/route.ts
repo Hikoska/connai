@@ -57,8 +57,8 @@ export async function POST(req: NextRequest) {
       if (supaUrl && supaKey) {
         // Idempotent insert — stripe_session_id has a UNIQUE constraint (migration CL-13).
         // Prefer: resolution=ignore-duplicates → ON CONFLICT DO NOTHING, so Stripe retries
-        // (network blips, timeouts) are safe and won't produce duplicate payment records.
-        await fetch(`${supaUrl}/rest/v1/report_payments`, {
+        // (network blips, timeouts) are safe and won’t produce duplicate payment records.
+        const insertRes = await fetch(`${supaUrl}/rest/v1/report_payments`, {
           method: 'POST',
           headers: {
             apikey: supaKey,
@@ -73,6 +73,12 @@ export async function POST(req: NextRequest) {
             amount_cents: session.amount_total ?? 4900,
           }),
         });
+        // 2xx = success (201 Created or 200 no-op on duplicate).
+        // On non-2xx: return 500 so Stripe retries the webhook delivery.
+        if (!insertRes.ok && insertRes.status !== 409) {
+          console.error('[webhook] Supabase insert failed:', insertRes.status);
+          return NextResponse.json({ error: 'DB write failed' }, { status: 500 });
+        }
       }
     }
   }
