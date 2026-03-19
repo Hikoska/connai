@@ -12,6 +12,11 @@ function CheckoutContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Redirect to dashboard if no reportId param
+  useEffect(() => {
+    if (!reportId) { router.replace('/dashboard') }
+  }, [reportId, router])
+
   const handleCheckout = async () => {
     if (!reportId) { setError('Missing report ID. Please return to your report.'); return }
     setLoading(true)
@@ -37,12 +42,8 @@ function CheckoutContent() {
 
   if (!reportId) {
     return (
-      <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
-        <div className="text-center max-w-sm">
-          <h1 className="text-xl font-bold text-white mb-3">No report found</h1>
-          <p className="text-white/60 text-sm mb-6">Please return to your report to unlock premium features.</p>
-          <Link href="/dashboard" className="text-teal-400 hover:text-teal-300 text-sm underline underline-offset-4">Go to Dashboard</Link>
-        </div>
+      <div className="min-h-screen bg-[#0E1117] flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-teal-400/30 border-t-teal-400 rounded-full animate-spin" />
       </div>
     )
   }
