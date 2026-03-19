@@ -60,13 +60,13 @@ Transcript:
 ${transcript.slice(0, 6000)}`
 
   const tryAI = async (model: ReturnType<typeof groq>) => {
-    const { text } = await generateText({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.1 })
+    const { text } = await generateText({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.1, maxTokens: 400 })
     return text
   }
 
   let raw = ''
   try { raw = await tryAI(groq('llama-3.3-70b-versatile')) }
-  catch { try { raw = await tryAI(cerebras('llama3.1-8b')) } catch { /* fallback below */ } }
+  catch { try { raw = await tryAI(cerebras('llama3.1-8b')) } catch { /* fallback */ } }
 
   const match = raw.match(/\{[\s\S]*\}/)
   if (!match) return Object.fromEntries(DIMENSIONS.map(d => [d, 35]))
@@ -86,14 +86,16 @@ export async function GET(
     )
   }
 
+  // 1. Check interview status
   const interviews = await sbGet(`/interviews?lead_id=eq.${id}&select=id,status,created_at&order=created_at.desc`)
   if (!Array.isArray(interviews) || interviews.length === 0) {
     return NextResponse.json({ error: 'No interviews found' }, { status: 404 })
   }
 
   const totalCount = interviews.length
-  // FIX: DB stores 'complete' not 'completed'
-  const completed = interviews.filter((iv: { status: string }) => iv.status === 'complete' || iv.status === 'completed')
+  const completed = interviews.filter((iv: { status: string }) =>
+    iv.status === 'complete' || iv.status === 'completed'
+  )
   const completedCount = completed.length
   const partial = completedCount < totalCount || completedCount === 0
 
@@ -105,16 +107,23 @@ export async function GET(
     })
   }
 
-  const leadRows = await sbGet(`/leads?id=eq.${id}&select=dimension_scores,overall_score&limit=1`)
-  const cached = Array.isArray(leadRows) ? leadRows[0] : null
-  if (cached?.dimension_scores && typeof cached.dimension_scores === 'object') {
+  // 2. Read canonical scores from reports table (service key — not leads cache)
+  //    This is the single source of truth; leads.dimension_scores is not reliable.
+  const reportRows = await sbGet(
+    `/reports?lead_id=eq.${id}&select=overall_score,dimension_scores&order=created_at.desc&limit=1`,
+    true  // service key — bypasses RLS
+  )
+  const report = Array.isArray(reportRows) ? reportRows[0] : null
+
+  if (report?.dimension_scores && typeof report.dimension_scores === 'object') {
+    const dims = report.dimension_scores as Record<string, number>
     return NextResponse.json({
       leadId: id, completedCount, totalCount, partial,
-      dimensions: DIMENSIONS.map(name => ({ name, score: (cached.dimension_scores as Record<string, number>)[name] ?? 35 })),
+      dimensions: DIMENSIONS.map(name => ({ name, score: dims[name] ?? 35 })),
     })
   }
 
-  // FIX: column is 'transcript', not 'answers'
+  // 3. No report row yet — compute on-the-fly from transcript (AI fallback)
   const latestId = completed[0].id
   const ivRows = await sbGet(`/interviews?id=eq.${latestId}&select=transcript&limit=1`, true)
   const ivData  = Array.isArray(ivRows) ? ivRows[0] : null
@@ -133,18 +142,13 @@ export async function GET(
     })
   }
 
+  // Compute scores — NOTE: do NOT write back to leads table.
+  // Trigger /api/report/generate instead to create a proper report row.
   const raw = await scoreTranscript(transcript)
   const dimensions = DIMENSIONS.map(name => ({
     name,
     score: Math.min(100, Math.max(0, Math.round((raw[name] as number) ?? 35))),
   }))
-  const overallScore = Math.round(dimensions.reduce((s, d) => s + d.score, 0) / dimensions.length)
-
-  fetch(`${SB_URL}/rest/v1/leads?id=eq.${id}`, {
-    method: 'PATCH',
-    headers: { apikey: SB_SVC, Authorization: `Bearer ${SB_SVC}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-    body: JSON.stringify({ dimension_scores: raw, overall_score: overallScore }),
-  }).catch(() => {})
 
   return NextResponse.json({ leadId: id, completedCount, totalCount, dimensions, partial })
 }
