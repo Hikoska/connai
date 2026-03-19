@@ -41,6 +41,11 @@ export default function NewAuditPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const trimmedOrg = orgName.trim()
+    if (!trimmedOrg || trimmedOrg.length < 2) {
+      setError('Please enter a valid organisation name (at least 2 characters).')
+      return
+    }
     setLoading(true)
     setError('')
     try {
@@ -48,7 +53,7 @@ export default function NewAuditPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          org_name: orgName.trim(),
+          org_name: trimmedOrg,
           industry: industry || undefined,
           role: role || undefined,
           email,
