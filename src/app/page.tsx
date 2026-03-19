@@ -14,6 +14,27 @@ import HomeConcierge from '@/components/HomeConcierge'
 
 const instrumentSerif = Instrument_Serif({ subsets: ['latin'], weight: '400', variable: '--font-instrument-serif' })
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  'name': 'Connai',
+  'url': 'https://connai.linkgrow.io',
+  'applicationCategory': 'BusinessApplication',
+  'operatingSystem': 'Web',
+  'description': 'AI-powered digital maturity audit. Get a scored report across 8 dimensions in 20 minutes.',
+  'offers': {
+    '@type': 'Offer',
+    'price': '0',
+    'priceCurrency': 'USD',
+    'description': 'Free digital maturity assessment',
+  },
+  'publisher': {
+    '@type': 'Organization',
+    'name': 'Connai',
+    'url': 'https://connai.linkgrow.io',
+  },
+}
+
 const Hero = () => (
   <section className="relative pt-24 pb-16 overflow-hidden bg-[#0D2738]">
     <div className="absolute inset-0 bg-gradient-to-b from-[#0D5C63]/10 to-transparent pointer-events-none" />
@@ -30,7 +51,7 @@ const Hero = () => (
         Connai runs an AI-powered digital maturity audit and delivers a scored report your leadership team can act on.
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-        <StartInterviewButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-full hover:bg-[#0a4a50] transition-colors text-lg inline-flex items-center gap-2 shadow-lg shadow-teal-900/20 animate-pulse">
+        <StartInterviewButton className="bg-[#0D5C63] text-white font-bold px-8 py-4 rounded-full hover:bg-[#0a4a50] transition-all text-lg inline-flex items-center gap-2 shadow-lg shadow-teal-900/40 ring-2 ring-teal-500/20 hover:ring-teal-500/40">
           Start a free audit &rarr;
         </StartInterviewButton>
         <span className="text-sm text-white/60">No consultant required &middot; Results in minutes</span>
@@ -43,6 +64,10 @@ const Hero = () => (
 export default function HomePage() {
   return (
     <main id="main-content">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Hero />
       <HowItWorks />
       <WhatYouGet />
@@ -65,14 +90,14 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-teal-400 font-bold text-sm">Connai</span>
-            <span className="text-white/30 text-xs">· AI-powered digital maturity audits</span>
+            <span className="text-white/30 text-xs">&middot; AI-powered digital maturity audits</span>
           </div>
           <nav className="flex items-center gap-5 text-xs text-white/40">
             <Link href="/dashboard" className="hover:text-white/70 transition-colors">Dashboard</Link>
             <Link href="/privacy" className="hover:text-white/70 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-white/70 transition-colors">Terms</Link>
           </nav>
-          <p className="text-white/30 text-xs">© {new Date().getFullYear()} Connai. All rights reserved.</p>
+          <p className="text-white/30 text-xs">&copy; {new Date().getFullYear()} Connai. All rights reserved.</p>
         </div>
       </footer>
     </main>
