@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { Share2, Check, Download } from 'lucide-react';
+import { Share2, Check, Download, RefreshCw } from 'lucide-react';
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -116,6 +116,7 @@ function ReportContent() {
 
   const [report,         setReport]         = useState<ReportData | null>(null);
   const [shareCopied,    setShareCopied]    = useState(false);
+  const [regenerating,   setRegenerating]   = useState(false);
   const [loading,        setLoading]        = useState(true);
   const [error,          setError]          = useState<string | null>(null);
   const [execSummary,    setExecSummary]    = useState<string | null>(null);
@@ -139,7 +140,24 @@ function ReportContent() {
     }
   }, [])
 
-    useEffect(() => {
+  const handleRegenerate = useCallback(async () => {
+    if (regenerating) return
+    setRegenerating(true)
+    try {
+      const res = await fetch('/api/report/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: id, force: true }),
+      })
+      if (res.ok) {
+        // Reload page after short delay to show new report
+        setTimeout(() => window.location.reload(), 1200)
+      }
+    } catch { /* silent */ }
+    finally { setRegenerating(false) }
+  }, [id, regenerating])
+
+      useEffect(() => {
     if (!id) return;
     fetch(`/api/report/${id}/preview`)
       .then(r => r.ok ? r.json() : null)
@@ -261,6 +279,16 @@ function ReportContent() {
                 ? <><Check size={13} className="text-teal-400" /> <span className="text-teal-400">Copied!</span></>
                 : <><Share2 size={13} /> <span>Share</span></>
               }
+            </button>
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              title="Regenerate report"
+              disabled={regenerating}
+              className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white disabled:opacity-40 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <RefreshCw size={13} className={regenerating ? 'animate-spin' : ''} />
+              <span className="hidden sm:inline">{regenerating ? 'Running…' : 'Regenerate'}</span>
             </button>
           </div>
         </div>
