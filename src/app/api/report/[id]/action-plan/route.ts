@@ -9,14 +9,8 @@ const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const SB_SVC  = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-const groq = createOpenAI({
-  baseURL: 'https://api.groq.com/openai/v1',
-  apiKey:  process.env.GROQ_API_KEY,
-})
-const cerebras = createOpenAI({
-  baseURL: 'https://api.cerebras.ai/v1',
-  apiKey:  process.env.CEREBRAS_API_KEY ?? '',
-})
+const groq = createOpenAI({ baseURL: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY })
+const cerebras = createOpenAI({ baseURL: 'https://api.cerebras.ai/v1', apiKey: process.env.CEREBRAS_API_KEY ?? '' })
 
 async function sbGet(path: string, useService = false) {
   const key = useService ? SB_SVC : SB_ANON
@@ -28,70 +22,63 @@ async function sbGet(path: string, useService = false) {
   return res.json()
 }
 
-/** Server-side payment gate — queries report_payments via service role key */
-async function isPaid(leadId: string): Promise<boolean> {
-  if (!SB_SVC) return false // fail closed: no service key = no access
-  const rows = await sbGet(
-    `/report_payments?lead_id=eq.${encodeURIComponent(leadId)}&limit=1&select=id`,
-    true
-  )
-  return Array.isArray(rows) && rows.length > 0
+async function generateWithFallback(prompt: string, maxTokens = 1500): Promise<string> {
+  const models = [
+    { p: groq,     m: 'qwen-qwq-32b' },
+    { p: groq,     m: 'llama-3.3-70b-versatile' },
+    { p: cerebras, m: 'llama3.1-8b' },
+    { p: groq,     m: 'llama-3.1-8b-instant' },
+  ]
+  for (const { p, m } of models) {
+    try {
+      const { text } = await generateText({ model: p(m), prompt, temperature: 0.3, maxTokens })
+      if (text && text.trim().length > 50) return text.trim()
+    } catch { continue }
+  }
+  throw new Error('All AI providers failed')
 }
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  // ── Payment gate: disabled until Stripe connected ─────────────────────────
-  // const paid = await isPaid(id)
-  // if (!paid) { return NextResponse.json({ error: 'Payment required.' }, { status: 402 }) }
-  // ─────────────────────────────────────────────────────────────────────────
-
-  // 1. Lead metadata (org name + industry)
   const leadRows = await sbGet(`/leads?id=eq.${id}&select=org_name,industry&limit=1`)
   const lead = Array.isArray(leadRows) ? leadRows[0] : null
-  if (!lead) {
-    return NextResponse.json({ error: 'Lead not found.' }, { status: 404 })
-  }
+  if (!lead) return NextResponse.json({ error: 'Lead not found.' }, { status: 404 })
 
-  // 2. Scores from reports table (dimension_scores lives here)
   const repRows = await sbGet(`/reports?lead_id=eq.${id}&select=overall_score,dimension_scores&order=created_at.desc&limit=1`, true)
   const rep = Array.isArray(repRows) ? repRows[0] : null
-  if (!rep?.dimension_scores) {
-    return NextResponse.json({ error: 'Scores not yet generated.' }, { status: 404 })
-  }
+  if (!rep?.dimension_scores) return NextResponse.json({ error: 'Scores not yet generated.' }, { status: 404 })
 
   const scores = rep.dimension_scores as Record<string, number>
   const orgName = lead.org_name ?? 'the organisation'
-  const industry = lead.industry ? ` in the ${lead.industry} sector` : ''
+  const industry = lead.industry ?? 'their sector'
+  const sortedDims = Object.entries(scores).sort(([, a], [, b]) => (a as number) - (b as number))
+  const weakest = sortedDims.slice(0, 3).map(([n, s]) => `${n} (${s}/100)`).join(', ')
+  const strongest = [...sortedDims].reverse().slice(0, 2).map(([n, s]) => `${n} (${s}/100)`).join(', ')
+  const dimensionList = sortedDims.map(([n, s]) => `  ${n}: ${s}/100`).join('\n')
 
-  const dimensionList = Object.entries(scores)
-    .sort(([, a], [, b]) => a - b)
-    .map(([name, score]) => `- ${name}: ${score}/100`)
-    .join('\n')
+  const prompt = `You are a senior digital transformation consultant building a prioritised action plan for ${orgName} in ${industry}.
 
-  const prompt = `You are a senior digital transformation consultant creating a prioritised action plan for ${orgName}${industry}.\n\nDigital Maturity scores (sorted by priority gap):\n${dimensionList}\n\nReturn ONLY valid JSON, no commentary:\n{\n  "summary": "<2-3 sentence executive summary: current maturity level, biggest gap, primary priority>",\n  "quick_wins": [\n    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "Low"}\n  ],\n  "six_month": [\n    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "Medium"}\n  ],\n  "long_term": [\n    {"action": "<specific, actionable item>", "dimension": "<dimension>", "impact": "High", "effort": "High"}\n  ]\n}\n\nRules:\n- quick_wins: 3-4 items, 30-day actions, low effort high impact\n- six_month: 3-4 items, structured programmes this quarter\n- long_term: 2-3 items, strategic transformation 12-24 months\n- Be specific to the organisation's gaps, not generic advice`
+Overall score: ${rep.overall_score ?? '?'}/100
+Dimension scores (lowest = highest priority):
+${dimensionList}
 
-  const tryAI = async (model: ReturnType<typeof groq>) => {
-    const { text } = await generateText({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3 })
-    return text
-  }
+Top 3 gaps: ${weakest}
+Strongest areas: ${strongest}
 
-  let raw = ''
-  try { raw = await tryAI(groq('llama-3.3-70b-versatile')) }
-  catch {
-    try { raw = await tryAI(cerebras('llama3.1-8b')) }
-    catch { return NextResponse.json({ error: 'AI service unavailable. Try again shortly.' }, { status: 503 }) }
-  }
+Return ONLY valid JSON, no markdown fences, no explanation:
+{"quick_wins":[{"action":"<30-day specific action>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"six_month":[{"action":"<6-month initiative>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"long_term":[{"action":"<12-24 month strategic programme>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"summary":"<2 sentences: most important insight and what success looks like in 12 months>"}`
 
-  const match = raw.match(/\{[\s\S]*\}/)
-  if (!match) return NextResponse.json({ error: 'Plan generation failed' }, { status: 500 })
+  let raw: string
+  try { raw = await generateWithFallback(prompt, 1500) }
+  catch { return NextResponse.json({ error: 'AI unavailable' }, { status: 503 }) }
 
   try {
-    return NextResponse.json(JSON.parse(match[0]))
+    const cleaned = raw.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim()
+    return NextResponse.json(JSON.parse(cleaned))
   } catch {
-    return NextResponse.json({ error: 'Plan parsing failed' }, { status: 500 })
+    const match = raw.match(/\{[\s\S]*\}/)
+    if (match) { try { return NextResponse.json(JSON.parse(match[0])) } catch { /* fall through */ } }
+    return NextResponse.json({ error: 'Failed to parse action plan' }, { status: 500 })
   }
 }
