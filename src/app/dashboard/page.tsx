@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { FileText, PlayCircle, Users, Plus, BarChart2, Link2, Check } from 'lucide-react'
+import { FileText, PlayCircle, Users, Plus, BarChart2, Link2, Check, Loader2 } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { StartInterviewButton } from '@/components/StartInterviewButton'
 import { PricingModal } from '@/components/PricingModal'
@@ -58,6 +58,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const supabaseRef = useRef<SupabaseClient | null>(null)
+  const [generatingReport, setGeneratingReport] = React.useState<string | null>(null)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
 
@@ -300,6 +301,30 @@ export default function DashboardPage() {
                           >
                             <BarChart2 size={14} /> Report
                           </Link>
+                        )}
+                        {allDone && !lead.report && (
+                          <button
+                            type="button"
+                            disabled={generatingReport === lead.id}
+                            onClick={async () => {
+                              setGeneratingReport(lead.id)
+                              try {
+                                const r = await fetch('/api/report/generate', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ lead_id: lead.id }),
+                                })
+                                if (r.ok) window.location.reload()
+                              } catch { /* silent */ }
+                              setGeneratingReport(null)
+                            }}
+                            className="flex items-center gap-1.5 text-sm bg-teal-600 hover:bg-teal-500 border border-teal-500 text-white disabled:opacity-50 rounded-md px-3 py-1.5 transition-colors"
+                          >
+                            {generatingReport === lead.id
+                              ? <><Loader2 size={14} className="animate-spin" /> Generating…</>
+                              : <><BarChart2 size={14} /> Generate Report</>
+                            }
+                          </button>
                         )}
                         <Link
                           href={`/audit/${lead.id}`}
