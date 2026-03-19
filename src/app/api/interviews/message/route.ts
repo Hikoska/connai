@@ -98,26 +98,26 @@ function buildSystemPrompt(
   return `You are a digital maturity consultant conducting a structured interview with ${ctx.name}, ${ctx.role} at ${ctx.org}.
 
 Your goal is to assess their organisation across 8 digital maturity dimensions:
-${ALL_DIMENSIONS.map((d, i) => `${i + 1}. ${d}${covered.includes(d) ? ' ✓' : ''}`).join('\n')}
+${ALL_DIMENSIONS.map((d, i) => `${i + 1}. ${d}${covered.includes(d) ? ' \u2713' : ''}`).join('\n')}
 
-Dimensions not yet explored: ${uncovered.length > 0 ? uncovered.join(', ') : 'all covered — wrap up'}
+Dimensions not yet explored: ${uncovered.length > 0 ? uncovered.join(', ') : 'all covered \u2014 wrap up'}
 
 INSTRUCTIONS:
 - Ask ONE clear, conversational question per turn
 - Prioritise dimensions not yet explored
 - Listen actively and acknowledge their answer briefly before your question
-- ${isNearEnd ? 'You are near the end — cover any remaining dimensions and start wrapping up' : 'Keep the conversation flowing naturally'}
-- ${isFirst ? `Start with a warm welcome: "Hi ${ctx.name}, thanks for taking the time. Let\'s explore how ${ctx.org} is progressing digitally. I\'ll ask you ${8 + 2} questions across 8 areas — there are no right or wrong answers. Ready to start?"` : 'Do NOT re-introduce yourself'}
+- ${isNearEnd ? 'You are near the end \u2014 cover any remaining dimensions and start wrapping up' : 'Keep the conversation flowing naturally'}
+- ${isFirst ? `Start with a warm welcome: "Hi ${ctx.name}, thanks for taking the time. Let\'s explore how ${ctx.org} is progressing digitally. I\'ll ask you ${8 + 2} questions across 8 areas \u2014 there are no right or wrong answers. Ready to start?"` : 'Do NOT re-introduce yourself'}
 - Maximum 2 short sentences before your question
 - Do NOT list or number the dimensions in your response
 - Never ask about pricing, budgets in absolute terms, or personally sensitive topics
 
 SCORING RUBRIC (internal, do not reveal):
-1–30: Ad hoc — no formal approach
-31–50: Developing — some tools, inconsistent
-51–70: Defined — structured processes
-71–85: Advanced — data-driven, integrated
-86–100: Leading — continuous innovation`
+1\u201330: Ad hoc \u2014 no formal approach
+31\u201350: Developing \u2014 some tools, inconsistent
+51\u201370: Defined \u2014 structured processes
+71\u201385: Advanced \u2014 data-driven, integrated
+86\u2013100: Leading \u2014 continuous innovation`
 }
 
 type InterviewContext = {
@@ -187,11 +187,9 @@ export async function POST(req: NextRequest) {
           resend.emails.send({
             from: 'Connai <noreply@connai.linkgrow.io>',
             to: ctx.email,
-            subject: `Your Connai interview is complete — report incoming`,
-            html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0E1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" style="background:#151B23;border:1px solid #1e2a36;border-radius:16px;overflow:hidden;max-width:560px;"><tr><td style="background:#0D5C63;padding:24px 36px;"><span style="color:#fff;font-size:20px;font-weight:700;">Connai</span></td></tr><tr><td style="padding:36px;"><h2 style="color:#fff;font-size:22px;margin:0 0 12px;">Thank you, ${ctx.name}!</h2><p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 20px;">Your interview for <strong style="color:#fff;">${ctx.org}</strong> is now complete. Our AI is analysing your responses across 8 dimensions of digital maturity.</p><p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 28px;">Your report will be ready within minutes.</p><a href="${reportUrl}" style="display:inline-block;background:#0D5C63;color:#fff;font-weight:600;font-size:15px;padding:14px 32px;border-radius:50px;text-decoration:none;">View report →</a></td></tr><tr><td style="padding:20px 36px;border-top:1px solid #1e2a36;"><p style="color:#334155;font-size:12px;margin:0;">Connai · connai.linkgrow.io</p></td></tr></table></td></tr></table></body></html>`,
+            subject: `Your Connai interview is complete \u2014 report incoming`,
+            html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0E1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" style="background:#151B23;border:1px solid #1e2a36;border-radius:16px;overflow:hidden;max-width:560px;"><tr><td style="background:#0D5C63;padding:24px 36px;"><span style="color:#fff;font-size:20px;font-weight:700;">Connai</span></td></tr><tr><td style="padding:36px;"><h2 style="color:#fff;font-size:22px;margin:0 0 12px;">Thank you, ${ctx.name}!</h2><p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 20px;">Your interview for <strong style="color:#fff;">${ctx.org}</strong> is now complete. Our AI is analysing your responses across 8 dimensions of digital maturity.</p><p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 28px;">Your report will be ready within minutes.</p><a href="${reportUrl}" style="display:inline-block;background:#0D5C63;color:#fff;font-weight:600;font-size:15px;padding:14px 32px;border-radius:50px;text-decoration:none;">View report \u2192</a></td></tr><tr><td style="padding:20px 36px;border-top:1px solid #1e2a36;"><p style="color:#334155;font-size:12px;margin:0;">Connai \u00b7 connai.linkgrow.io</p></td></tr></table></td></tr></table></body></html>`,
           }).catch(() => {})
-          // (mirrors interviews/complete PATCH but inline, since streaming frontend
-          //  never calls /complete endpoint separately)
         }
 
         // Update lead status based on completion count
@@ -235,15 +233,15 @@ export async function POST(req: NextRequest) {
               if (lead) {
                 resend.emails.send({
                   from: 'Connai <noreply@connai.linkgrow.io>',
-                  to: lead.email,
-                  subject: `All interviews complete — ${lead.org_name || 'your audit'} report is ready`,
-                  html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0E1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" style="background:#151B23;border:1px solid #1e2a36;border-radius:16px;overflow:hidden;max-width:560px;"><tr><td style="background:#0D5C63;padding:24px 36px;"><span style="color:#fff;font-size:20px;font-weight:700;">Connai</span></td></tr><tr><td style="padding:36px;"><h2 style="color:#fff;font-size:22px;margin:0 0 12px;">All interviews complete!</h2><p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 20px;">All stakeholder interviews for <strong style="color:#fff;">${lead.org_name || 'your audit'}</strong> are now complete. Your AI-generated Digital Maturity Report is ready to view.</p><a href="${APP_URL}/report/${ctx.lead_id}" style="display:inline-block;background:#0D5C63;color:#fff;font-weight:600;font-size:15px;padding:14px 32px;border-radius:50px;text-decoration:none;">View full report →</a></td></tr><tr><td style="padding:20px 36px;border-top:1px solid #1e2a36;"><p style="color:#334155;font-size:12px;margin:0;">Connai · connai.linkgrow.io</p></td></tr></table></td></tr></table></body></html>`,
+                  to: 'lmamet@linkgrow.io',
+                  subject: `[Connai] All interviews complete \u2014 ${lead.org_name || 'audit'} | ${ctx.lead_id}`,
+                  html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0E1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" style="background:#151B23;border:1px solid #1e2a36;border-radius:16px;overflow:hidden;max-width:560px;"><tr><td style="background:#0D5C63;padding:24px 36px;"><span style="color:#fff;font-size:20px;font-weight:700;">Connai Admin</span></td></tr><tr><td style="padding:36px;"><h2 style="color:#fff;font-size:22px;margin:0 0 12px;">${'\ud83d\udfe2'} All interviews complete</h2><p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 8px;">Audit: <strong style="color:#fff;">${lead.org_name || 'Unknown org'}</strong></p><p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 20px;">The AI report has been queued for generation. Review below.</p><a href="${APP_URL}/report/${ctx.lead_id}" style="display:inline-block;background:#0D5C63;color:#fff;font-weight:600;font-size:15px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-right:12px;">View report \u2192</a><a href="${APP_URL}/dashboard" style="display:inline-block;background:#1e293b;color:#94a3b8;font-size:14px;padding:14px 24px;border-radius:50px;text-decoration:none;">Dashboard</a><p style="color:#475569;font-size:12px;margin:24px 0 0;">Lead ID: ${ctx.lead_id}</p></td></tr><tr><td style="padding:20px 36px;border-top:1px solid #1e2a36;"><p style="color:#334155;font-size:12px;margin:0;">Connai Admin Notification \u00b7 connai.linkgrow.io</p></td></tr></table></td></tr></table></body></html>`,
                 }).catch(() => {})
               }
             }
           }
         }
-      } catch { /* non-fatal — interview is still marked complete */ }
+      } catch { /* non-fatal \u2014 interview is still marked complete */ }
 
       return NextResponse.json({ reply: null, isDone: true })
     }
@@ -251,7 +249,7 @@ export async function POST(req: NextRequest) {
     const systemPrompt = buildSystemPrompt(ctx, messages ?? [], isFirstMessage)
     const msgs = messages as Array<{ role: 'user' | 'assistant'; content: string }>
 
-    // ── [AI-02] Streaming path ──
+    // \u2500\u2500 [AI-02] Streaming path \u2500\u2500
     if (wantStream) {
       try {
         const result = streamText({
@@ -267,7 +265,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Non-streaming path (fallback + legacy clients) ──
+    // \u2500\u2500 Non-streaming path (fallback + legacy clients) \u2500\u2500
     const models = [groq('qwen-qwq-32b'), groq('llama-3.3-70b-versatile'), cerebras('llama3.1-8b')]
     let reply = 'Thank you for sharing that. Could you tell me more about your current technology challenges?'
     for (const model of models) {
