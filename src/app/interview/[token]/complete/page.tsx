@@ -11,6 +11,7 @@ export default function InterviewCompletePage() {
   const [leadId, setLeadId] = useState<string | null>(null)
   const [orgName, setOrgName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [reportWarmed, setReportWarmed] = useState(false)
 
   useEffect(() => {
     const fetchLead = async () => {
@@ -22,9 +23,22 @@ export default function InterviewCompletePage() {
         .eq('token', token)
         .single()
       if (interview) {
-        setLeadId(interview.lead_id)
+        const lid = interview.lead_id
+        setLeadId(lid)
         const leads = interview.leads as Record<string, unknown>
         setOrgName(Array.isArray(leads) ? (leads[0] as Record<string,string>)?.org_name : (leads as Record<string,string>)?.org_name)
+
+        // Pre-warm: kick off report generation in the background so it's
+        // ready when the user clicks "View my report"
+        if (lid) {
+          fetch('/api/report/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lead_id: lid }),
+          })
+            .then(r => { if (r.ok) setReportWarmed(true) })
+            .catch(() => { /* silent — user can still navigate */ })
+        }
       }
       setLoading(false)
     }
@@ -56,7 +70,9 @@ export default function InterviewCompletePage() {
           Your responses have been recorded. Our AI is now analysing your digital maturity profile.
         </p>
         <p className="text-white/40 text-sm mb-8">
-          Your report will be ready in a few minutes.
+          {reportWarmed
+            ? 'Your report is being generated — it should be ready in under a minute.'
+            : 'Your report will be ready in a few minutes.'}
         </p>
 
         {/* Primary CTA */}
