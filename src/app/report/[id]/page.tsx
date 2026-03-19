@@ -48,6 +48,53 @@ const INDUSTRY_BENCHMARKS: Record<string, number> = {
   'security & compliance': 57, innovation: 48,
 }
 
+// ── Skeleton loading component [UX-NEW-A] ──
+function ReportSkeleton() {
+  return (
+    <div id="report-root" className="min-h-screen bg-slate-950 text-white">
+      <div className="border-b border-slate-800 px-6 py-4 bg-slate-950/95">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="h-5 w-20 bg-slate-800 rounded animate-pulse" />
+          <div className="flex gap-2">
+            <div className="h-7 w-16 bg-slate-800 rounded-lg animate-pulse" />
+            <div className="h-7 w-24 bg-slate-800 rounded-lg animate-pulse" />
+          </div>
+        </div>
+      </div>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
+          <div className="h-4 w-24 bg-slate-800 rounded animate-pulse mb-2" />
+          <div className="h-8 w-64 bg-slate-800 rounded animate-pulse mb-6" />
+          <div className="h-16 w-24 bg-slate-800 rounded animate-pulse mb-2" />
+          <div className="h-3 w-48 bg-slate-800 rounded animate-pulse" />
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
+          <div className="h-5 w-36 bg-slate-800 rounded animate-pulse mb-4" />
+          <div className="space-y-2">
+            <div className="h-3 w-full bg-slate-800 rounded animate-pulse" />
+            <div className="h-3 w-5/6 bg-slate-800 rounded animate-pulse" />
+            <div className="h-3 w-4/6 bg-slate-800 rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
+          <div className="h-5 w-40 bg-slate-800 rounded animate-pulse mb-6" />
+          <div className="space-y-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i}>
+                <div className="flex justify-between mb-1.5">
+                  <div className="h-3 w-32 bg-slate-800 rounded animate-pulse" />
+                  <div className="h-3 w-12 bg-slate-800 rounded animate-pulse" />
+                </div>
+                <div className="h-2 bg-slate-800 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
 function ReportContent() {
   const params      = useParams()
   const searchParams = useSearchParams()
@@ -130,7 +177,6 @@ function ReportContent() {
       .catch(() => {})
   }, [report, id])
 
-  // Check paid status
   useEffect(() => {
     if (!id) return
     const checkPaid = () => fetch(`/api/report/${id}/paid-status`)
@@ -155,28 +201,16 @@ function ReportContent() {
       .finally(() => setPlanLoading(false));
   }, [report, paid, paidChecked, id]);
 
-  // Null-safe alias — report.dimensions may be undefined if API returns partial data
   const dims = report?.dimensions ?? [];
-
   const overallScore = dims.length > 0
     ? Math.round(dims.reduce((s, d) => s + d.score, 0) / dims.length)
     : 0;
   const tier = getMaturityTier(overallScore);
-
   const strong     = dims.filter(d => d.score >= 70);
   const developing = dims.filter(d => d.score >= 40 && d.score < 70);
   const critical   = dims.filter(d => d.score < 40);
 
-  if (loading) return (
-    <div id="report-root" className="min-h-screen bg-slate-950 text-white">
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-400">Loading your report…</p>
-        </div>
-      </div>
-    </div>
-  );
+  if (loading) return <ReportSkeleton />;
 
   if (error || !report) return (
     <div id="report-root" className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
@@ -198,34 +232,15 @@ function ReportContent() {
           <span className="text-white font-bold text-lg tracking-tight">Connai</span>
           <div className="flex items-center gap-2">
             <span className="text-slate-500 text-sm hidden sm:block">Digital Maturity Report</span>
-            <button
-              type="button"
-              onClick={handleShare}
-              title="Share report"
-              className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors"
-            >
-              {shareCopied
-                ? <><Check size={13} className="text-teal-400" /> <span className="text-teal-400">Copied!</span></>
-                : <><Share2 size={13} /> <span>Share</span></>
-              }
+            <button type="button" onClick={handleShare} title="Share report" className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
+              {shareCopied ? <><Check size={13} className="text-teal-400" /><span className="text-teal-400">Copied!</span></> : <><Share2 size={13} /><span>Share</span></>}
             </button>
-            <button
-              type="button"
-              onClick={handleRegenerate}
-              title="Regenerate report"
-              disabled={regenerating}
-              className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white disabled:opacity-40 px-3 py-1.5 rounded-lg transition-colors"
-            >
+            <button type="button" onClick={handleRegenerate} title="Regenerate report" disabled={regenerating} className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white disabled:opacity-40 px-3 py-1.5 rounded-lg transition-colors">
               <RefreshCw size={13} className={regenerating ? 'animate-spin' : ''} />
               <span className="hidden sm:inline">{regenerating ? 'Running…' : 'Regenerate'}</span>
             </button>
             {isPaid && (
-              <button
-                type="button"
-                onClick={handleDownloadPdf}
-                title="Download PDF"
-                className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors"
-              >
+              <button type="button" onClick={handleDownloadPdf} title="Download PDF" className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
                 <Download size={13} />
                 <span className="hidden sm:inline">PDF</span>
               </button>
@@ -235,28 +250,21 @@ function ReportContent() {
       </div>
 
       <main id="main-report" className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-10">
-
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <p className="text-slate-400 text-sm mb-1">{reportDate}</p>
               <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">Your Digital Maturity Report</h1>
             </div>
-            <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${tier.bg} ${tier.color} ${tier.border}`}>
-              {tier.label}
-            </span>
+            <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${tier.bg} ${tier.color} ${tier.border}`}>{tier.label}</span>
           </div>
           <div className="mt-6 flex items-end gap-3">
             <span className={`text-6xl sm:text-7xl font-extrabold leading-none tabular-nums ${tier.color}`}>{overallScore}</span>
             <span className="text-slate-500 text-lg mb-1">/ 100</span>
           </div>
           <p className="text-slate-400 text-sm mt-2">Overall digital maturity score across 8 dimensions</p>
-          {report.completedCount === 1 && (
-            <p className="mt-3 text-xs text-slate-500 bg-slate-800/60 inline-block px-3 py-1 rounded-full">Based on 1 completed interview</p>
-          )}
-          {report.completedCount >= 2 && (
-            <p className="mt-3 text-xs text-slate-500 bg-slate-800/60 inline-block px-3 py-1 rounded-full">Based on {report.completedCount} completed interviews</p>
-          )}
+          {report.completedCount === 1 && <p className="mt-3 text-xs text-slate-500 bg-slate-800/60 inline-block px-3 py-1 rounded-full">Based on 1 completed interview</p>}
+          {(report.completedCount ?? 0) >= 2 && <p className="mt-3 text-xs text-slate-500 bg-slate-800/60 inline-block px-3 py-1 rounded-full">Based on {report.completedCount} completed interviews</p>}
         </div>
 
         {report && (
@@ -265,9 +273,7 @@ function ReportContent() {
             {execSummary ? (
               <>
                 <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{execSummary}</p>
-                {execTier && (
-                  <p className="mt-3 text-xs text-slate-500">Maturity Tier: <span className="text-teal-400 font-medium">{execTier}</span></p>
-                )}
+                {execTier && <p className="mt-3 text-xs text-slate-500">Maturity Tier: <span className="text-teal-400 font-medium">{execTier}</span></p>}
               </>
             ) : (
               <div className="flex items-center gap-2 text-slate-400 text-sm">
@@ -294,11 +300,7 @@ function ReportContent() {
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-sm text-slate-300 capitalize">{d.name}</span>
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          delta >= 10 ? 'bg-teal-900/40 text-teal-300' :
-                          delta >= 0  ? 'bg-blue-900/40 text-blue-300' :
-                          'bg-red-900/40 text-red-300'
-                        }`}>{delta >= 0 ? '+' : ''}{delta} vs median</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${delta >= 10 ? 'bg-teal-900/40 text-teal-300' : delta >= 0 ? 'bg-blue-900/40 text-blue-300' : 'bg-red-900/40 text-red-300'}`}>{delta >= 0 ? '+' : ''}{delta} vs median</span>
                         <span className="text-sm font-semibold text-white tabular-nums w-8 text-right">{d.score}</span>
                       </div>
                     </div>
@@ -318,15 +320,13 @@ function ReportContent() {
             <h2 className="text-lg font-semibold text-white mb-5">Maturity Breakdown</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { label: 'Strengths',     items: strong,     color: 'text-teal-400',  bg: 'bg-teal-900/20',  border: 'border-teal-800/40'  },
-                { label: 'Developing',    items: developing, color: 'text-amber-400', bg: 'bg-amber-900/20', border: 'border-amber-800/40' },
-                { label: 'Critical Gaps', items: critical,   color: 'text-red-400',   bg: 'bg-red-900/20',   border: 'border-red-800/40'   },
+                { label: 'Strengths', items: strong, color: 'text-teal-400', bg: 'bg-teal-900/20', border: 'border-teal-800/40' },
+                { label: 'Developing', items: developing, color: 'text-amber-400', bg: 'bg-amber-900/20', border: 'border-amber-800/40' },
+                { label: 'Critical Gaps', items: critical, color: 'text-red-400', bg: 'bg-red-900/20', border: 'border-red-800/40' },
               ].map(({ label, items, color, bg, border }) => (
                 <div key={label} className={`${bg} border ${border} rounded-xl p-4`}>
                   <p className={`text-xs font-semibold ${color} mb-2 uppercase tracking-wide`}>{label}</p>
-                  {items.length === 0 ? (
-                    <p className="text-slate-500 text-xs">None</p>
-                  ) : (
+                  {items.length === 0 ? <p className="text-slate-500 text-xs">None</p> : (
                     <ul className="space-y-1.5">
                       {items.map(d => (
                         <li key={d.name} className="text-xs text-slate-300 flex items-start gap-1.5">
@@ -348,9 +348,7 @@ function ReportContent() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {dims.map(d => (
                 <div key={d.name} className="bg-slate-800/50 rounded-xl p-3 text-center">
-                  <div className={`text-2xl font-bold tabular-nums ${
-                    d.score >= 70 ? 'text-teal-400' : d.score >= 40 ? 'text-amber-400' : 'text-red-400'
-                  }`}>{d.score}</div>
+                  <div className={`text-2xl font-bold tabular-nums ${d.score >= 70 ? 'text-teal-400' : d.score >= 40 ? 'text-amber-400' : 'text-red-400'}`}>{d.score}</div>
                   <div className="text-xs text-slate-400 mt-1 capitalize leading-tight">{d.name}</div>
                 </div>
               ))}
@@ -371,18 +369,13 @@ function ReportContent() {
                 </span>
               </div>
               <ul className="space-y-2 mb-6">
-                {['Full 3-tier action plan (Quick Wins / 6-Month / Strategic)', 'Priority improvement roadmap', 'Branded PDF export', 'Shareable report link', `All ${dims.length || 8} dimension scores + industry benchmarks`]
-                  .map(item => (
-                    <li key={item} className="flex items-start gap-2.5 text-sm text-white/80">
-                      <span className="text-teal-400 mt-0.5 flex-shrink-0">✔</span>{item}
-                    </li>
-                  ))}
+                {['Full 3-tier action plan (Quick Wins / 6-Month / Strategic)', 'Priority improvement roadmap', 'Branded PDF export', 'Shareable report link', `All ${dims.length || 8} dimension scores + industry benchmarks`].map(item => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-white/80">
+                    <span className="text-teal-400 mt-0.5 flex-shrink-0">✔</span>{item}
+                  </li>
+                ))}
               </ul>
-              <button
-                type="button"
-                onClick={() => window.location.href = `/checkout?reportId=${id}`}
-                className="w-full sm:w-auto bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-8 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
-              >
+              <button type="button" onClick={() => window.location.href = `/checkout?reportId=${id}`} className="w-full sm:w-auto bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-8 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
                 Unlock for $49 · Secure checkout
               </button>
               <p className="text-xs text-slate-500 mt-3">One-time payment · Powered by Stripe · Instant access</p>
@@ -427,7 +420,6 @@ function ReportContent() {
         </div>
 
         <FeedbackBar reportId={id ?? ''} />
-
       </main>
     </div>
   )
