@@ -9,6 +9,7 @@ export const maxDuration = 60
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const APP_URL      = process.env.NEXT_PUBLIC_URL ?? 'https://connai.linkgrow.io'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 const groq = createOpenAI({ baseURL: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY })
@@ -197,6 +198,42 @@ export async function POST(req: NextRequest) {
           html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0E1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" style="background:#151B23;border:1px solid #1e2a36;border-radius:16px;overflow:hidden;max-width:560px;"><tr><td style="background:#0D5C63;padding:24px 36px;"><span style="color:#fff;font-size:20px;font-weight:700;">Connai</span></td></tr><tr><td style="padding:36px;"><h2 style="color:#fff;font-size:22px;margin:0 0 12px;">Thank you, ${ctx.name}!</h2><p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 20px;">Your interview for <strong style="color:#fff;">${ctx.org}</strong> is now complete. Our AI is analysing your responses across 8 dimensions of digital maturity.</p><p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 28px;">Your report will be ready within minutes.</p><a href="${reportUrl}" style="display:inline-block;background:#0D5C63;color:#fff;font-weight:600;font-size:15px;padding:14px 32px;border-radius:50px;text-decoration:none;">View report \u2192</a></td></tr><tr><td style="padding:20px 36px;border-top:1px solid #1e2a36;"><p style="color:#334155;font-size:12px;margin:0;">Connai \u00b7 connai.linkgrow.io</p></td></tr></table></td></tr></table></body></html>`,
         }).catch(() => {})
       }
+      // Update lead status + fire background report generation
+      // (mirrors interviews/complete PATCH but inline, since streaming frontend
+      // no longer calls that endpoint after the streaming refactor)
+      try {
+        const allRes = await fetch(
+          `${SB_URL}/rest/v1/interviews?lead_id=eq.${ctx.lead_id}&select=id,status`,
+          { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } }
+        )
+        if (allRes.ok) {
+          const allInterviews: Array<{ id: string; status: string }> = await allRes.json()
+          const total     = allInterviews.length
+          const completed = allInterviews.filter(iv => iv.status === 'complete').length
+          let newLeadStatus: string | null = null
+          if (completed === total && total > 0) {
+            newLeadStatus = 'interviews_complete'
+          } else if (completed > 0) {
+            newLeadStatus = 'interviews_in_progress'
+          }
+          if (newLeadStatus) {
+            await fetch(`${SB_URL}/rest/v1/leads?id=eq.${ctx.lead_id}`, {
+              method: 'PATCH',
+              headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: newLeadStatus }),
+            })
+          }
+          // Fire-and-forget: pre-generate report when all done
+          if (newLeadStatus === 'interviews_complete') {
+            fetch(`${APP_URL}/api/report/generate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ lead_id: ctx.lead_id }),
+            }).catch(() => {})
+          }
+        }
+      } catch { /* non-fatal — interview is still marked complete */ }
+
       return NextResponse.json({ reply: null, isDone: true })
     }
 
