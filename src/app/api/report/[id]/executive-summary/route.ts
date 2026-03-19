@@ -33,6 +33,21 @@ async function withFallback(prompt: string, maxTokens = 1400): Promise<string> {
   throw new Error('All AI providers failed')
 }
 
+/** Cache-Control helpers.
+ *  cached=true  → content already stored in DB → short private cache (5 min)
+ *  cached=false → freshly generated → private, no-store (personalised AI output)
+ */
+function jsonWithCache(body: unknown, cached: boolean): NextResponse {
+  const res = NextResponse.json(body)
+  res.headers.set(
+    'Cache-Control',
+    cached
+      ? 'private, max-age=300, stale-while-revalidate=600'
+      : 'private, no-cache, no-store'
+  )
+  return res
+}
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
   if (!rateLimit(ip, 'exec-summary', 10)) {
@@ -60,11 +75,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const rep = Array.isArray(repRows) ? repRows[0] : null
 
   if (!rep?.dimension_scores) {
-    return NextResponse.json({ summary: 'This organisation has completed a Connai digital maturity assessment. Scores are being calculated \u2014 please refresh in a moment.' })
+    return jsonWithCache(
+      { summary: 'This organisation has completed a Connai digital maturity assessment. Scores are being calculated \u2014 please refresh in a moment.' },
+      false
+    )
   }
 
+  // Already stored in DB — return immediately with short cache
   if (rep.executive_summary && rep.executive_summary.length > 100) {
-    return NextResponse.json({ summary: rep.executive_summary, tier: getMaturityTier(rep.overall_score ?? 50) })
+    return jsonWithCache(
+      { summary: rep.executive_summary, tier: getMaturityTier(rep.overall_score ?? 50) },
+      true
+    )
   }
 
   const scores = rep.dimension_scores as Record<string, number>
@@ -78,30 +100,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const topStrengths = [...sortedDims].reverse().slice(0, 2).map(([n, s]) => `${n} (${s}/100)`).join(', ')
   const dimensionBreakdown = sortedDims.map(([n, s]) => `  ${n}: ${s}/100`).join('\n')
 
-  const prompt = `You are a senior digital transformation partner writing an executive summary for a board-level presentation.
-
-Client: ${orgName}
-Industry: ${industry}
-Overall Digital Maturity Score: ${overall}/100 \u2014 ${tier}
-
-Dimension breakdown (sorted lowest to highest):
-${dimensionBreakdown}
-
-Top 3 capability gaps: ${topGaps}
-Top 2 strengths: ${topStrengths}
-
-Write a crisp, insightful executive summary (220-260 words) for a C-suite / board audience.
-
-Paragraph 1 (Current State, ~120 words): Open with the overall score and tier in context. Name ${orgName}'s 2 genuine strengths backed by their scores. Then identify the 2-3 most critical structural gaps limiting digital performance. Be precise about why these gaps matter for their industry.
-
-Paragraph 2 (Strategic Imperatives, ~120 words): Recommend 3 high-leverage interventions in priority order, each tied to a specific gap. State the expected business outcome. Close with one sentence on the competitive window \u2014 what happens if they delay 12 months.
-
-Tone: Write like McKinsey. No bullets. No platitudes like "digital transformation journey". Direct, specific, slightly provocative where warranted.`
+  const prompt = `You are a senior digital transformation partner writing an executive summary for a board-level presentation.\n\nClient: ${orgName}\nIndustry: ${industry}\nOverall Digital Maturity Score: ${overall}/100 \u2014 ${tier}\n\nDimension breakdown (sorted lowest to highest):\n${dimensionBreakdown}\n\nTop 3 capability gaps: ${topGaps}\nTop 2 strengths: ${topStrengths}\n\nWrite a crisp, insightful executive summary (220-260 words) for a C-suite / board audience.\n\nParagraph 1 (Current State, ~120 words): Open with the overall score and tier in context. Name ${orgName}'s 2 genuine strengths backed by their scores. Then identify the 2-3 most critical structural gaps limiting digital performance. Be precise about why these gaps matter for their industry.\n\nParagraph 2 (Strategic Imperatives, ~120 words): Recommend 3 high-leverage interventions in priority order, each tied to a specific gap. State the expected business outcome. Close with one sentence on the competitive window \u2014 what happens if they delay 12 months.\n\nTone: Write like McKinsey. No bullets. No platitudes like "digital transformation journey". Direct, specific, slightly provocative where warranted.`
 
   try {
     const summary = await withFallback(prompt, 1400)
-    return NextResponse.json({ summary, tier })
+    return jsonWithCache({ summary, tier }, false)
   } catch {
-    return NextResponse.json({ summary: `${orgName} has achieved an overall digital maturity score of ${overall}/100 placing them in the ${tier} tier. Key strengths: ${topStrengths}. Priority gaps: ${topGaps}.`, tier })
+    return jsonWithCache(
+      { summary: `${orgName} has achieved an overall digital maturity score of ${overall}/100 placing them in the ${tier} tier. Key strengths: ${topStrengths}. Priority gaps: ${topGaps}.`, tier },
+      false
+    )
   }
 }
