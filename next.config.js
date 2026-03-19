@@ -8,7 +8,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Security headers — added 2026-03-19
   async headers() {
     return [
       {
@@ -46,9 +45,7 @@ const nextConfig = {
       'stripe': stub,
       '@stripe/stripe-js': stub,
       '@google/generative-ai': stub,
-      // Browser-only PDF libs — too large for serverless bundle
-      'jspdf': stub,
-      'html2canvas': stub,
+      // Note: jsPDF is used server-side in PDF route — NOT stubbed
     }
     return config
   },
