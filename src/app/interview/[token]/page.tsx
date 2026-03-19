@@ -135,15 +135,15 @@ export default function InterviewPage() {
           setStreamingReply('')
         }
       } else {
-        // Fallback: non-streaming JSON response
+        // Fallback: non-streaming JSON response (also handles isDone: true path)
         setThinking(false)
         const data = await res.json()
-        if (data.reply) {
+        if (data.isDone) {
+          // Interview complete — server signals completion with { reply: null, isDone: true }
+          setDone(true)
+        } else if (data.reply) {
           const final: Message[] = [...updated, { role: 'assistant', content: data.reply }]
           setMessages(final)
-          if (data.isDone) {
-            setDone(true)
-          }
         }
       }
     } catch {
@@ -172,8 +172,23 @@ export default function InterviewPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0E1117]">
-        <p className="text-red-400 text-sm">{error}</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0E1117] px-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-sm w-full text-center">
+          <div className="w-12 h-12 bg-red-900/30 border border-red-800/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-white font-semibold mb-2">Unable to load interview</p>
+          <p className="text-slate-400 text-sm mb-5">{error}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm py-2.5 px-4 rounded-xl transition-colors"
+          >
+            Try again
+          </button>
+        </div>
       </div>
     )
   }
