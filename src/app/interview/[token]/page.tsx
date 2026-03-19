@@ -77,7 +77,7 @@ export default function InterviewPage() {
           body: JSON.stringify({ token, messages: [] }),
         })
         const data = await res.json()
-        if (data.message) setMessages([{ role: 'assistant', content: data.message }])
+        if (data.reply) setMessages([{ role: 'assistant', content: data.reply }])
         setLoading(false)
       } catch {
         setError('Failed to load interview. Please try again.')
@@ -105,8 +105,8 @@ export default function InterviewPage() {
         body: JSON.stringify({ token, messages: updated }),
       })
       const data = await res.json()
-      if (data.message) {
-        const final: Message[] = [...updated, { role: 'assistant', content: data.message }]
+      if (data.reply) {
+        const final: Message[] = [...updated, { role: 'assistant', content: data.reply }]
         setMessages(final)
         if (data.done) {
           setDone(true)
