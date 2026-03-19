@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
@@ -57,7 +59,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const supabaseRef = useRef<SupabaseClient | null>(null)
-  const [generatingReport, setGeneratingReport] = React.useState<string | null>(null)
+  const [generatingReport, setGeneratingReport] = useState<string | null>(null)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
 
