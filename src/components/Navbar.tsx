@@ -1,71 +1,66 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useState, useEffect, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { ConnaiMark } from './ConnaiLogo'
 
-const ConnaiMark = ({ size = 28, className = '' }: { size?: number; className?: string }) => (
-  <svg width={Math.round(size * 1.14)} height={size} viewBox="0 0 32 28" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
-    <rect x="1" y="16" width="8" height="12" rx="4" fill="#0ab8ca" />
-    <rect x="12" y="8" width="8" height="20" rx="4" fill="#0791a0" />
-    <rect x="23" y="1" width="8" height="27" rx="4" fill="#0D5C63" />
-  </svg>
-)
+const NAV_LINKS = [
+  { href: '/#how-it-works', label: 'How it works' },
+  { href: '/#pricing', label: 'Pricing' },
+]
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isAccountOpen, setIsAccountOpen] = useState(false)
-  const accountRef = useRef<HTMLDivElement>(null)
+  const [session, setSession] = useState<{ email: string } | null>(null)
+  const [loading, setLoading] = useState(true)
   const pathname = usePathname()
   const router = useRouter()
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10)
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { createClient } = await import('@supabase/supabase-js')
-        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-        const { data: { session } } = await sb.auth.getSession()
-        setIsLoggedIn(!!session)
-      } catch {}
-    }
-    checkAuth()
+    setIsMenuOpen(false)
+    setIsAccountOpen(false)
   }, [pathname])
 
-  // Close dropdown on click outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
-        setIsAccountOpen(false)
-      }
+    const initSession = async () => {
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const sb = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+        const { data: { session: s } } = await sb.auth.getSession()
+        setSession(s ? { email: s.user.email ?? '' } : null)
+
+        sb.auth.onAuthStateChange((_event, newSession) => {
+          setSession(newSession ? { email: newSession.user.email ?? '' } : null)
+        })
+      } catch {}
+      setLoading(false)
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    initSession()
   }, [])
 
   const handleSignOut = async () => {
     try {
       const { createClient } = await import('@supabase/supabase-js')
-      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const sb = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
       await sb.auth.signOut()
-      setIsLoggedIn(false)
-      setIsAccountOpen(false)
+      setSession(null)
       router.push('/')
     } catch {}
   }
 
+  const isHomePage = pathname === '/'
+
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-      isScrolled ? 'bg-[#0D2738]/95 backdrop-blur-md shadow-lg shadow-black/20' : 'bg-transparent'
-    }`}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 bg-[#0D2738]/95 backdrop-blur border-b border-white/5">
+      <nav className="max-w-6xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link
@@ -78,52 +73,79 @@ export function Navbar() {
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/#how-it-works" className="text-white/70 hover:text-white text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
-              How it works
-            </Link>
+            {isHomePage && NAV_LINKS.map(link => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-sm text-white/60 hover:text-white transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
 
-            {isLoggedIn ? (
-              <div className="relative" ref={accountRef}>
+          {/* Desktop right actions */}
+          <div className="hidden md:flex items-center gap-3">
+            {loading ? (
+              <div className="w-20 h-8 bg-white/5 rounded-lg animate-pulse" />
+            ) : session ? (
+              <div className="relative">
                 <button
                   type="button"
                   onClick={() => setIsAccountOpen(!isAccountOpen)}
                   className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                   aria-expanded={isAccountOpen}
                   aria-haspopup="true"
+                  aria-label="Account menu"
                 >
-                  <span className="w-7 h-7 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold">L</span>
+                  <span className="w-7 h-7 bg-teal-700/50 rounded-full flex items-center justify-center text-xs font-bold text-teal-300">
+                    {session.email[0].toUpperCase()}
+                  </span>
+                  <span className="max-w-[120px] truncate">{session.email}</span>
+                  <svg className={`w-3 h-3 transition-transform ${isAccountOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
                 {isAccountOpen && (
-                  <div className="absolute right-0 mt-2 w-44 bg-[#0D2738] border border-white/10 rounded-lg shadow-xl py-1 z-50">
-                    <Link href="/dashboard" className="block px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/5" onClick={() => setIsAccountOpen(false)}>Dashboard</Link>
-                    <button type="button" onClick={handleSignOut} className="w-full text-left px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/5">Sign out</button>
+                  <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-white/10 rounded-xl shadow-xl py-1 z-50">
+                    <Link href="/dashboard" className="block px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/5 transition-colors">Dashboard</Link>
+                    <Link href="/audit/new" className="block px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/5 transition-colors">New audit</Link>
+                    <div className="border-t border-white/5 my-1" />
+                    <button type="button" onClick={handleSignOut} className="w-full text-left px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/5 transition-colors">
+                      Sign out
+                    </button>
                   </div>
                 )}
               </div>
             ) : (
-              <Link href="/auth/login" className="text-sm text-white/70 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">
-                Sign in
-              </Link>
-            )}
+              <>
+                <Link
+                  href="/auth/login"
+                  className="text-sm text-white/70 hover:text-white transition-colors"
+                >
+                  Sign in
+                </Link>
 
-            {/* FIXED: was href='#' — now navigates to /audit/new */}
-            <Link
-              href="/audit/new"
-              className="bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
-            >
-              Start free audit
-            </Link>
+                {/* FIXED: was href='#' -- now navigates to /audit/new */}
+                <Link
+                  href="/audit/new"
+                  className="text-sm bg-teal-600 hover:bg-teal-500 text-white font-semibold px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+                >
+                  Start free
+                </Link>
+              </>
+            )}
           </div>
 
-          {/* Mobile menu button */}
+          {/* Mobile hamburger */}
           <button
             type="button"
             className="md:hidden text-white/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded p-1"
-            aria-label="Toggle menu"
-            aria-expanded={isMenuOpen}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isMenuOpen}
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isMenuOpen
                 ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
@@ -133,27 +155,25 @@ export function Navbar() {
 
         {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-white/10 py-4 space-y-3">
-            <Link href="/#how-it-works" className="block text-white/70 hover:text-white text-sm transition-colors py-2" onClick={() => setIsMenuOpen(false)}>How it works</Link>
-            {isLoggedIn ? (
+          <div className="md:hidden border-t border-white/5 py-4 space-y-2">
+            {isHomePage && NAV_LINKS.map(link => (
+              <a key={link.href} href={link.href} className="block text-sm text-white/70 hover:text-white py-2 transition-colors">{link.label}</a>
+            ))}
+            {session ? (
               <>
-                <Link href="/dashboard" className="block text-white/70 hover:text-white text-sm py-2" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
-                <button type="button" onClick={handleSignOut} className="block w-full text-left text-white/70 hover:text-white text-sm py-2">Sign out</button>
+                <Link href="/dashboard" className="block text-sm text-white/70 hover:text-white py-2 transition-colors">Dashboard</Link>
+                <Link href="/audit/new" className="block text-sm text-white/70 hover:text-white py-2 transition-colors">New audit</Link>
+                <button type="button" onClick={handleSignOut} className="block w-full text-left text-white/70 hover:text-white text-sm py-2 transition-colors">Sign out</button>
               </>
             ) : (
-              <Link href="/auth/login" className="block text-white/70 hover:text-white text-sm py-2" onClick={() => setIsMenuOpen(false)}>Sign in</Link>
+              <>
+                <Link href="/auth/login" className="block text-sm text-white/70 hover:text-white py-2 transition-colors">Sign in</Link>
+                <Link href="/audit/new" className="block text-sm bg-teal-600 hover:bg-teal-500 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-center">Start free</Link>
+              </>
             )}
-            {/* FIXED: was href='#' on mobile too */}
-            <Link
-              href="/audit/new"
-              className="block bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors text-center"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Start free audit
-            </Link>
           </div>
         )}
-      </div>
-    </nav>
+      </nav>
+    </header>
   )
 }

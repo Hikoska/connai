@@ -23,19 +23,16 @@ export function FloatingAIWidget() {
     api: '/api/chat',
   })
 
-  // Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
 
-  // Listen for external open trigger (e.g. from FAQ "Ask Connai" button)
   useEffect(() => {
     const handler = () => setIsOpen(true)
     window.addEventListener('connai:open-chat', handler)
     return () => window.removeEventListener('connai:open-chat', handler)
   }, [])
 
-  // Detect CONNAI tags in completed assistant messages
   useEffect(() => {
     for (const msg of messages) {
       if (msg.role !== 'assistant' || !msg.content || processedIds.current.has(msg.id)) continue
@@ -53,9 +50,7 @@ export function FloatingAIWidget() {
             .then(r => r.json())
             .then(res => { if (res.token) { setLeadId(res.token); router.push('/dashboard') } })
             .catch(e => console.error('[CONNAI_CAPTURE] fetch failed', e))
-        } catch (e) {
-
-        }
+        } catch (e) {}
         continue
       }
 
@@ -72,9 +67,7 @@ export function FloatingAIWidget() {
             .then(r => r.json())
             .then(res => { if (res.audit_url) setAuditUrl(res.audit_url) })
             .catch(e => console.error('[CONNAI_STAKEHOLDERS] fetch failed', e))
-        } catch (e) {
-
-        }
+        } catch (e) {}
       }
     }
   }, [messages, leadId])
@@ -91,7 +84,7 @@ export function FloatingAIWidget() {
               aria-label="Close chat"
               className="text-gray-400 hover:text-gray-600 text-lg leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
             >
-              ×
+              &times;
             </button>
           </div>
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
@@ -110,9 +103,9 @@ export function FloatingAIWidget() {
             {isLoading && (
               <div className="bg-gray-100 text-gray-800 rounded-xl rounded-bl-sm px-3 py-2 text-sm max-w-[90%]">
                 <div className="flex gap-1">
-                  <span className="animate-bounce [animation-delay:0ms]">·</span>
-                  <span className="animate-bounce [animation-delay:150ms]">·</span>
-                  <span className="animate-bounce [animation-delay:300ms]">·</span>
+                  <span className="animate-bounce [animation-delay:0ms]">&middot;</span>
+                  <span className="animate-bounce [animation-delay:150ms]">&middot;</span>
+                  <span className="animate-bounce [animation-delay:300ms]">&middot;</span>
                 </div>
               </div>
             )}
@@ -120,29 +113,23 @@ export function FloatingAIWidget() {
           </div>
           {auditUrl ? (
             <div className="px-4 py-3 border-t border-gray-100 text-center">
-              <a
-                href={auditUrl}
-                className="text-sm text-[#0D5C63] font-medium hover:underline"
-              >
-                View your audit report →
+              <a href={auditUrl} className="text-sm text-[#0D5C63] font-medium hover:underline">
+                View your audit report &rarr;
               </a>
             </div>
           ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="flex items-center gap-2 px-3 py-2 border-t border-gray-100"
-            >
+            <form onSubmit={handleSubmit} className="flex items-center gap-2 px-3 py-2 border-t border-gray-100">
               <input
                 value={input}
                 onChange={handleInputChange}
-                placeholder="Type a message…"
+                placeholder="Type a message&hellip;"
                 className="flex-1 text-sm px-3 py-1.5 rounded-full border border-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-[#0D5C63] transition-colors"
               />
               <button
                 type="submit"
                 disabled={isLoading || !input.trim()}
+                aria-label="Send"
                 className="w-7 h-7 bg-[#0D5C63] text-white rounded-full flex items-center justify-center disabled:opacity-40 hover:bg-[#0a4a50] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
-              aria-label="Send"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
                   <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
