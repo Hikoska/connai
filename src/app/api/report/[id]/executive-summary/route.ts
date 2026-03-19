@@ -9,14 +9,8 @@ const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_SVC = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-const groq = createOpenAI({
-  baseURL: 'https://api.groq.com/openai/v1',
-  apiKey: process.env.GROQ_API_KEY,
-})
-const cerebras = createOpenAI({
-  baseURL: 'https://api.cerebras.ai/v1',
-  apiKey: process.env.CEREBRAS_API_KEY ?? '',
-})
+const groq = createOpenAI({ baseURL: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY })
+const cerebras = createOpenAI({ baseURL: 'https://api.cerebras.ai/v1', apiKey: process.env.CEREBRAS_API_KEY ?? '' })
 
 function getMaturityTier(score: number): string {
   if (score >= 91) return 'Digital Leader'
@@ -27,154 +21,81 @@ function getMaturityTier(score: number): string {
   return 'Digitally Dormant'
 }
 
-type AIModel = ReturnType<typeof groq>
-
-async function callAI(model: AIModel, prompt: string, maxTokens = 800): Promise<string> {
-  const { text } = await generateText({
-    model,
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.35,
-    maxTokens,
-  })
-  return text.trim()
-}
-
-/**
- * Three-tier fallback:
- * 1. qwen-qwq-32b  — best analytical depth for exec summaries
- * 2. llama-3.3-70b-versatile — reliable workhorse
- * 3. cerebras llama3.1-8b — fast fallback
- * 4. groq llama-3.1-8b-instant — last resort
- */
-async function withFallback(prompt: string, maxTokens = 800): Promise<string> {
-  const attempts: Array<[AIModel, number]> = [
-    [groq('qwen-qwq-32b'), maxTokens],
-    [groq('llama-3.3-70b-versatile'), maxTokens],
-    [cerebras('llama3.1-8b'), maxTokens],
-    [groq('llama-3.1-8b-instant'), maxTokens],
-  ]
-  for (const [model, tokens] of attempts) {
+async function withFallback(prompt: string, maxTokens = 1400): Promise<string> {
+  const models = [groq('qwen-qwq-32b'), groq('llama-3.3-70b-versatile'), cerebras('llama3.1-8b'), groq('llama-3.1-8b-instant')]
+  for (const model of models) {
     try {
-      const result = await callAI(model, prompt, tokens)
-      if (result && result.length > 30) return result
-    } catch {
-      continue
-    }
+      const { text } = await generateText({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, maxTokens })
+      if (text && text.trim().length > 30) return text.trim()
+    } catch { continue }
   }
   throw new Error('All AI providers failed')
 }
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const key = SB_SVC || SB_ANON
 
-  // 1. Fetch lead metadata (org name + industry)
   const leadRes = await fetch(
     `${SB_URL}/rest/v1/leads?id=eq.${id}&select=org_name,industry&limit=1`,
-    {
-      headers: { apikey: key, Authorization: `Bearer ${key}`, Accept: 'application/json' },
-      cache: 'no-store',
-    }
+    { headers: { apikey: key, Authorization: `Bearer ${key}`, Accept: 'application/json' }, cache: 'no-store' }
   )
   if (!leadRes.ok) return NextResponse.json({ error: 'Lead not found' }, { status: 404 })
   const leadRows = await leadRes.json()
   const lead = Array.isArray(leadRows) ? leadRows[0] : null
   if (!lead) return NextResponse.json({ error: 'Lead not found' }, { status: 404 })
 
-  // 2. Fetch scores from reports table (scores live here, not on leads)
   const repRes = await fetch(
-    `${SB_URL}/rest/v1/reports?lead_id=eq.${id}&select=overall_score,dimension_scores&order=created_at.desc&limit=1`,
-    {
-      headers: { apikey: SB_SVC, Authorization: `Bearer ${SB_SVC}`, Accept: 'application/json' },
-      cache: 'no-store',
-    }
+    `${SB_URL}/rest/v1/reports?lead_id=eq.${id}&select=overall_score,dimension_scores,executive_summary&order=created_at.desc&limit=1`,
+    { headers: { apikey: SB_SVC, Authorization: `Bearer ${SB_SVC}`, Accept: 'application/json' }, cache: 'no-store' }
   )
   if (!repRes.ok) return NextResponse.json({ error: 'Scores not ready' }, { status: 404 })
   const repRows = await repRes.json()
   const rep = Array.isArray(repRows) ? repRows[0] : null
+
   if (!rep?.dimension_scores) {
-    // Graceful fallback — scores not yet ready, return placeholder instead of 404 (CL-19 Task B)
-    return NextResponse.json({
-      summary: 'This organisation has completed a ConnAI digital maturity assessment. A personalised executive summary will be generated once all dimension scores are available.',
-      tier: null,
-      overall_score: null,
-      dimension_insights: {},
-    })
+    return NextResponse.json({ summary: 'This organisation has completed a Connai digital maturity assessment. Scores are being calculated \u2014 please refresh in a moment.' })
+  }
+
+  if (rep.executive_summary && rep.executive_summary.length > 100) {
+    return NextResponse.json({ summary: rep.executive_summary })
   }
 
   const scores = rep.dimension_scores as Record<string, number>
-  const vals = Object.values(scores) as number[]
-  const overallScore = rep.overall_score ?? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
-  const tier = getMaturityTier(overallScore)
-  const orgName = lead.org_name ?? 'this organisation'
-  const industryCtx = lead.industry ? ` in the ${lead.industry} sector` : ''
+  const overall = (rep.overall_score as number) ?? Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / Object.values(scores).length)
+  const tier = getMaturityTier(overall)
+  const orgName = lead.org_name ?? 'the organisation'
+  const industry = lead.industry ?? 'their sector'
 
-  const sortedDims = Object.entries(scores).sort(([, a], [, b]) => (b as number) - (a as number))
-  const topStrengths = sortedDims.slice(0, 2).map(([name]) => name).join(' and ')
-  const topGaps = [...sortedDims].reverse().slice(0, 2).map(([name]) => name).join(' and ')
-  const dimensionList = sortedDims
-    .map(([name, score]) => `  ${name}: ${score}/100`)
-    .join('\n')
+  const sortedDims = Object.entries(scores).sort(([, a], [, b]) => (a as number) - (b as number))
+  const topGaps = sortedDims.slice(0, 3).map(([n, s]) => `${n} (${s}/100)`).join(', ')
+  const topStrengths = [...sortedDims].reverse().slice(0, 2).map(([n, s]) => `${n} (${s}/100)`).join(', ')
+  const dimensionBreakdown = sortedDims.map(([n, s]) => `  ${n}: ${s}/100`).join('\n')
 
-  const summaryPrompt = `You are a senior digital transformation consultant preparing a confidential maturity assessment report.
+  const prompt = `You are a senior digital transformation partner writing an executive summary for a board-level presentation.
 
-Organisation: ${orgName}${industryCtx}
-Overall Maturity Score: ${overallScore}/100 — ${tier} tier
+Client: ${orgName}
+Industry: ${industry}
+Overall Digital Maturity Score: ${overall}/100 \u2014 ${tier}
 
-Dimension scores (highest to lowest):
-${dimensionList}
+Dimension breakdown (sorted lowest to highest):
+${dimensionBreakdown}
 
-Write a 2-paragraph executive summary. Use a direct, confident, consulting tone — not generic.
+Top 3 capability gaps: ${topGaps}
+Top 2 strengths: ${topStrengths}
 
-Paragraph 1 (current state): Describe ${orgName}'s digital maturity profile based on the scores. Highlight their strongest areas (${topStrengths}) with specific insight into what these scores mean for their business. Then name the primary gaps (${topGaps}) and explain the operational risk or missed opportunity these represent.
+Write a crisp, insightful executive summary (220-260 words) for a C-suite / board audience.
 
-Paragraph 2 (path forward): Identify the 2 highest-leverage areas to address first. Be specific about the business value unlocked by closing those gaps — revenue, efficiency, competitive advantage. End with one sentence on what reaching the next maturity tier would mean for ${orgName}.
+Paragraph 1 (Current State, ~120 words): Open with the overall score and tier in context. Name ${orgName}'s 2 genuine strengths backed by their scores. Then identify the 2-3 most critical structural gaps limiting digital performance. Be precise about why these gaps matter for their industry.
 
-Constraints:
-- No bullet points, no headers
-- 200–240 words total  
-- Address the organisation by name throughout
-- Specific and insightful, not boilerplate consulting language`
+Paragraph 2 (Strategic Imperatives, ~120 words): Recommend 3 high-leverage interventions in priority order, each tied to a specific gap. State the expected business outcome. Close with one sentence on the competitive window \u2014 what happens if they delay 12 months.
 
-  const insightsPrompt = `You are a digital maturity expert interpreting assessment results for a business audience.
+Tone: Write like McKinsey. No bullets. No platitudes like "digital transformation journey". Direct, specific, slightly provocative where warranted.`
 
-For each dimension below, write exactly ONE sentence (max 20 words) that explains what the score means for the business in plain English. Be specific — no filler phrases, no "you should improve this".
-
-Scores:
-${dimensionList}
-
-Return ONLY a valid JSON object in this exact format (no markdown, no explanation):
-{
-${sortedDims.map(([name]) => `  "${name}": "one sentence here"`).join(',\n')}
-}`
-
-  // Run both AI calls in parallel
-  const [summaryResult, insightsResult] = await Promise.allSettled([
-    withFallback(summaryPrompt, 800),
-    withFallback(insightsPrompt, 1000),
-  ])
-
-  if (summaryResult.status === 'rejected') {
-    return NextResponse.json({ error: 'AI unavailable' }, { status: 503 })
+  try {
+    const summary = await withFallback(prompt, 1400)
+    return NextResponse.json({ summary })
+  } catch {
+    return NextResponse.json({ summary: `${orgName} has achieved an overall digital maturity score of ${overall}/100 placing them in the ${tier} tier. Key strengths: ${topStrengths}. Priority gaps: ${topGaps}.` })
   }
-
-  const summary = summaryResult.value
-
-  let dimension_insights: Record<string, string> = {}
-  if (insightsResult.status === 'fulfilled') {
-    try {
-      const raw = insightsResult.value
-      // Strip any markdown code fences if present
-      const cleaned = raw.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim()
-      dimension_insights = JSON.parse(cleaned)
-    } catch {
-      // Insights are optional — degrade gracefully
-      dimension_insights = {}
-    }
-  }
-
-  return NextResponse.json({ summary, tier, overall_score: overallScore, dimension_insights })
 }
