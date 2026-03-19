@@ -112,7 +112,16 @@ function ReportContent() {
   const params     = useParams();
   const id         = params?.id as string;
   const searchParams = useSearchParams();
-  const forceUnlock = searchParams?.get('unlock') === '1';
+  // forceUnlock: admin-only escape hatch. Requires ?unlock=<NEXT_PUBLIC_REPORT_UNLOCK_TOKEN>.
+  // Never set NEXT_PUBLIC_REPORT_UNLOCK_TOKEN to a trivial value in production.
+  const unlockToken = searchParams?.get('unlock') ?? ''
+  const envUnlock   = process.env.NEXT_PUBLIC_REPORT_UNLOCK_TOKEN ?? ''
+  const forceUnlock = unlockToken.length > 4 && envUnlock.length > 4 && unlockToken === envUnlock
+
+  // After Stripe checkout, session_id is appended to the return URL.
+  // We treat its presence as a pending payment — the webhook confirms it
+  // async, and the paid-status API will return true on next poll.
+  const hasStripeReturn = Boolean(searchParams?.get('session_id'))
 
   const [report,         setReport]         = useState<ReportData | null>(null);
   const [shareCopied,    setShareCopied]    = useState(false);
@@ -177,11 +186,24 @@ function ReportContent() {
     );
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { setPaidChecked(true); return; }
-      fetch(`/api/report/${id}/paid-status`)
+      const checkPaid = () => fetch(`/api/report/${id}/paid-status`)
         .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d?.paid) setPaid(true); })
-        .catch(() => {})
-        .finally(() => setPaidChecked(true));
+        .then(d => { if (d?.paid) { setPaid(true); return true; } return false; })
+        .catch(() => false)
+      ;
+      // If returning from Stripe checkout, poll until webhook confirms payment
+      const stripeReturn = new URL(window.location.href).searchParams.get('session_id')
+      if (stripeReturn) {
+        let attempts = 0
+        const poll = async () => {
+          const confirmed = await checkPaid()
+          if (!confirmed && attempts++ < 10) setTimeout(poll, 3000)
+          else setPaidChecked(true)
+        }
+        poll()
+      } else {
+        checkPaid().finally(() => setPaidChecked(true))
+      }
     });
   }, [id]);
 
