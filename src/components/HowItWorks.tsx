@@ -20,7 +20,7 @@ const steps = [
     ),
     step: '02',
     title: 'AI Conducts Interviews',
-    description: 'Connai interviews relevant team members simultaneously at scale — 100% transcript fidelity, intelligent follow-ups, no fatigue or bias.',
+    description: 'Connai interviews relevant team members simultaneously at scale &mdash; 100% transcript fidelity, intelligent follow-ups, no fatigue or bias.',
   },
   { 
     icon: (
@@ -30,7 +30,7 @@ const steps = [
     ),
     step: '03',
     title: 'Receive Your Report',
-    description: 'Within days, not months: a quantifiable score, industry benchmarks, gap analysis, and a prioritised roadmap — all ready to act on.',
+    description: 'Within days, not months: a quantifiable score, industry benchmarks, gap analysis, and a prioritised roadmap &mdash; all ready to act on.',
   },
 ]
 

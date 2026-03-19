@@ -8,20 +8,20 @@ type Role = typeof ROLES[number]
 
 const ROLE_CONTENT: Record<Role, { headline: string; cta: string }> = {
   'CEO / Owner': {
-    headline: "You'll get a full digital health score for your org in 20 min — at a fraction of consultant cost.",
-    cta: 'Start my free audit →',
+    headline: "You'll get a full digital health score for your org in 20 min &mdash; at a fraction of consultant cost.",
+    cta: 'Start my free audit &rarr;',
   },
   'Operations': {
     headline: 'Connai maps your process gaps and benchmarks them against your sector. Takes 20 min.',
-    cta: 'Run the audit →',
+    cta: 'Run the audit &rarr;',
   },
   'IT / Digital': {
     headline: "You'll get a scored breakdown of your digital infrastructure and adoption gaps across 8 dimensions.",
-    cta: 'See what it covers →',
+    cta: 'See what it covers &rarr;',
   },
   'Just exploring': {
     headline: 'Most people get their first audit done in under 10 minutes. No consultants, no forms.',
-    cta: 'Try it free →',
+    cta: 'Try it free &rarr;',
   },
 }
 
@@ -66,7 +66,6 @@ export default function HomeConcierge() {
         ${visible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
     >
       <div className="bg-slate-900 border border-teal-600/40 rounded-2xl shadow-2xl shadow-black/40 overflow-hidden">
-        {/* Header bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
@@ -86,7 +85,7 @@ export default function HomeConcierge() {
           {step === 1 && (
             <div>
               <p className="text-white font-semibold text-sm mb-3">
-                👋 What brings you to Connai today?
+                &#x1F44B; What brings you to Connai today?
               </p>
               <div className="flex flex-col gap-2">
                 {ROLES.map((r) => (
@@ -117,7 +116,7 @@ export default function HomeConcierge() {
                 onClick={() => setStep(1)}
                 className="w-full text-center text-xs text-white/50 hover:text-white/80 mt-2 transition-colors py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
               >
-                ← Back
+                &larr; Back
               </button>
             </div>
           )}
