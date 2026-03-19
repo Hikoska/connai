@@ -55,11 +55,18 @@ function flattenItems(items: unknown[]): string[] {
       const impact = o.impact    ? String(o.impact) : ''
       if (!action) return ''
       // Format: "<action> (dimension, High impact)"
-      const ctx = [dim, impact ? `${impact} impact` : ''].filter(Boolean).join(' · ')
+      const ctx = [dim, impact ? `${impact} impact` : ''].filter(Boolean).join(' \u00b7 ')
       return ctx ? `${action} (${ctx})` : action
     }
     return ''
   }).filter(Boolean)
+}
+
+/** All action-plan content is freshly generated and personalised \u2014 never cache publicly. */
+function noCacheJson(body: unknown): NextResponse {
+  const res = NextResponse.json(body)
+  res.headers.set('Cache-Control', 'private, no-cache, no-store')
+  return res
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -86,17 +93,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const strongest = [...sortedDims].reverse().slice(0, 2).map(([n, s]) => `${n} (${s}/100)`).join(', ')
   const dimensionList = sortedDims.map(([n, s]) => `  ${n}: ${s}/100`).join('\n')
 
-  const prompt = `You are a senior digital transformation consultant building a prioritised action plan for ${orgName} in ${industry}.
-
-Overall score: ${rep.overall_score ?? '?'}/100
-Dimension scores (lowest = highest priority):
-${dimensionList}
-
-Top 3 gaps: ${weakest}
-Strongest areas: ${strongest}
-
-Return ONLY valid JSON, no markdown fences, no explanation:
-{"quick_wins":[{"action":"<30-day specific action>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"six_month":[{"action":"<6-month initiative>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"long_term":[{"action":"<12-24 month strategic programme>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"summary":"<2 sentences: most important insight and what success looks like in 12 months>"}`
+  const prompt = `You are a senior digital transformation consultant building a prioritised action plan for ${orgName} in ${industry}.\n\nOverall score: ${rep.overall_score ?? '?'}/100\nDimension scores (lowest = highest priority):\n${dimensionList}\n\nTop 3 gaps: ${weakest}\nStrongest areas: ${strongest}\n\nReturn ONLY valid JSON, no markdown fences, no explanation:\n{"quick_wins":[{"action":"<30-day specific action>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"six_month":[{"action":"<6-month initiative>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"long_term":[{"action":"<12-24 month strategic programme>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"summary":"<2 sentences: most important insight and what success looks like in 12 months>"}` 
 
   let raw: string
   try { raw = await generateWithFallback(prompt, 1500) }
@@ -106,7 +103,7 @@ Return ONLY valid JSON, no markdown fences, no explanation:
     const cleaned = raw.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim()
     const parsed = JSON.parse(cleaned)
     // Return flattened strings so the report page renderer works correctly
-    return NextResponse.json({
+    return noCacheJson({
       quick_wins: flattenItems(parsed.quick_wins ?? []),
       six_month:  flattenItems(parsed.six_month  ?? []),
       long_term:  flattenItems(parsed.long_term  ?? []),
@@ -117,7 +114,7 @@ Return ONLY valid JSON, no markdown fences, no explanation:
     if (match) {
       try {
         const parsed = JSON.parse(match[0])
-        return NextResponse.json({
+        return noCacheJson({
           quick_wins: flattenItems(parsed.quick_wins ?? []),
           six_month:  flattenItems(parsed.six_month  ?? []),
           long_term:  flattenItems(parsed.long_term  ?? []),

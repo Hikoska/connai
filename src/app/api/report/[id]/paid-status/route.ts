@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+  if (!rateLimit(ip, 'paid-status', 30)) {
+    return NextResponse.json({ paid: false }, { status: 429 })
+  }
   if (!id) return NextResponse.json({ paid: false });
 
   const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

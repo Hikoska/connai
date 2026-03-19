@@ -9,6 +9,7 @@ function CheckoutContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const reportId = searchParams.get('reportId')
+  const sessionId = searchParams.get('session_id')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -16,6 +17,15 @@ function CheckoutContent() {
   useEffect(() => {
     if (!reportId) { router.replace('/dashboard') }
   }, [reportId, router])
+
+  // Auto-redirect to report after successful payment
+  useEffect(() => {
+    if (!sessionId || !reportId) return
+    const timer = setTimeout(() => {
+      router.replace(`/report/${reportId}?force=1`)
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [sessionId, reportId, router])
 
   const handleCheckout = async () => {
     if (!reportId) { setError('Missing report ID. Please return to your report.'); return }
@@ -38,6 +48,33 @@ function CheckoutContent() {
       setError('Network error. Please try again.')
       setLoading(false)
     }
+  }
+
+  if (sessionId && reportId) {
+    return (
+      <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
+        <div className="text-center max-w-sm">
+          <div className="w-16 h-16 rounded-full bg-teal-900/40 border border-teal-500/30 flex items-center justify-center mx-auto mb-6">
+            <svg viewBox="0 0 24 24" className="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Payment successful!</h1>
+          <p className="text-white/60 text-sm mb-6">
+            Your full report is unlocked. Redirecting in a moment&hellip;
+          </p>
+          <div className="flex items-center justify-center gap-2 text-teal-400 text-sm">
+            <div className="w-4 h-4 border-2 border-teal-400/30 border-t-teal-400 rounded-full animate-spin" />
+            Loading your report
+          </div>
+          <p className="mt-6">
+            <a href={`/report/${reportId}?force=1`} className="text-white/40 hover:text-white/70 text-xs underline underline-offset-4 transition-colors">
+              Click here if not redirected automatically
+            </a>
+          </p>
+        </div>
+      </div>
+    )
   }
 
   if (!reportId) {
@@ -68,7 +105,7 @@ function CheckoutContent() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-white font-bold text-2xl">$49</p>
-              <p className="text-white/50 text-xs mt-0.5">one-time · per report</p>
+              <p className="text-white/50 text-xs mt-0.5">one-time \u00b7 per report</p>
             </div>
             <div className="bg-teal-900/40 border border-teal-500/30 text-teal-300 text-xs font-semibold px-3 py-1.5 rounded-full">
               Full Access
@@ -85,7 +122,7 @@ function CheckoutContent() {
               'All 8 dimension scores + industry benchmarks',
             ].map((item) => (
               <li key={item} className="flex items-start gap-2.5 text-sm text-white/80">
-                <span className="text-teal-400 mt-0.5 flex-shrink-0">✔</span>
+                <span className="text-teal-400 mt-0.5 flex-shrink-0">\u2714</span>
                 {item}
               </li>
             ))}
@@ -106,15 +143,15 @@ function CheckoutContent() {
             {loading ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Redirecting to payment…
+                Redirecting to payment\u2026
               </>
             ) : (
-              'Pay $49 · Secure checkout'
+              'Pay $49 \u00b7 Secure checkout'
             )}
           </button>
 
           <p className="text-center text-white/30 text-xs mt-3">
-            Powered by Stripe · Secure · Instant access after payment
+            Powered by Stripe \u00b7 Secure \u00b7 Instant access after payment
           </p>
         </div>
 
@@ -129,7 +166,7 @@ function CheckoutContent() {
             href={`/report/${reportId}`}
             className="text-white/40 hover:text-white/70 text-xs underline underline-offset-4 transition-colors"
           >
-            ← Back to report
+            \u2190 Back to report
           </Link>
         </p>
       </div>
