@@ -181,6 +181,25 @@ export async function POST(req: Request) {
       'Content-Type': 'application/json',
     }
 
+    // ── Idempotency check: return early if a complete report already exists ────
+    const existingRes = await fetch(
+      `${SB_URL}/rest/v1/reports?lead_id=eq.${lead_id}&select=id,status&order=created_at.desc&limit=1`,
+      { headers, cache: 'no-store' }
+    )
+    if (existingRes.ok) {
+      const existing = await existingRes.json()
+      if (Array.isArray(existing) && existing.length > 0 && existing[0].status === 'complete') {
+        return NextResponse.json({
+          success: true,
+          report_id: existing[0].id,
+          lead_id,
+          idempotent: true,
+          message: 'Report already exists',
+        })
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const interviewsRes = await fetch(
       `${SB_URL}/rest/v1/interviews?lead_id=eq.${lead_id}&select=id,lead_id,messages,stakeholder_role,leads(org_name,industry,role)`,
       { headers }
