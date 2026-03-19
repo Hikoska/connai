@@ -123,7 +123,7 @@ export async function POST(req: Request) {
   try {
     const ip = (req as Request & { headers: Headers }).headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
     if (!rateLimit(ip, 10)) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
-    const { lead_id } = await req.json()
+    const { lead_id, force } = await req.json()
     if (!lead_id) return NextResponse.json({ error: 'lead_id required' }, { status: 400 })
     if (!SERVICE_KEY) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
 
@@ -135,7 +135,7 @@ export async function POST(req: Request) {
     )
     if (existingRes.ok) {
       const existing = await existingRes.json()
-      if (Array.isArray(existing) && existing.length > 0 && existing[0].status === 'complete') {
+      if (!force && Array.isArray(existing) && existing.length > 0 && existing[0].status === 'complete') {
         return NextResponse.json({ success: true, report_id: existing[0].id, lead_id, idempotent: true })
       }
     }
