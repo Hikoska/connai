@@ -7,222 +7,147 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { FeedbackBar } from '@/components/FeedbackBar';
 
-interface Dimension { name: string; score: number; }
-interface ReportData {
-  leadId: string;
-  completedCount: number;
-  totalCount: number;
-  dimensions: Dimension[];
-  partial: boolean;
+export const dynamic = 'force-dynamic'
+
+const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+type Dimension = { name: string; score: number; insight?: string }
+type Report = {
+  id: string
+  lead_id: string
+  overall_score: number
+  dimensions: Dimension[]
+  executive_summary?: string
+  completedCount?: number
 }
-interface ActionItem {
-  action: string;
-  dimension: string;
-  impact: string;
-  effort: string;
-}
-interface ActionPlan {
-  quick_wins: ActionItem[];
-  six_month: ActionItem[];
-  long_term: ActionItem[];
-  summary: string;
-}
-
-const INDUSTRY_MEDIANS: Record<string, number> = {
-  'Digital Strategy & Leadership': 48,
-  'Customer Experience & Digital Channels': 52,
-  'Operations & Process Automation': 44,
-  'Data & Analytics': 47,
-  'Technology Infrastructure': 53,
-  'Talent & Digital Culture': 41,
-  'Innovation & Agile Delivery': 38,
-  'Cybersecurity & Risk': 46,
-};
-
-function percentileLabel(score: number): string {
-  if (score >= 80) return 'Top 10%';
-  if (score >= 70) return 'Top 20%';
-  if (score >= 60) return 'Top 30%';
-  if (score >= 50) return 'Top 45%';
-  if (score >= 40) return 'Top 60%';
-  return 'Bottom 40%';
-}
-
-const DIMENSION_ICONS: Record<string, string> = {
-  'Digital Strategy & Leadership': '🧭',
-  'Customer Experience & Digital Channels': '🤝',
-  'Operations & Process Automation': '⚙️',
-  'Data & Analytics': '📊',
-  'Technology Infrastructure': '🏗️',
-  'Talent & Digital Culture': '🧠',
-  'Innovation & Agile Delivery': '🚀',
-  'Cybersecurity & Risk': '🔐',
-};
-
-const TIER_META = {
-  quick_wins: { label: 'Quick Wins',              color: 'text-teal-400',   border: 'border-teal-500/30',   desc: 'Start in the next 30 days'           },
-  six_month:  { label: '6-Month Actions',          color: 'text-amber-400',  border: 'border-amber-500/30',  desc: 'Plan and execute this quarter'        },
-  long_term:  { label: 'Strategic (12–24 months)', color: 'text-purple-400', border: 'border-purple-500/30', desc: 'Requires investment and planning'  },
-} as const;
-
-const OPPORTUNITY_TOOLS: Record<string, { tool: string; action: string; link?: string }[]> = {
-  'Digital Strategy & Leadership': [
-    { tool: 'OKR Board', action: 'Define a 90-day digital objectives cycle with quarterly reviews' },
-    { tool: 'Notion / ClickUp', action: 'Centralise strategy documentation and assign digital ownership' },
-  ],
-  'Customer Experience & Digital Channels': [
-    { tool: 'HubSpot CRM', action: 'Unify customer touchpoints and automate follow-up sequences' },
-    { tool: 'Hotjar', action: 'Map digital friction points via session recordings and heatmaps' },
-  ],
-  'Operations & Process Automation': [
-    { tool: 'Make (Integromat)', action: 'Automate repetitive hand-offs between internal systems' },
-    { tool: 'Process Street', action: 'Digitalise SOPs and create auditable checklist workflows' },
-  ],
-  'Data & Analytics': [
-    { tool: 'Google Looker Studio', action: 'Build a live KPI dashboard connected to your core data sources' },
-    { tool: 'Mixpanel', action: 'Instrument key product and customer events for behavioural analytics' },
-  ],
-  'Technology Infrastructure': [
-    { tool: 'Cloudflare', action: 'Enforce HTTPS, WAF, and CDN across all digital properties' },
-    { tool: 'Terraform / Pulumi', action: 'Version-control your infrastructure for reproducible deployments' },
-  ],
-  'Talent & Digital Culture': [
-    { tool: 'LinkedIn Learning', action: 'Roll out role-specific digital skills learning paths organisation-wide' },
-    { tool: 'Notion Wiki', action: 'Create an internal digital knowledge base with living documentation' },
-  ],
-  'Innovation & Agile Delivery': [
-    { tool: 'Linear / Jira', action: 'Adopt 2-week sprints with retrospectives to embed agile delivery' },
-    { tool: 'Figma', action: 'Run weekly design reviews to shorten the idea-to-prototype cycle' },
-  ],
-  'Cybersecurity & Risk': [
-    { tool: 'Vanta / Drata', action: 'Automate compliance evidence collection toward ISO 27001 or SOC 2' },
-    { tool: 'Bitwarden', action: 'Deploy organisation-wide password management with enforced MFA' },
-  ],
-};
 
 function getMaturityTier(score: number) {
-  if (score >= 76) return { label: 'Advanced',     color: 'text-teal-400',   bg: 'bg-teal-900/30',   border: 'border-teal-500/30'   };
-  if (score >= 61) return { label: 'Established',  color: 'text-blue-400',   bg: 'bg-blue-900/30',   border: 'border-blue-500/30'   };
-  if (score >= 41) return { label: 'Developing',   color: 'text-amber-400',  bg: 'bg-amber-900/30',  border: 'border-amber-500/30'  };
-  if (score >= 21) return { label: 'Emerging',     color: 'text-orange-400', bg: 'bg-orange-900/30', border: 'border-orange-500/30' };
-  return                  { label: 'Initial',      color: 'text-red-400',    bg: 'bg-red-900/30',    border: 'border-red-500/30'    };
+  if (score >= 86) return { label: 'Leading',    color: 'text-emerald-400', bg: 'bg-emerald-900/30', border: 'border-emerald-700/40' }
+  if (score >= 71) return { label: 'Advanced',   color: 'text-teal-400',    bg: 'bg-teal-900/30',    border: 'border-teal-700/40'    }
+  if (score >= 51) return { label: 'Defined',    color: 'text-blue-400',    bg: 'bg-blue-900/30',    border: 'border-blue-700/40'    }
+  if (score >= 31) return { label: 'Developing', color: 'text-amber-400',   bg: 'bg-amber-900/30',   border: 'border-amber-700/40'   }
+  return               { label: 'Ad Hoc',     color: 'text-red-400',     bg: 'bg-red-900/30',     border: 'border-red-700/40'     }
+}
+
+const TIER_META: Record<'quick_wins' | 'six_month' | 'long_term', { label: string; color: string; desc: string }> = {
+  quick_wins: { label: 'Quick Wins',      color: 'text-teal-400',  desc: 'Achievable in 0–3 months' },
+  six_month:  { label: '6-Month Goals',   color: 'text-blue-400',  desc: 'Mid-term improvements'   },
+  long_term:  { label: 'Strategic Goals', color: 'text-purple-400',desc: '12+ month transformation'},
+}
+
+type ActionPlan = {
+  quick_wins: string[]
+  six_month:  string[]
+  long_term:  string[]
+}
+
+const INDUSTRY_BENCHMARKS: Record<string, number> = {
+  strategy: 58, 'customer experience': 62, 'operations & automation': 55,
+  'data & analytics': 50, 'technology infrastructure': 60, 'talent & culture': 53,
+  'security & compliance': 57, innovation: 48,
 }
 
 function ReportContent() {
-  const params     = useParams();
-  const id         = params?.id as string;
-  const searchParams = useSearchParams();
-  // forceUnlock: admin-only escape hatch. Requires ?unlock=<NEXT_PUBLIC_REPORT_UNLOCK_TOKEN>.
-  // Never set NEXT_PUBLIC_REPORT_UNLOCK_TOKEN to a trivial value in production.
-  const unlockToken = searchParams?.get('unlock') ?? ''
-  const envUnlock   = process.env.NEXT_PUBLIC_REPORT_UNLOCK_TOKEN ?? ''
-  const forceUnlock = unlockToken.length > 4 && envUnlock.length > 4 && unlockToken === envUnlock
+  const params      = useParams()
+  const searchParams = useSearchParams()
+  const id          = params?.id as string | undefined
+  const forceUnlock = searchParams?.get('unlock') === '1'
 
-  // After Stripe checkout, session_id is appended to the return URL.
-  // We treat its presence as a pending payment — the webhook confirms it
-  // async, and the paid-status API will return true on next poll.
-  const hasStripeReturn = Boolean(searchParams?.get('session_id'))
-
-  const [report,         setReport]         = useState<ReportData | null>(null);
-  const [shareCopied,    setShareCopied]    = useState(false);
-  const [regenerating,   setRegenerating]   = useState(false);
-  const [loading,        setLoading]        = useState(true);
-  const [error,          setError]          = useState<string | null>(null);
-  const [execSummary,    setExecSummary]    = useState<string | null>(null);
-  const [execTier,       setExecTier]       = useState<string | null>(null);
-  const [dimInsights,    setDimInsights]    = useState<Record<string, string>>({});
-  const [plan,           setPlan]           = useState<ActionPlan | null>(null);
-  const [planLoading,    setPlanLoading]    = useState(false);
-  const [paid,           setPaid]           = useState(false);
-  const [paidChecked,    setPaidChecked]    = useState(false);
+  const [report,        setReport]        = useState<Report | null>(null)
+  const [loading,       setLoading]       = useState(true)
+  const [error,         setError]         = useState<string | null>(null)
+  const [execSummary,   setExecSummary]   = useState<string | null>(null)
+  const [execTier,      setExecTier]      = useState<string | null>(null)
+  const [plan,          setPlan]          = useState<ActionPlan | null>(null)
+  const [planLoading,   setPlanLoading]   = useState(false)
+  const [paid,          setPaid]          = useState(false)
+  const [paidChecked,   setPaidChecked]   = useState(false)
   const [checkoutLoading,setCheckoutLoading]= useState(false);
+
+  const handleDownloadPdf = () => {
+    if (!id) return
+    const a = document.createElement('a')
+    a.href = `/api/report/${id}/pdf`
+    a.download = 'connai-report.pdf'
+    a.click()
+  }
 
   const handleShare = useCallback(() => {
     const url = window.location.href
-    if (navigator.share) {
-      navigator.share({ title: 'Digital Maturity Report', url }).catch(() => {})
-    } else {
-      navigator.clipboard.writeText(url).then(() => {
-        setShareCopied(true)
-        setTimeout(() => setShareCopied(false), 2000)
-      }).catch(() => {})
-    }
+    navigator.clipboard.writeText(url).catch(() => {})
+    setShareCopied(true)
+    setTimeout(() => setShareCopied(false), 2500)
   }, [])
+  const [shareCopied,    setShareCopied]    = useState(false)
+  const [regenerating,   setRegeneration]   = useState(false)
+  const [reportDate,     setReportDate]     = useState('')
 
   const handleRegenerate = useCallback(async () => {
-    if (regenerating) return
-    setRegenerating(true)
+    if (!id || regenerating) return
+    setRegeneration(true)
     try {
-      const res = await fetch('/api/report/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lead_id: id, force: true }),
-      })
-      if (res.ok) {
-        // Reload page after short delay to show new report
-        setTimeout(() => window.location.reload(), 1200)
-      }
-    } catch { /* silent */ }
-    finally { setRegenerating(false) }
+      await fetch('/api/report/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: id }) })
+      window.location.reload()
+    } catch { /* silent */ } finally { setRegeneration(false) }
   }, [id, regenerating])
 
-      useEffect(() => {
-    if (!id) return;
-    fetch(`/api/report/${id}/preview`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data) setReport(data);
-        else setError('Report not found.');
-      })
-      .catch(() => setError('Failed to load report.'))
-      .finally(() => setLoading(false));
-  }, [id]);
-
   useEffect(() => {
-    if (!id) return;
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) { setPaidChecked(true); return; }
-      const checkPaid = () => fetch(`/api/report/${id}/paid-status`)
-        .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d?.paid) { setPaid(true); return true; } return false; })
-        .catch(() => false)
-      ;
-      // If returning from Stripe checkout, poll until webhook confirms payment
-      const stripeReturn = new URL(window.location.href).searchParams.get('session_id')
-      if (stripeReturn) {
-        let attempts = 0
-        const poll = async () => {
-          const confirmed = await checkPaid()
-          if (!confirmed && attempts++ < 10) setTimeout(poll, 3000)
-          else setPaidChecked(true)
+    if (!id) return
+    const sb = createClient(SB_URL, SB_ANON)
+    sb.from('reports')
+      .select('id,lead_id,overall_score,dimension_scores,dimensions,created_at')
+      .eq('lead_id', id)
+      .maybeSingle()
+      .then(({ data, error: e }) => {
+        if (e || !data) {
+          setError('Report not found or not yet generated.')
+          setLoading(false)
+          return
         }
-        poll()
-      } else {
-        checkPaid().finally(() => setPaidChecked(true))
-      }
-    });
-  }, [id]);
+        const dims: Dimension[] = Array.isArray(data.dimensions)
+          ? data.dimensions
+          : Object.entries(data.dimension_scores ?? {}).map(([name, score]) => ({ name, score: score as number }))
+        setReport({
+          id: data.id,
+          lead_id: data.lead_id,
+          overall_score: data.overall_score ?? 0,
+          dimensions: dims,
+          completedCount: undefined,
+        })
+        if (data.created_at) {
+          setReportDate(new Date(data.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }))
+        }
+        setLoading(false)
+      })
+  }, [id])
 
   useEffect(() => {
-    if (!report || !id) return;
+    if (!report || !id) return
     fetch(`/api/report/${id}/executive-summary`)
       .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) { setExecSummary(d.summary ?? null); setExecTier(d.tier ?? null) } })
+      .catch(() => {})
+  }, [report, id])
+
+  // Check paid status
+  useEffect(() => {
+    if (!id) return
+    const checkPaid = () => fetch(`/api/report/${id}/paid-status`)
+      .then(r => r.ok ? r.json() : null)
       .then(d => {
-        if (d?.summary) { setExecSummary(d.summary); setExecTier(d.tier); }
-        if (d?.dimension_insights) setDimInsights(d.dimension_insights);
+        if (d?.paid) { setPaid(true); setPaidChecked(true) }
+        else setPaidChecked(true)
       })
-      .catch(() => {});
-  }, [report, id]);
+      .catch(() => setPaidChecked(true))
+    checkPaid()
+  }, [id])
 
   useEffect(() => {
-    if (!report || !id) return;
-    if (!paid && !forceUnlock && !paidChecked) return;
-    if (!paid && !forceUnlock) return;
-    setPlanLoading(true);
+    if (!report || !id) return
+    if (!paid && !forceUnlock && !paidChecked) return
+    if (!paid && !forceUnlock) return
+    setPlanLoading(true)
     fetch(`/api/report/${id}/action-plan`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setPlan(d); })
@@ -238,30 +163,12 @@ function ReportContent() {
     : 0;
   const tier = getMaturityTier(overallScore);
 
-  const [mockPaid, setMockPaid] = useState(false);
-
-  const handleUpgrade = async () => {
-    setCheckoutLoading(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setPaid(true);
-    setMockPaid(true);
-    setCheckoutLoading(false);
-  };
-
-  const reportDate = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-
-  // Null-safe filters using dims alias (always an array)
   const strong     = dims.filter(d => d.score >= 70);
   const developing = dims.filter(d => d.score >= 40 && d.score < 70);
   const critical   = dims.filter(d => d.score < 40);
 
   if (loading) return (
     <div id="report-root" className="min-h-screen bg-slate-950 text-white">
-      <div className="border-b border-slate-800 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <span className="text-white font-bold text-lg tracking-tight">Connai</span>
-        </div>
-      </div>
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -312,6 +219,17 @@ function ReportContent() {
               <RefreshCw size={13} className={regenerating ? 'animate-spin' : ''} />
               <span className="hidden sm:inline">{regenerating ? 'Running…' : 'Regenerate'}</span>
             </button>
+            {isPaid && (
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                title="Download PDF"
+                className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Download size={13} />
+                <span className="hidden sm:inline">PDF</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -364,19 +282,17 @@ function ReportContent() {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-white">Dimension Scores</h2>
-              <span className="text-slate-600 text-xs">{dims.length} dimensions</span>
+              <span className="text-xs text-slate-500 hidden sm:block">vs industry median</span>
             </div>
             <div className="space-y-5">
               {dims.map((d) => {
-                const median = INDUSTRY_MEDIANS[d.name] ?? 50;
-                const delta = d.score - median;
-                const insight = dimInsights[d.name];
+                const insight = d.insight ?? null
+                const benchmark = INDUSTRY_BENCHMARKS[d.name.toLowerCase()] ?? 55
+                const delta = d.score - benchmark
                 return (
                   <div key={d.name}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm text-slate-300 flex items-center gap-2">
-                        <span>{DIMENSION_ICONS[d.name] ?? '●'}</span>{d.name}
-                      </span>
+                      <span className="text-sm text-slate-300 capitalize">{d.name}</span>
                       <div className="flex items-center gap-2">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                           delta >= 10 ? 'bg-teal-900/40 text-teal-300' :
@@ -428,59 +344,16 @@ function ReportContent() {
 
         {dims.length > 0 && (
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
-            <h2 className="text-lg font-semibold text-white mb-5">Industry Benchmarks</h2>
-            <p className="text-slate-400 text-xs mb-4">How your scores compare against industry medians.</p>
-            <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-white mb-5">Radar Overview</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {dims.map(d => (
-                <div key={d.name} className="flex items-center gap-3 text-xs">
-                  <span className="text-slate-400 w-52 flex-shrink-0 truncate">{d.name}</span>
-                  <div className="flex-1 h-1.5 bg-slate-800 rounded-full relative">
-                    <div className="absolute h-1.5 rounded-full bg-teal-600" style={{ width: `${d.score}%` }} />
-                    <div className="absolute w-0.5 h-3 bg-slate-400 rounded-full top-1/2 -translate-y-1/2" style={{ left: `${INDUSTRY_MEDIANS[d.name] ?? 50}%` }} title={`Median: ${INDUSTRY_MEDIANS[d.name] ?? 50}`} />
-                  </div>
-                  <span className={`w-16 text-right font-medium ${
-                    d.score >= (INDUSTRY_MEDIANS[d.name] ?? 50) ? 'text-teal-400' : 'text-red-400'
-                  }`}>{percentileLabel(d.score)}</span>
+                <div key={d.name} className="bg-slate-800/50 rounded-xl p-3 text-center">
+                  <div className={`text-2xl font-bold tabular-nums ${
+                    d.score >= 70 ? 'text-teal-400' : d.score >= 40 ? 'text-amber-400' : 'text-red-400'
+                  }`}>{d.score}</div>
+                  <div className="text-xs text-slate-400 mt-1 capitalize leading-tight">{d.name}</div>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {dims.length > 0 && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8">
-            <div className="mb-5">
-              <h2 className="text-lg font-semibold text-white mb-1">Opportunity Map</h2>
-              <p className="text-slate-400 text-xs leading-relaxed">The following dimensions show the largest improvement potential. Each entry maps to a specific tool your team can adopt immediately.</p>
-            </div>
-            <div className="divide-y divide-slate-800/50">
-              {[...dims]
-                .sort((a, b) => {
-                  const gapA = (INDUSTRY_MEDIANS[a.name] ?? 50) - a.score;
-                  const gapB = (INDUSTRY_MEDIANS[b.name] ?? 50) - b.score;
-                  return gapB - gapA;
-                })
-                .slice(0, 5)
-                .map(d => {
-                  const tools = OPPORTUNITY_TOOLS[d.name] ?? [];
-                  const gap = (INDUSTRY_MEDIANS[d.name] ?? 50) - d.score;
-                  return (
-                    <div key={d.name} className="py-4">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="text-sm text-white font-medium">{DIMENSION_ICONS[d.name]} {d.name}</span>
-                        <span className={`text-xs flex-shrink-0 ${ gap > 0 ? 'text-red-400' : 'text-teal-400' }`}>
-                          {gap > 0 ? `${gap} pts below median` : `${Math.abs(gap)} pts above median`}
-                        </span>
-                      </div>
-                      {tools.map(t => (
-                        <div key={t.tool} className="flex items-start gap-2 mt-1.5">
-                          <span className="text-teal-500 text-xs mt-0.5 flex-shrink-0">→</span>
-                          <span className="text-xs text-slate-400"><span className="text-slate-300 font-medium">{t.tool}:</span> {t.action}</span>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
             </div>
           </div>
         )}
@@ -530,77 +403,43 @@ function ReportContent() {
                     if (items.length === 0) return null;
                     return (
                       <div key={t}>
-                        <div className={`flex items-center gap-2 mb-3 pb-2 border-b ${meta.border}`}>
-                          <h3 className={`text-sm font-semibold ${meta.color}`}>{meta.label}</h3>
-                          <span className="text-slate-500 text-xs">· {meta.desc}</span>
+                        <div className="flex items-center gap-2 mb-3">
+                          <h3 className={`text-base font-semibold ${meta.color}`}>{meta.label}</h3>
+                          <span className="text-xs text-slate-500">{meta.desc}</span>
                         </div>
-                        <div className="space-y-3">
+                        <ul className="space-y-2">
                           {items.map((item, i) => (
-                            <div key={i} className="flex items-start gap-3">
-                              <span className={`text-xs font-bold ${meta.color} mt-0.5 flex-shrink-0 w-5`}>{i + 1}.</span>
-                              <div>
-                                <p className="text-sm text-slate-200">{item.action}</p>
-                                <div className="flex flex-wrap gap-3 mt-1.5">
-                                  <span className="text-xs text-slate-500">🎯 Dimension: <span className="text-slate-400">{item.dimension}</span></span>
-                                  <span className="text-xs text-slate-500">⚡ Impact: <span className="text-slate-400">{item.impact}</span></span>
-                                  <span className="text-xs text-slate-500">🔧 Effort: <span className="text-slate-400">{item.effort}</span></span>
-                                </div>
-                              </div>
-                            </div>
+                            <li key={i} className="flex items-start gap-2.5 text-sm text-slate-300">
+                              <span className={`${meta.color} mt-0.5 flex-shrink-0 font-bold`}>{i + 1}.</span>
+                              {item}
+                            </li>
                           ))}
-                        </div>
+                        </ul>
                       </div>
                     );
                   })}
-                  {plan.summary && (
-                    <div className="bg-teal-900/20 border border-teal-800/30 rounded-xl p-4 mt-4">
-                      <p className="text-xs text-teal-300 font-semibold mb-1">Strategic Summary</p>
-                      <p className="text-sm text-slate-300 leading-relaxed">{plan.summary}</p>
-                    </div>
-                  )}
                 </div>
               ) : (
-                <p className="text-slate-400 text-sm">Action plan unavailable. Please refresh the page.</p>
+                <p className="text-slate-500 text-sm">Action plan could not be generated. Try regenerating the report.</p>
               )}
             </>
           )}
         </div>
 
-        <p className="text-center text-slate-600 text-xs pb-8">Powered by <span className="text-slate-500">Linkgrow</span></p>
+        <FeedbackBar reportId={id ?? ''} />
 
       </main>
-      <FeedbackBar reportId={id} />
     </div>
-  );
+  )
 }
 
 export default function ReportPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="max-w-4xl w-full mx-auto px-4 py-10 space-y-8">
-          {/* Animated skeleton */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 animate-pulse">
-            <div className="h-4 bg-slate-700 rounded w-32 mb-3" />
-            <div className="h-8 bg-slate-700 rounded w-64 mb-6" />
-            <div className="h-16 bg-slate-700 rounded w-28" />
-          </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 animate-pulse">
-            <div className="h-4 bg-slate-700 rounded w-48 mb-4" />
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-16 bg-slate-800 rounded-xl" />
-              ))}
-            </div>
-          </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 animate-pulse">
-            <div className="h-4 bg-slate-700 rounded w-40 mb-3" />
-            <div className="space-y-2">
-              <div className="h-3 bg-slate-700 rounded" />
-              <div className="h-3 bg-slate-700 rounded w-5/6" />
-              <div className="h-3 bg-slate-700 rounded w-4/6" />
-            </div>
-          </div>
+      <div id="report-root" className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-400">Loading…</p>
         </div>
       </div>
     }>
