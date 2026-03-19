@@ -1,8 +1,7 @@
 'use client';
-import Image from 'next/image';
 import { Share2, Check, Download, RefreshCw } from 'lucide-react';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { FeedbackBar } from '@/components/FeedbackBar';
@@ -11,6 +10,9 @@ export const dynamic = 'force-dynamic'
 
 const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+const POLL_INTERVAL_MS = 5_000
+const POLL_MAX_ATTEMPTS = 12 // 60 seconds
 
 type Dimension = { name: string; score: number; insight?: string }
 type Report = {
@@ -48,7 +50,7 @@ const INDUSTRY_BENCHMARKS: Record<string, number> = {
   'security & compliance': 57, innovation: 48,
 }
 
-// ── Skeleton loading component [UX-NEW-A] ──
+// ── Skeleton loading component ──
 function ReportSkeleton() {
   return (
     <div id="report-root" className="min-h-screen bg-slate-950 text-white">
@@ -95,6 +97,43 @@ function ReportSkeleton() {
   )
 }
 
+// ── Generating state ──
+function GeneratingState({ pollCount }: { pollCount: number }) {
+  const dots = [0,1,2].map(i => (
+    <span key={i} className="inline-block w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce"
+      style={{ animationDelay: `${i * 0.15}s` }} />
+  ))
+  const pct = Math.min(90, Math.round((pollCount / POLL_MAX_ATTEMPTS) * 90))
+  return (
+    <div id="report-root" className="min-h-screen bg-slate-950 text-white flex flex-col">
+      <div className="border-b border-slate-800 px-6 py-4">
+        <div className="max-w-4xl mx-auto">
+          <span className="text-white font-bold text-lg">Connai</span>
+        </div>
+      </div>
+      <main className="flex-1 flex items-center justify-center px-4">
+        <div className="text-center max-w-sm">
+          <div className="w-16 h-16 rounded-2xl bg-teal-900/30 border border-teal-800/40 flex items-center justify-center mx-auto mb-6">
+            <div className="flex gap-1 items-center">{dots}</div>
+          </div>
+          <h1 className="text-xl font-bold text-white mb-2">Generating your report</h1>
+          <p className="text-slate-400 text-sm mb-6">
+            Our AI is analysing your interview responses across 8 dimensions of digital maturity.
+            This usually takes 30–60 seconds.
+          </p>
+          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-teal-600 to-teal-400 rounded-full transition-all duration-1000"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <p className="text-slate-600 text-xs mt-2">Checking for results…</p>
+        </div>
+      </main>
+    </div>
+  )
+}
+
 function ReportContent() {
   const params      = useParams()
   const searchParams = useSearchParams()
@@ -104,13 +143,18 @@ function ReportContent() {
   const [report,        setReport]        = useState<Report | null>(null)
   const [loading,       setLoading]       = useState(true)
   const [error,         setError]         = useState<string | null>(null)
+  // [UX-NEW-C] Polling state for report generation
+  const [generating,    setGenerating]    = useState(false)
+  const pollCountRef    = useRef(0)
+  const pollTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [pollCount,     setPollCount]     = useState(0)
+
   const [execSummary,   setExecSummary]   = useState<string | null>(null)
   const [execTier,      setExecTier]      = useState<string | null>(null)
   const [plan,          setPlan]          = useState<ActionPlan | null>(null)
   const [planLoading,   setPlanLoading]   = useState(false)
   const [paid,          setPaid]          = useState(false)
   const [paidChecked,   setPaidChecked]   = useState(false)
-  const [checkoutLoading,setCheckoutLoading]= useState(false);
 
   const handleDownloadPdf = () => {
     if (!id) return
@@ -139,7 +183,8 @@ function ReportContent() {
     } catch { /* silent */ } finally { setRegeneration(false) }
   }, [id, regenerating])
 
-  useEffect(() => {
+  // [UX-NEW-C] Fetch report with polling fallback
+  const fetchReport = useCallback(() => {
     if (!id) return
     const sb = createClient(SB_URL, SB_ANON)
     sb.from('reports')
@@ -147,11 +192,32 @@ function ReportContent() {
       .eq('lead_id', id)
       .maybeSingle()
       .then(({ data, error: e }) => {
-        if (e || !data) {
-          setError('Report not found or not yet generated.')
+        if (e) {
+          setError('Failed to load report. Please try refreshing.')
           setLoading(false)
+          setGenerating(false)
           return
         }
+        if (!data) {
+          // Report not ready yet — poll if we haven't exceeded the limit
+          if (pollCountRef.current < POLL_MAX_ATTEMPTS) {
+            pollCountRef.current++
+            setPollCount(pollCountRef.current)
+            setLoading(false)
+            setGenerating(true)
+            pollTimerRef.current = setTimeout(fetchReport, POLL_INTERVAL_MS)
+          } else {
+            setGenerating(false)
+            setError(
+              'Your report is taking longer than expected. Please refresh in a moment or click Regenerate.'
+            )
+            setLoading(false)
+          }
+          return
+        }
+        // Report found!
+        if (pollTimerRef.current) clearTimeout(pollTimerRef.current)
+        setGenerating(false)
         const dims: Dimension[] = Array.isArray(data.dimensions)
           ? data.dimensions
           : Object.entries(data.dimension_scores ?? {}).map(([name, score]) => ({ name, score: score as number }))
@@ -168,6 +234,16 @@ function ReportContent() {
         setLoading(false)
       })
   }, [id])
+
+  // Cleanup poll timer on unmount
+  useEffect(() => {
+    return () => { if (pollTimerRef.current) clearTimeout(pollTimerRef.current) }
+  }, [])
+
+  useEffect(() => {
+    if (!id) return
+    fetchReport()
+  }, [id, fetchReport])
 
   useEffect(() => {
     if (!report || !id) return
@@ -210,13 +286,27 @@ function ReportContent() {
   const developing = dims.filter(d => d.score >= 40 && d.score < 70);
   const critical   = dims.filter(d => d.score < 40);
 
+  // Loading states
   if (loading) return <ReportSkeleton />;
+  if (generating) return <GeneratingState pollCount={pollCount} />;
 
   if (error || !report) return (
     <div id="report-root" className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-      <div className="text-center max-w-md">
-        <p className="text-xl font-semibold text-white mb-2">Report unavailable</p>
-        <p className="text-slate-400 text-sm">{error ?? 'This report could not be loaded.'}</p>
+      <div className="text-center max-w-md px-4">
+        <div className="w-12 h-12 bg-amber-900/30 border border-amber-800/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <span className="text-amber-400 text-xl">⚠️</span>
+        </div>
+        <p className="text-lg font-semibold text-white mb-2">Report unavailable</p>
+        <p className="text-slate-400 text-sm mb-5">{error ?? 'This report could not be loaded.'}</p>
+        <button
+          type="button"
+          onClick={handleRegenerate}
+          disabled={regenerating}
+          className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors disabled:opacity-40"
+        >
+          <RefreshCw size={14} className={regenerating ? 'animate-spin' : ''} />
+          {regenerating ? 'Generating…' : 'Generate report'}
+        </button>
       </div>
     </div>
   );
