@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { FileText, PlayCircle, Users, Plus, BarChart2 } from 'lucide-react'
+import { FileText, PlayCircle, Users, Plus, BarChart2, Link2, Check } from 'lucide-react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { StartInterviewButton } from '@/components/StartInterviewButton'
 import { PricingModal } from '@/components/PricingModal'
@@ -59,6 +59,15 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
   const supabaseRef = useRef<SupabaseClient | null>(null)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
+  const [copiedToken, setCopiedToken] = useState<string | null>(null)
+
+  const copyInviteLink = (token: string) => {
+    const url = `${window.location.origin}/interview/${token}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedToken(token)
+      setTimeout(() => setCopiedToken(null), 2000)
+    }).catch(() => {})
+  }
 
   useEffect(() => {
     const init = async () => {
@@ -241,6 +250,19 @@ export default function DashboardPage() {
                                   }`}>
                                     {s.label}
                                   </span>
+                                  {iv.status !== 'complete' && (
+                                    <button
+                                      type="button"
+                                      title="Copy invite link"
+                                      onClick={() => copyInviteLink(iv.token)}
+                                      className="ml-1 p-1 rounded hover:bg-white/10 text-white/30 hover:text-white/70 transition-colors"
+                                    >
+                                      {copiedToken === iv.token
+                                        ? <Check size={11} className="text-teal-400" />
+                                        : <Link2 size={11} />
+                                      }
+                                    </button>
+                                  )}
                                 </div>
                               )
                             })}
