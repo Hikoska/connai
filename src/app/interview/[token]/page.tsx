@@ -69,37 +69,43 @@ export default function InterviewPage() {
           id: `eq.${iv.lead_id}`,
           select: 'org_name',
           limit: '1',
-        }).catch(() => null)
+        })
         if (lead?.org_name) setOrgName(lead.org_name)
 
-        const res = await fetch('/api/interviews/message', {
+        // Load initial message (trigger first AI turn)
+        const reply = await fetch('/api/interviews/message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, messages: [] }),
         })
-        const data = await res.json()
+        const data = await reply.json()
         if (data.reply) setMessages([{ role: 'assistant', content: data.reply }])
-        setLoading(false)
       } catch {
         setError('Failed to load interview. Please try again.')
         setLoading(false)
       }
+      setLoading(false)
     }
     init()
   }, [token])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, thinking])
+  }, [messages, streamingReply, thinking, done])
 
-  async function send() {
-    const text = input.trim()
-    if (!text || thinking || done) return
-    const updated: Message[] = [...messages, { role: 'user', content: text }]
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
+  }
+
+  const send = async () => {
+    if (!input.trim() || thinking || done) return
+    const userMsg: Message = { role: 'user', content: input.trim() }
+    const updated: Message[] = [...messages, userMsg]
     setMessages(updated)
     setInput('')
     setThinking(true)
     setStreamingReply('')
+
     try {
       const res = await fetch('/api/interviews/message', {
         method: 'POST',
@@ -107,31 +113,49 @@ export default function InterviewPage() {
         body: JSON.stringify({ token, messages: updated, stream: true }),
       })
 
-      // Handle AI SDK DataStreamResponse (text/event-stream)
-      if (res.headers.get('content-type')?.includes('text/event-stream') && res.body) {
+      if (!res.ok) throw new Error('Request failed')
+
+      const contentType = res.headers.get('content-type') ?? ''
+      const isStream = contentType.includes('text/event-stream') || contentType.includes('text/plain') || contentType.includes('x-ndjson')
+
+      if (isStream && res.body) {
+        // Streaming SSE path
         const reader = res.body.getReader()
         const decoder = new TextDecoder()
+        let buffer = ''
         let accumulated = ''
-        setThinking(false)
+
         while (true) {
           const { done: streamDone, value } = await reader.read()
           if (streamDone) break
-          const chunk = decoder.decode(value, { stream: true })
-          // AI SDK data stream lines: 0:"token"\n
-          for (const line of chunk.split('\n')) {
-            const match = line.match(/^0:"(.*)"$/)
-            if (match) {
-              try {
-                const tok = JSON.parse(`"${match[1]}"`)
-                accumulated += tok
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            const payload = line.slice(6).trim()
+            if (payload === '[DONE]') break
+            try {
+              const parsed = JSON.parse(payload)
+              // Vercel AI SDK format: { type: "text-delta", textDelta: "..." }
+              if (parsed.type === 'text-delta' && parsed.textDelta) {
+                accumulated += parsed.textDelta
                 setStreamingReply(accumulated)
-              } catch { /* skip malformed chunk */ }
-            }
+              }
+              // isDone signal from server
+              if (parsed.isDone) {
+                setDone(true)
+                setStreamingReply('')
+                break
+              }
+            } catch { /* skip non-JSON lines */ }
           }
         }
-        if (accumulated) {
-          const final: Message[] = [...updated, { role: 'assistant', content: accumulated }]
-          setMessages(final)
+
+        setThinking(false)
+        if (accumulated.trim()) {
+          setMessages([...updated, { role: 'assistant', content: accumulated.trim() }])
           setStreamingReply('')
         }
       } else {
@@ -147,16 +171,9 @@ export default function InterviewPage() {
         }
       }
     } catch {
-      setMessages(prev => [
-        ...prev,
-        { role: 'assistant', content: 'Sorry, I had a connection issue. Please try again.' },
-      ])
+      setThinking(false)
+      setMessages([...updated, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }])
     }
-    setThinking(false)
-  }
-
-  function onKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
 
   if (loading) {
@@ -164,13 +181,14 @@ export default function InterviewPage() {
       <div className="min-h-screen flex items-center justify-center bg-[#0E1117]">
         <div className="text-center space-y-3">
           <div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto" />
-          <p className="text-slate-500 text-sm">Preparing your interview...</p>
+          <p className="text-slate-500 text-sm">Loading your interview…</p>
         </div>
       </div>
     )
   }
 
   if (error) {
+    const isInvalid = error.startsWith('Invalid or expired')
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0E1117] px-4">
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-sm w-full text-center">
@@ -179,15 +197,28 @@ export default function InterviewPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <p className="text-white font-semibold mb-2">Unable to load interview</p>
-          <p className="text-slate-400 text-sm mb-5">{error}</p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm py-2.5 px-4 rounded-xl transition-colors"
-          >
-            Try again
-          </button>
+          <p className="text-white font-semibold mb-2">{isInvalid ? 'Link unavailable' : 'Unable to load interview'}</p>
+          <p className="text-slate-400 text-sm mb-5">
+            {isInvalid
+              ? 'This interview link has expired or is no longer valid. Please contact the person who sent you this link.'
+              : error}
+          </p>
+          {isInvalid ? (
+            <a
+              href="/"
+              className="block w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 font-semibold text-sm py-2.5 px-4 rounded-xl transition-colors"
+            >
+              Go to homepage
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm py-2.5 px-4 rounded-xl transition-colors"
+            >
+              Try again
+            </button>
+          )}
         </div>
       </div>
     )
@@ -198,10 +229,12 @@ export default function InterviewPage() {
       {/* Header */}
       <div className="bg-[#0E1117]/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center gap-3 flex-shrink-0">
         <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-xs font-bold">C</span>
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
         </div>
-        <div>
-          <p className="text-sm font-semibold text-slate-200">Connai AI Interviewer</p>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-white">Connai AI Interviewer</p>
           {orgName && (
             <p className="text-xs text-slate-500">
               {orgName}
@@ -210,53 +243,57 @@ export default function InterviewPage() {
             </p>
           )}
           {messages.length > 0 && (
-            <p className="text-xs text-teal-400 font-medium">
-              Question {Math.ceil(messages.length / 2)} of 8
+            <p className="text-xs text-slate-600 mt-0.5">
+              Question {Math.min(messages.filter(m => m.role === 'assistant').length, 10)} of ~10
             </p>
           )}
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="max-w-2xl mx-auto space-y-4">
-          {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'bg-[#0D5C63] text-white rounded-br-sm'
-                    : 'bg-slate-800/80 text-slate-100 border border-slate-700 rounded-bl-sm'
-                }`}
-              >
-                {msg.content}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 max-w-2xl mx-auto w-full">
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`flex ${
+              msg.role === 'user' ? 'justify-end' : 'justify-start'
+            }`}
+          >
+            <div
+              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                msg.role === 'user'
+                  ? 'bg-[#0D5C63] text-white rounded-br-sm'
+                  : 'bg-slate-800/80 text-slate-100 rounded-bl-sm'
+              }`}
+            >
+              {msg.content}
+            </div>
+          </div>
+        ))}
+
+        {/* Streaming reply */}
+        {streamingReply && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] rounded-2xl rounded-bl-sm px-4 py-3 text-sm leading-relaxed bg-slate-800/80 text-slate-100">
+              {streamingReply}
+              <span className="inline-block w-1 h-3.5 bg-teal-400 ml-0.5 animate-pulse rounded-sm" />
+            </div>
+          </div>
+        )}
+
+        {/* Thinking indicator */}
+        {thinking && !streamingReply && (
+          <div className="flex justify-start">
+            <div className="bg-slate-800/80 rounded-2xl rounded-bl-sm px-4 py-3">
+              <div className="flex gap-1.5 items-center">
+                <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
-          ))}
-
-          {thinking && (
-            <div className="flex justify-start">
-              <div className="bg-slate-800/80 border border-slate-700 rounded-2xl rounded-bl-sm px-4 py-3">
-                <div className="flex gap-1.5 items-center h-4">
-                  <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                  <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                  <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {streamingReply && (
-            <div className="flex justify-start">
-              <div className="max-w-[80%] px-4 py-3 rounded-2xl rounded-bl-sm text-sm leading-relaxed bg-slate-800/80 text-slate-100 border border-slate-700">
-                {streamingReply}
-                <span className="inline-block w-1.5 h-3.5 bg-teal-400 rounded-sm ml-0.5 animate-pulse" />
-              </div>
-            </div>
-          )}
-
-          <div ref={bottomRef} />
-        </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
       </div>
 
       {/* Input bar or done state */}
