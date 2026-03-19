@@ -35,6 +35,7 @@ export default function InterviewPage() {
   const [comment, setComment] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [streamingReply, setStreamingReply] = useState('')
 
   const submitWithComment = async () => {
     setSubmitting(true)
@@ -98,23 +99,51 @@ export default function InterviewPage() {
     setMessages(updated)
     setInput('')
     setThinking(true)
+    setStreamingReply('')
     try {
       const res = await fetch('/api/interviews/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, messages: updated }),
+        body: JSON.stringify({ token, messages: updated, stream: true }),
       })
-      const data = await res.json()
-      if (data.reply) {
-        const final: Message[] = [...updated, { role: 'assistant', content: data.reply }]
-        setMessages(final)
-        if (data.done) {
-          setDone(true)
-          await fetch('/api/interviews/complete', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token, answers: final }),
-          })
+
+      // Handle AI SDK DataStreamResponse (text/event-stream)
+      if (res.headers.get('content-type')?.includes('text/event-stream') && res.body) {
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let accumulated = ''
+        setThinking(false)
+        while (true) {
+          const { done: streamDone, value } = await reader.read()
+          if (streamDone) break
+          const chunk = decoder.decode(value, { stream: true })
+          // AI SDK data stream lines: 0:"token"\n
+          for (const line of chunk.split('\n')) {
+            const match = line.match(/^0:"(.*)"$/)
+            if (match) {
+              try {
+                const tok = JSON.parse(`"${match[1]}"`)
+                accumulated += tok
+                setStreamingReply(accumulated)
+              } catch { /* skip malformed chunk */ }
+            }
+          }
+        }
+        if (accumulated) {
+          const final: Message[] = [...updated, { role: 'assistant', content: accumulated }]
+          setMessages(final)
+          setStreamingReply('')
+        }
+      } else {
+        // Fallback: non-streaming JSON response
+        setThinking(false)
+        const data = await res.json()
+        if (data.reply) {
+          const final: Message[] = [...updated, { role: 'assistant', content: data.reply }]
+          setMessages(final)
+          if (data.isDone) {
+            setDone(true)
+          }
         }
       }
     } catch {
@@ -167,7 +196,7 @@ export default function InterviewPage() {
           )}
           {messages.length > 0 && (
             <p className="text-xs text-teal-400 font-medium">
-              Question {Math.ceil(messages.length / 2)} of 20
+              Question {Math.ceil(messages.length / 2)} of 8
             </p>
           )}
         </div>
@@ -198,6 +227,15 @@ export default function InterviewPage() {
                   <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
                   <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {streamingReply && (
+            <div className="flex justify-start">
+              <div className="max-w-[80%] px-4 py-3 rounded-2xl rounded-bl-sm text-sm leading-relaxed bg-slate-800/80 text-slate-100 border border-slate-700">
+                {streamingReply}
+                <span className="inline-block w-1.5 h-3.5 bg-teal-400 rounded-sm ml-0.5 animate-pulse" />
               </div>
             </div>
           )}
