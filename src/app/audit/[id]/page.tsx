@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   Copy, Check, ExternalLink, RefreshCw, BarChart2,
-  Users, Clock, CheckCircle2, FileText, Send, Plus
+  Users, Clock, CheckCircle2, FileText, Send, Plus, Loader2
 } from 'lucide-react'
 import { InviteForm } from '@/components/InviteForm'
 
@@ -81,6 +81,7 @@ export default function AuditDetailPage() {
   const [resending, setResending] = useState<string | null>(null)
   const [resendDone, setResendDone] = useState<string | null>(null)
   const [showInviteForm, setShowInviteForm] = useState(false)
+  const [generatingReport, setGeneratingReport] = useState(false)
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
 
@@ -117,6 +118,14 @@ export default function AuditDetailPage() {
   }
 
   const generateReport = async () => {
+    setGeneratingReport(true)
+    try {
+      await fetch('/api/report/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: id }),
+      })
+    } catch { /* proceed anyway */ }
     router.push(`/report/${id}`)
   }
 
@@ -166,7 +175,8 @@ export default function AuditDetailPage() {
               <button
               type="button"
                 onClick={generateReport}
-                className="flex items-center gap-1.5 text-xs bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-md px-3 py-1.5 transition-colors"
+                disabled={generatingReport}
+                className="flex items-center gap-1.5 text-xs bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-md px-3 py-1.5 transition-colors disabled:opacity-50"
               >
                 <FileText size={13} /> Generate report
               </button>
@@ -308,7 +318,8 @@ export default function AuditDetailPage() {
             <button
               type="button"
               onClick={generateReport}
-              className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-4 py-3 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
+              disabled={generatingReport}
+              className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-4 py-3 rounded-lg transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
             >
               <FileText size={15} /> Generate report
             </button>
