@@ -1,7 +1,8 @@
 'use client';
 import Image from 'next/image';
+import { Share2, Check, Download } from 'lucide-react';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { FeedbackBar } from '@/components/FeedbackBar';
@@ -107,13 +108,14 @@ function getMaturityTier(score: number) {
   return                  { label: 'Initial',      color: 'text-red-400',    bg: 'bg-red-900/30',    border: 'border-red-500/30'    };
 }
 
-export default function ReportPage() {
+function ReportContent() {
   const params     = useParams();
   const id         = params?.id as string;
   const searchParams = useSearchParams();
   const forceUnlock = searchParams?.get('unlock') === '1';
 
   const [report,         setReport]         = useState<ReportData | null>(null);
+  const [shareCopied,    setShareCopied]    = useState(false);
   const [loading,        setLoading]        = useState(true);
   const [error,          setError]          = useState<string | null>(null);
   const [execSummary,    setExecSummary]    = useState<string | null>(null);
@@ -125,7 +127,19 @@ export default function ReportPage() {
   const [paidChecked,    setPaidChecked]    = useState(false);
   const [checkoutLoading,setCheckoutLoading]= useState(false);
 
-  useEffect(() => {
+  const handleShare = useCallback(() => {
+    const url = window.location.href
+    if (navigator.share) {
+      navigator.share({ title: 'Digital Maturity Report', url }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        setShareCopied(true)
+        setTimeout(() => setShareCopied(false), 2000)
+      }).catch(() => {})
+    }
+  }, [])
+
+    useEffect(() => {
     if (!id) return;
     fetch(`/api/report/${id}/preview`)
       .then(r => r.ok ? r.json() : null)
@@ -235,7 +249,20 @@ export default function ReportPage() {
       <div className="border-b border-slate-800 px-6 py-4 sticky top-0 z-40 bg-slate-950/95 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <span className="text-white font-bold text-lg tracking-tight">Connai</span>
-          <span className="text-slate-500 text-sm">Digital Maturity Report</span>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 text-sm hidden sm:block">Digital Maturity Report</span>
+            <button
+              type="button"
+              onClick={handleShare}
+              title="Share report"
+              className="flex items-center gap-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors"
+            >
+              {shareCopied
+                ? <><Check size={13} className="text-teal-400" /> <span className="text-teal-400">Copied!</span></>
+                : <><Share2 size={13} /> <span>Share</span></>
+              }
+            </button>
+          </div>
         </div>
       </div>
 
@@ -495,4 +522,39 @@ export default function ReportPage() {
       <FeedbackBar reportId={id} />
     </div>
   );
+}
+
+export default function ReportPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="max-w-4xl w-full mx-auto px-4 py-10 space-y-8">
+          {/* Animated skeleton */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 animate-pulse">
+            <div className="h-4 bg-slate-700 rounded w-32 mb-3" />
+            <div className="h-8 bg-slate-700 rounded w-64 mb-6" />
+            <div className="h-16 bg-slate-700 rounded w-28" />
+          </div>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 animate-pulse">
+            <div className="h-4 bg-slate-700 rounded w-48 mb-4" />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-16 bg-slate-800 rounded-xl" />
+              ))}
+            </div>
+          </div>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 animate-pulse">
+            <div className="h-4 bg-slate-700 rounded w-40 mb-3" />
+            <div className="space-y-2">
+              <div className="h-3 bg-slate-700 rounded" />
+              <div className="h-3 bg-slate-700 rounded w-5/6" />
+              <div className="h-3 bg-slate-700 rounded w-4/6" />
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <ReportContent />
+    </Suspense>
+  )
 }
