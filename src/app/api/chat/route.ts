@@ -44,7 +44,7 @@ const groq = createOpenAI({
 export async function POST(req: NextRequest) {
   // Rate limit: max 15 chat messages per minute per IP (prevents Groq key burn)
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'anon'
-  const { success: ok } = rateLimit(ip, 15, 60_000)
+  const ok = rateLimit(ip, 15)
   if (!ok) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {
       status: 429,
