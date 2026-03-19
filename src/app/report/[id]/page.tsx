@@ -291,6 +291,9 @@ function ReportInner() {
               <button
                 type="button"
                 onClick={() => setShareDropdown(v => !v)}
+                aria-label="Share this report"
+                aria-expanded={shareDropdown}
+                aria-haspopup="true"
                 className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors"
               >
                 <Share2 size={13} /> Share
@@ -328,6 +331,7 @@ function ReportInner() {
             <button
               type="button"
               onClick={handleDownloadPDF}
+              aria-label="Download report as PDF"
               className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors"
             >
               <Download size={13} /> PDF
