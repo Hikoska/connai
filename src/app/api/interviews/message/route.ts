@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import { Resend } from 'resend'
+import { rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -55,6 +56,8 @@ async function generateReply(systemPrompt: string, msgs: Array<{role: string; co
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? req.headers.get('x-real-ip') ?? 'unknown'
+    if (!rateLimit(ip, 30)) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     const { token, messages } = await req.json()
     if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 })
     const ctx = await getInterviewContext(token)
