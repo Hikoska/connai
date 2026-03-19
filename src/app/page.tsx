@@ -61,6 +61,20 @@ export default function HomePage() {
       </section>
       <FloatingAIWidget />
       <HomeConcierge />
+      <footer className="bg-[#0D2738] border-t border-white/5 py-10 px-6">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-teal-400 font-bold text-sm">Connai</span>
+            <span className="text-white/30 text-xs">· AI-powered digital maturity audits</span>
+          </div>
+          <nav className="flex items-center gap-5 text-xs text-white/40">
+            <Link href="/dashboard" className="hover:text-white/70 transition-colors">Dashboard</Link>
+            <Link href="/privacy" className="hover:text-white/70 transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-white/70 transition-colors">Terms</Link>
+          </nav>
+          <p className="text-white/30 text-xs">© {new Date().getFullYear()} Connai. All rights reserved.</p>
+        </div>
+      </footer>
     </main>
   )
 }
