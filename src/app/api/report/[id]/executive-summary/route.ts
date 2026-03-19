@@ -29,7 +29,7 @@ function getMaturityTier(score: number): string {
 
 type AIModel = ReturnType<typeof groq>
 
-async function callAI(model: AIModel, prompt: string, maxTokens = 512): Promise<string> {
+async function callAI(model: AIModel, prompt: string, maxTokens = 800): Promise<string> {
   const { text } = await generateText({
     model,
     messages: [{ role: 'user', content: prompt }],
@@ -39,16 +39,29 @@ async function callAI(model: AIModel, prompt: string, maxTokens = 512): Promise<
   return text.trim()
 }
 
-async function withFallback(prompt: string, maxTokens = 512): Promise<string> {
-  try {
-    return await callAI(groq('llama-3.3-70b-versatile'), prompt, maxTokens)
-  } catch {
+/**
+ * Three-tier fallback:
+ * 1. qwen-qwq-32b  — best analytical depth for exec summaries
+ * 2. llama-3.3-70b-versatile — reliable workhorse
+ * 3. cerebras llama3.1-8b — fast fallback
+ * 4. groq llama-3.1-8b-instant — last resort
+ */
+async function withFallback(prompt: string, maxTokens = 800): Promise<string> {
+  const attempts: Array<[AIModel, number]> = [
+    [groq('qwen-qwq-32b'), maxTokens],
+    [groq('llama-3.3-70b-versatile'), maxTokens],
+    [cerebras('llama3.1-8b'), maxTokens],
+    [groq('llama-3.1-8b-instant'), maxTokens],
+  ]
+  for (const [model, tokens] of attempts) {
     try {
-      return await callAI(cerebras('llama3.1-8b'), prompt, maxTokens)
+      const result = await callAI(model, prompt, tokens)
+      if (result && result.length > 30) return result
     } catch {
-      throw new Error('All AI providers failed')
+      continue
     }
   }
+  throw new Error('All AI providers failed')
 }
 
 export async function GET(
@@ -140,8 +153,8 @@ ${sortedDims.map(([name]) => `  "${name}": "one sentence here"`).join(',\n')}
 
   // Run both AI calls in parallel
   const [summaryResult, insightsResult] = await Promise.allSettled([
-    withFallback(summaryPrompt, 512),
-    withFallback(insightsPrompt, 800),
+    withFallback(summaryPrompt, 800),
+    withFallback(insightsPrompt, 1000),
   ])
 
   if (summaryResult.status === 'rejected') {
