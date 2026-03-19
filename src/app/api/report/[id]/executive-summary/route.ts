@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
+import { rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 45
@@ -32,7 +33,12 @@ async function withFallback(prompt: string, maxTokens = 1400): Promise<string> {
   throw new Error('All AI providers failed')
 }
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+  if (!rateLimit(ip, 'exec-summary', 10)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const { id } = await params
   const key = SB_SVC || SB_ANON
 
@@ -58,7 +64,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   if (rep.executive_summary && rep.executive_summary.length > 100) {
-    return NextResponse.json({ summary: rep.executive_summary })
+    return NextResponse.json({ summary: rep.executive_summary, tier: getMaturityTier(rep.overall_score ?? 50) })
   }
 
   const scores = rep.dimension_scores as Record<string, number>
@@ -94,8 +100,8 @@ Tone: Write like McKinsey. No bullets. No platitudes like "digital transformatio
 
   try {
     const summary = await withFallback(prompt, 1400)
-    return NextResponse.json({ summary })
+    return NextResponse.json({ summary, tier })
   } catch {
-    return NextResponse.json({ summary: `${orgName} has achieved an overall digital maturity score of ${overall}/100 placing them in the ${tier} tier. Key strengths: ${topStrengths}. Priority gaps: ${topGaps}.` })
+    return NextResponse.json({ summary: `${orgName} has achieved an overall digital maturity score of ${overall}/100 placing them in the ${tier} tier. Key strengths: ${topStrengths}. Priority gaps: ${topGaps}.`, tier })
   }
 }

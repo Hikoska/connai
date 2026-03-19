@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
+import { rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -38,7 +39,35 @@ async function generateWithFallback(prompt: string, maxTokens = 1500): Promise<s
   throw new Error('All AI providers failed')
 }
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+/**
+ * Flatten action-plan items to plain strings for the report page renderer.
+ * The AI returns objects: { action, dimension, impact, effort }
+ * We flatten to: "<action>" — or add context if available.
+ */
+function flattenItems(items: unknown[]): string[] {
+  if (!Array.isArray(items)) return []
+  return items.map(item => {
+    if (typeof item === 'string') return item
+    if (item && typeof item === 'object') {
+      const o = item as Record<string, unknown>
+      const action = String(o.action || '').trim()
+      const dim    = o.dimension ? String(o.dimension) : ''
+      const impact = o.impact    ? String(o.impact) : ''
+      if (!action) return ''
+      // Format: "<action> (dimension, High impact)"
+      const ctx = [dim, impact ? `${impact} impact` : ''].filter(Boolean).join(' · ')
+      return ctx ? `${action} (${ctx})` : action
+    }
+    return ''
+  }).filter(Boolean)
+}
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+  if (!rateLimit(ip, 'action-plan', 5)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const { id } = await params
 
   const leadRows = await sbGet(`/leads?id=eq.${id}&select=org_name,industry&limit=1`)
@@ -75,10 +104,27 @@ Return ONLY valid JSON, no markdown fences, no explanation:
 
   try {
     const cleaned = raw.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim()
-    return NextResponse.json(JSON.parse(cleaned))
+    const parsed = JSON.parse(cleaned)
+    // Return flattened strings so the report page renderer works correctly
+    return NextResponse.json({
+      quick_wins: flattenItems(parsed.quick_wins ?? []),
+      six_month:  flattenItems(parsed.six_month  ?? []),
+      long_term:  flattenItems(parsed.long_term  ?? []),
+      summary:    parsed.summary ?? '',
+    })
   } catch {
     const match = raw.match(/\{[\s\S]*\}/)
-    if (match) { try { return NextResponse.json(JSON.parse(match[0])) } catch { /* fall through */ } }
+    if (match) {
+      try {
+        const parsed = JSON.parse(match[0])
+        return NextResponse.json({
+          quick_wins: flattenItems(parsed.quick_wins ?? []),
+          six_month:  flattenItems(parsed.six_month  ?? []),
+          long_term:  flattenItems(parsed.long_term  ?? []),
+          summary:    parsed.summary ?? '',
+        })
+      } catch { /* fall through */ }
+    }
     return NextResponse.json({ error: 'Failed to parse action plan' }, { status: 500 })
   }
 }
