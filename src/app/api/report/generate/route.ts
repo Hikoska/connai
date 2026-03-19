@@ -122,7 +122,10 @@ export async function POST(req: Request) {
 
   try {
     const ip = (req as Request & { headers: Headers }).headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
-    if (!rateLimit(ip, 10)) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    // [SEC-01] Named bucket: 'report-generate' isolated from other routes
+    if (!rateLimit(ip, 'report-generate', 10)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
     const { lead_id, force } = await req.json()
     if (!lead_id) return NextResponse.json({ error: 'lead_id required' }, { status: 400 })
     if (!SERVICE_KEY) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
