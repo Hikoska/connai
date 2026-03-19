@@ -1,5 +1,7 @@
+import { NextRequest } from 'next/server'
 import { createOpenAI } from '@ai-sdk/openai'
 import { streamText } from 'ai'
+import { rateLimit } from '@/lib/rate-limit'
 
 const SYSTEM_PROMPT = `You are ConnAI, a top-tier digital transformation consultant conducting a Socratic Discovery for a digital maturity audit. You are not a rigid data-entry bot; you are an empathetic, unbiased, and validating expert who synthesizes information in real-time.
 
@@ -32,7 +34,6 @@ Your goal is to uncover the root causes of operational bottlenecks using active 
 - Once provided by the user, emit:
   <CONNAI_STAKEHOLDERS>{"stakeholders": [{"name": "Name", "role": "Role"}]}</CONNAI_STAKEHOLDERS>
 
-// ACTION: REAL PUSH - FORCED REDEPLOY - TRIGGER TIMESTAMP: 2026-03-10T13:45:00Z
 `
 
 const groq = createOpenAI({
@@ -40,7 +41,16 @@ const groq = createOpenAI({
   apiKey: process.env.GROQ_API_KEY,
 })
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  // Rate limit: max 15 chat messages per minute per IP (prevents Groq key burn)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'anon'
+  const { success: ok } = rateLimit(ip, 15, 60_000)
+  if (!ok) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
   const { messages } = await req.json()
 
   const result = streamText({
