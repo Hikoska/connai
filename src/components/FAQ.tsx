@@ -12,7 +12,7 @@ const faqItems = [
   },
   {
     q: "How long does the interview take?",
-    a: "The main interview takes about 30 minutes. It's fast and can be done right from your phone or computer at a time that suits you.",
+    a: "The main interview takes about 20 minutes. It's fast and can be done right from your phone or computer at a time that suits you.",
   },
   {
     q: "What do I get in the report?",
