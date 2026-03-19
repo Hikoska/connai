@@ -30,7 +30,7 @@ type Lead = {
   id: string
   org_name: string
   owner_email: string
-  created_at: string
+  captured_at: string
   interviews: Interview[]
   report: { id: string; lead_id: string } | null
 }
@@ -177,9 +177,16 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        {/* Org name + progress */}
+                        {/* Org name + date + progress */}
                         <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <h2 className="font-semibold text-white truncate">{lead.org_name || 'Unnamed Organisation'}</h2>
+                          <div className="flex flex-col min-w-0">
+                            <h2 className="font-semibold text-white truncate">{lead.org_name || 'Unnamed Organisation'}</h2>
+                            {lead.captured_at && (
+                              <span className="text-xs text-white/30 mt-0.5">
+                                {new Date(lead.captured_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
                           {totalCount > 0 && (
                             <span className="text-xs text-white/40 shrink-0">
                               {completedCount}/{totalCount} completed
