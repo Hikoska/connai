@@ -16,19 +16,23 @@ export function SocialProof() {
     const fetchStats = async () => {
       try {
         const supabase = createClient();
+        // Join leads table to filter out synthetic QA entries (Overnight_*, Test*)
         const { data } = await supabase
           .from('interviews')
-          .select('id, organisation', { count: 'exact' });
+          .select('id, leads!inner(org_name)')
+          .not('leads.org_name', 'like', 'Overnight_%')
+          .not('leads.org_name', 'like', 'Test%');
         if (data) {
+          const organisations = data
+            .map((item) => (item.leads as unknown as { org_name: string } | null)?.org_name)
+            .filter((name): name is string => Boolean(name));
           setStats({
             completedSessions: data.length,
-            distinctOrganisations: Array.from(
-              new Set(data.map((item) => item.organisation))
-            ).length,
+            distinctOrganisations: Array.from(new Set(organisations)).length,
           });
         }
       } catch (err) {
-
+        // fail silently — counter stays at 0 and component renders null
       }
     };
     fetchStats();
