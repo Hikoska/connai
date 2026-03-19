@@ -8,11 +8,11 @@ type Role = typeof ROLES[number]
 
 const ROLE_CONTENT: Record<Role, { headline: string; cta: string }> = {
   'CEO / Owner': {
-    headline: "You'll get a full digital health score for your org in 30 min — at a fraction of consultant cost.",
+    headline: "You'll get a full digital health score for your org in 20 min — at a fraction of consultant cost.",
     cta: 'Start my free audit →',
   },
   'Operations': {
-    headline: 'Connai maps your process gaps and benchmarks them against your sector. Takes 30 min.',
+    headline: 'Connai maps your process gaps and benchmarks them against your sector. Takes 20 min.',
     cta: 'Run the audit →',
   },
   'IT / Digital': {
@@ -62,7 +62,7 @@ export default function HomeConcierge() {
 
   return (
     <div
-      className={`fixed bottom-24 right-5 z-40 w-[300px] transition-all duration-500 ease-out
+      className={`fixed bottom-36 right-5 z-40 w-[300px] transition-all duration-500 ease-out
         ${visible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
     >
       <div className="bg-slate-900 border border-teal-600/40 rounded-2xl shadow-2xl shadow-black/40 overflow-hidden">
