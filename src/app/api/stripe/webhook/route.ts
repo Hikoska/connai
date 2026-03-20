@@ -45,10 +45,10 @@ export async function POST(req: NextRequest) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as {
       id: string;
-      metadata?: { report_id?: string };
+      metadata?: { lead_id?: string; report_id?: string }; // lead_id is primary; report_id for backward compat
       amount_total?: number;
     };
-    const reportId = session.metadata?.report_id;
+    const reportId = session.metadata?.lead_id ?? session.metadata?.report_id;
     const sessionId = session.id;
 
     if (reportId && sessionId) {
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       if (supaUrl && supaKey) {
         // Idempotent insert — stripe_session_id has a UNIQUE constraint (migration CL-13).
         // Prefer: resolution=ignore-duplicates → ON CONFLICT DO NOTHING, so Stripe retries
-        // (network blips, timeouts) are safe and won’t produce duplicate payment records.
+        // (network blips, timeouts) are safe and won't produce duplicate payment records.
         const insertRes = await fetch(`${supaUrl}/rest/v1/report_payments`, {
           method: 'POST',
           headers: {
