@@ -38,6 +38,32 @@
 
 ---
 
+## 💳 Stripe Setup
+
+Connai uses Stripe for paid report packs. You need two things: API keys + a webhook.
+
+### 1. API Keys
+In your [Stripe Dashboard](https://dashboard.stripe.com/apikeys), copy:
+- **Publishable key** → `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` in Vercel
+- **Secret key** → `STRIPE_SECRET_KEY` in Vercel
+
+### 2. Webhook Registration
+Go to [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks) and add an endpoint:
+
+```
+URL:    https://connai.linkgrow.io/api/stripe/webhook
+Event:  checkout.session.completed
+```
+
+Copy the **Webhook signing secret** → `STRIPE_WEBHOOK_SECRET` in Vercel.
+
+> ⚠️ Without the webhook, payments will process but report packs will **not** be credited — the `/api/stripe/webhook` handler is what unlocks the purchased pack in the database.
+
+### 3. Report Unlock Token
+Set `NEXT_PUBLIC_REPORT_UNLOCK_TOKEN` to any random string (e.g. `openssl rand -hex 16`). This is the fallback token that unlocks report previews on the `/report/[id]` page.
+
+---
+
 ## 🔐 Authentication Architecture
 
 Connai uses **Supabase Auth with `@supabase/ssr`** for cookie-based, server-aware sessions.
