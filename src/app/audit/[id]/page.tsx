@@ -65,6 +65,7 @@ function CopyButton({ text }: { text: string }) {
     <button
               type="button"
       onClick={copy}
+      aria-label={copied ? 'Link copied' : 'Copy interview link'}
       className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-white/5 border border-white/20 text-white/60 hover:text-white hover:border-white/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0E1117]"
     >
       {copied ? <><Check size={12} className="text-teal-400" /> Copied</> : <><Copy size={12} /> Copy link</>}
@@ -235,6 +236,7 @@ export default function AuditDetailPage() {
               type="button"
                         onClick={() => resendInvite(iv)}
                         disabled={resending === iv.id}
+                          aria-label="Resend invite email"
                         className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-md bg-white/5 border border-white/20 text-white/60 hover:text-white hover:border-white/30 transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0E1117]"
                         title="Resend invite email"
                       >
@@ -278,12 +280,14 @@ export default function AuditDetailPage() {
           <button
               type="button"
             onClick={() => setShowInviteForm(!showInviteForm)}
+            aria-expanded={showInviteForm}
+            aria-controls="invite-form-panel"
             className="flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors"
           >
             <Plus size={14} /> {showInviteForm ? 'Cancel' : 'Invite New Stakeholder'}
           </button>
           {showInviteForm && (
-            <div className="mt-4">
+            <div id="invite-form-panel" className="mt-4">
               <InviteForm leadId={lead.id} onInviteSent={() => { setShowInviteForm(false); fetchData() }} />
             </div>
           )}
