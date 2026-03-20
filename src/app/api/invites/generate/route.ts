@@ -16,6 +16,19 @@ export async function POST(req: Request) {
 
     const created: { name: string; role: string; interview_url: string }[] = []
 
+    // Fetch org name for email personalisation
+    let orgName = 'your organisation'
+    try {
+      const leadRes = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/leads?id=eq.${lead_id}&select=org_name&limit=1`,
+        { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}` } }
+      )
+      if (leadRes.ok) {
+        const leads = await leadRes.json()
+        if (leads?.[0]?.org_name) orgName = leads[0].org_name
+      }
+    } catch { /* non-fatal — fall back to default */ }
+
     for (const s of stakeholders) {
       if (!s.name?.trim() || !s.role?.trim()) continue
 
@@ -66,11 +79,11 @@ export async function POST(req: Request) {
           await resend.emails.send({
             from: 'Connai <invites@connai.linkgrow.io>',
             to: [s.email],
-            subject: `You're invited: Digital Maturity Interview${s.name ? ' for ' + s.name : ''}`,
+            subject: `You're invited: Digital Maturity Interview \u2014 ${orgName}`,
             html: `<!DOCTYPE html><html><body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#1a1a1a">
             <h2 style="color:#0D5C63;margin-bottom:8px">Your Digital Maturity Assessment</h2>
             <p>Hi ${s.name},</p>
-            <p>You've been invited to share your perspective on <strong>${''}</strong> organisation's digital maturity. The interview takes about 20 minutes and is completely conversational.</p>
+            <p>You've been invited to share your perspective on <strong>${orgName}</strong> organisation's digital maturity. The interview takes about 20 minutes and is completely conversational.</p>
             <p style="margin:24px 0">
               <a href="${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://connai.linkgrow.io'}/api/invites/track?token=${tokenValue}"
                  style="background:#0D5C63;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">
