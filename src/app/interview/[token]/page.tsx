@@ -33,6 +33,7 @@ export default function InterviewPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [error, setError] = useState('')
+  const [lastFailedMsg, setLastFailedMsg] = useState<string | null>(null)
 
   const [addlContext, setAddlContext] = useState('')
   const [submitted,   setSubmitted]   = useState(false)
@@ -154,6 +155,7 @@ export default function InterviewPage() {
       }
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }])
+      if (userContent) setLastFailedMsg(userContent)
     } finally {
       setThinking(false)
     }
@@ -163,6 +165,7 @@ export default function InterviewPage() {
     if (!input.trim() || thinking || done || !interviewId) return
     const content = input.trim()
     setInput('')
+    setLastFailedMsg(null)
     sendMessage(messages, interviewId, token, content)
   }, [input, thinking, done, interviewId, messages, token, sendMessage])
 
@@ -172,6 +175,14 @@ export default function InterviewPage() {
       send()
     }
   }, [send])
+
+  const retryLast = useCallback(() => {
+    if (!lastFailedMsg || !interviewId || thinking || done) return
+    const msgToRetry = lastFailedMsg
+    setLastFailedMsg(null)
+    setMessages(prev => prev.slice(0, -1))
+    sendMessage(messages.slice(0, -1), interviewId, token, msgToRetry)
+  }, [lastFailedMsg, interviewId, thinking, done, messages, token, sendMessage])
 
   if (loading) {
     return (
@@ -324,6 +335,18 @@ export default function InterviewPage() {
             </button>
           </div>
           <p className="text-xs text-slate-600 text-center mt-2">Enter to send &middot; Shift+Enter for new line</p>
+          {lastFailedMsg && !thinking && (
+            <div className="flex items-center justify-center gap-2 mt-1.5">
+              <span className="text-red-400/70 text-xs">Message failed.</span>
+              <button
+                type="button"
+                onClick={retryLast}
+                className="text-teal-400 text-xs hover:text-teal-300 underline underline-offset-2 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          )}
         </div>
       ) : null}
     </div>
