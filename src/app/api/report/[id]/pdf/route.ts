@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 import { jsPDF } from 'jspdf'
 
 export const dynamic = 'force-dynamic'
@@ -6,7 +7,12 @@ export const dynamic = 'force-dynamic'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://mhuofnkbjbanrdvvktps.supabase.co'
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+  if (!rateLimit(ip, 'report-pdf', 3)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
   if (!SUPABASE_SERVICE_ROLE_KEY) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   const { id } = await params
   let rows
