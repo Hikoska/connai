@@ -58,100 +58,56 @@ function ReportSkeleton() {
   return (
     <div id="report-root" className="min-h-screen bg-slate-950 text-white px-4 py-8 max-w-2xl mx-auto space-y-6 animate-pulse">
       <div className="h-8 w-48 bg-slate-800 rounded-xl" />
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-        <div className="h-16 w-16 bg-slate-800 rounded-full mx-auto" />
-        <div className="h-6 w-32 bg-slate-800 rounded mx-auto" />
-        <div className="h-4 w-24 bg-slate-800 rounded mx-auto" />
-      </div>
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="space-y-1">
-            <div className="flex justify-between">
-              <div className="h-3 w-40 bg-slate-800 rounded" />
-              <div className="h-3 w-8 bg-slate-800 rounded" />
-            </div>
-            <div className="h-2 bg-slate-800 rounded-full" />
-          </div>
-        ))}
-      </div>
+      <div className="h-32 bg-slate-800 rounded-2xl" />
+      <div className="h-4 w-full bg-slate-800 rounded" />
+      <div className="h-4 w-3/4 bg-slate-800 rounded" />
+      <div className="h-48 bg-slate-800 rounded-2xl" />
     </div>
   )
 }
 
-function GeneratingState({ onPollComplete }: { onPollComplete: (report: ReportData) => void }) {
-  const params = useParams()
-  const id = params?.id as string | undefined
-  const attemptRef = useRef(0)
-
-  useEffect(() => {
-    if (!id) return
-    const interval = setInterval(async () => {
-      attemptRef.current++
-      if (attemptRef.current > POLL_MAX_ATTEMPTS) {
-        clearInterval(interval)
-        return
-      }
-      try {
-        const res = await fetch(`/api/report/${id}/status`)
-        if (!res.ok) return
-        const { ready, report } = await res.json()
-        if (ready && report) {
-          clearInterval(interval)
-          onPollComplete(report)
-        }
-      } catch { /* ignore */ }
-    }, POLL_INTERVAL_MS)
-    return () => clearInterval(interval)
-  }, [id, onPollComplete])
-
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
   return (
-    <div id="report-root" className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center gap-6 px-4">
-      <div className="text-center space-y-3">
-        <div className="w-12 h-12 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto" />
-        <h2 className="text-xl font-semibold text-white">Generating your report…</h2>
-        <p className="text-slate-400 text-sm max-w-xs">Our AI is analysing the interview responses across 8 dimensions. This takes about 30 seconds.</p>
-      </div>
-      <p className="text-xs text-slate-600">This page will update automatically.</p>
-    </div>
+    <button
+      onClick={() => { navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) }) }}
+      className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/5"
+      title="Copy link"
+    >
+      {copied ? <Check size={12} className="text-teal-400" /> : <Share2 size={12} />}
+      {copied ? 'Copied' : 'Copy link'}
+    </button>
   )
 }
 
-function ReportInner() {
-  const params    = useParams()
+function useReportId() {
+  const params = useParams()
+  return params?.id as string | undefined
+}
+
+function ReportPageInner() {
+  const id = useReportId()
   const searchParams = useSearchParams()
-  const id        = params?.id as string | undefined
   const forceUnlock = searchParams.get('force') === '1'
 
-  const supabase  = createClient(SB_URL, SB_ANON)
+  const supabase = createClient(SB_URL, SB_ANON)
 
-  const [report,        setReport]        = useState<ReportData | null>(null)
-  const [loading,       setLoading]       = useState(true)
-  const [error,         setError]         = useState<string | null>(null)
-  const [generating,    setGenerating]    = useState(false)
-  const [paid,          setPaid]          = useState(false)
-  const [paidChecked,   setPaidChecked]   = useState(false)
-  const [actionPlan,    setActionPlan]    = useState<ActionPlan | null>(null)
-  const [planLoading,   setPlanLoading]   = useState(false)
-  const [planError,     setPlanError]     = useState<string | null>(null)
-  const [execSummary,   setExecSummary]   = useState<string | null>(null)
-  const [execLoading,   setExecLoading]   = useState(false)
-  const [copied,        setCopied]        = useState(false)
-  const [shareDropdown, setShareDropdown] = useState(false)
-  const shareRef = useRef<HTMLDivElement>(null)
+  const [report,       setReport]       = useState<ReportData | null>(null)
+  const [loading,      setLoading]      = useState(true)
+  const [generating,   setGenerating]   = useState(false)
+  const [error,        setError]        = useState<string | null>(null)
+  const [execSummary,  setExecSummary]  = useState<string | null>(null)
+  const [execLoading,  setExecLoading]  = useState(false)
+  const [actionPlan,   setActionPlan]   = useState<ActionPlan | null>(null)
+  const [planLoading,  setPlanLoading]  = useState(false)
+  const [planError,    setPlanError]    = useState<string | null>(null)
+  const [paid,         setPaid]         = useState(false)
+  const [paidChecked,  setPaidChecked]  = useState(false)
+  const [shareMsg,     setShareMsg]     = useState<string | null>(null)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollCount = useRef(0)
 
-  // -- Close share dropdown on outside click --
-  useEffect(() => {
-    if (!shareDropdown) return
-    const handler = (e: MouseEvent) => {
-      if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
-        setShareDropdown(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [shareDropdown])
-
-  // -- Load report --
+  // -- Load report from DB --
   useEffect(() => {
     if (!id) return
     const loadReport = async () => {
@@ -169,7 +125,12 @@ function ReportInner() {
           // Transform flat dimension_scores object to Dimension[] array
           const rawDims = (data as ReportData & { dimension_scores?: Record<string, number> }).dimension_scores ?? {}
           const dims: Dimension[] = Object.entries(rawDims).map(([name, score]) => ({ name, score: score as number }))
-          setReport({ ...(data as ReportData), dimensions: dims })
+          const reportData = data as ReportData
+          setReport({ ...reportData, dimensions: dims })
+          // Pre-populate exec summary from DB field to skip redundant API call
+          if (reportData.executive_summary) {
+            setExecSummary(reportData.executive_summary)
+          }
         }
       } catch (e) {
         setError((e as Error).message || 'Failed to load report')
@@ -189,7 +150,7 @@ function ReportInner() {
       .catch(() => setPaidChecked(true))
   }, [id, forceUnlock])
 
-  // -- Load executive summary (once report loaded) --
+  // -- Load executive summary (once report loaded, fallback if not in DB) --
   const loadExecSummary = useCallback(async () => {
     if (!id || execSummary || execLoading) return
     setExecLoading(true)
@@ -219,139 +180,156 @@ function ReportInner() {
       } else {
         setPlanError('Failed to load action plan')
       }
-    } catch {
-      setPlanError('Failed to load action plan')
-    }
+    } catch { setPlanError('Network error') }
     setPlanLoading(false)
   }, [id, actionPlan, planLoading])
 
   useEffect(() => {
     if (!paid && !forceUnlock && !paidChecked) return
     if (!paid && !forceUnlock) return
-    loadActionPlan()
   }, [paid, forceUnlock, paidChecked, loadActionPlan])
 
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch { /* ignore */ }
-  }
-
-  const handleDownloadPDF = () => { window.print() }
-
   const isPaid = paid || forceUnlock;
+
+  // Poll for report when generating
+  useEffect(() => {
+    if (!generating || !id) return
+    const triggerGenerate = async () => {
+      try {
+        await fetch('/api/report/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lead_id: id }),
+        })
+      } catch { /* fire-and-forget */ }
+    }
+    triggerGenerate()
+    pollRef.current = setInterval(async () => {
+      pollCount.current += 1
+      if (pollCount.current > POLL_MAX_ATTEMPTS) {
+        clearInterval(pollRef.current!)
+        setGenerating(false)
+        setError('Report generation timed out. Please refresh to try again.')
+        return
+      }
+      const { data } = await supabase
+        .from('reports')
+        .select('id, overall_score, dimension_scores, executive_summary')
+        .eq('lead_id', id)
+        .maybeSingle()
+      if (data?.overall_score) {
+        clearInterval(pollRef.current!)
+        setGenerating(false)
+        const rawDims = (data as ReportData & { dimension_scores?: Record<string, number> }).dimension_scores ?? {}
+        const dims: Dimension[] = Object.entries(rawDims).map(([name, score]) => ({ name, score: score as number }))
+        const reportData = data as ReportData
+        setReport({ ...reportData, dimensions: dims })
+        if (reportData.executive_summary) setExecSummary(reportData.executive_summary)
+      }
+    }, POLL_INTERVAL_MS)
+    return () => { if (pollRef.current) clearInterval(pollRef.current) }
+  }, [generating, id])
+
+  const handleShare = async () => {
+    const url = window.location.href
+    try {
+      await navigator.clipboard.writeText(url)
+      setShareMsg('Link copied!')
+    } catch {
+      setShareMsg(url)
+    }
+    setTimeout(() => setShareMsg(null), 3000)
+  }
 
   if (loading) return <ReportSkeleton />
 
   if (error) {
     return (
-      <div id="report-root" className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="text-center space-y-4 p-8">
-          <p className="text-red-400 font-semibold">Failed to load report</p>
-          <p className="text-slate-500 text-sm">{error}</p>
-          <button type="button" onClick={() => window.location.reload()} className="text-teal-400 text-sm hover:underline">Try again</button>
+      <div id="report-root" className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <p className="text-red-400 font-semibold mb-4">{error}</p>
+          <button onClick={() => window.location.reload()} className="text-teal-400 underline text-sm">Refresh</button>
         </div>
       </div>
     )
   }
 
   if (generating) {
-    return <GeneratingState onPollComplete={(data) => { setReport(data); setGenerating(false) }} />
-  }
-
-  if (!report) {
     return (
-      <div id="report-root" className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="text-center space-y-4 p-8">
-          <p className="text-slate-400 mb-4">Report not found or still generating.</p>
-          <button
-            type="button"
-            onClick={async () => {
-              setGenerating(true)
-              await fetch('/api/report/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: id }) })
-            }}
-            className="bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-xl"
-          >
-            Generate report
-          </button>
+      <div id="report-root" className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center px-4 gap-6">
+        <div className="w-10 h-10 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
+        <div className="text-center">
+          <p className="text-white font-semibold mb-1">Building your report…</p>
+          <p className="text-slate-400 text-sm">This usually takes 30–60 seconds</p>
         </div>
       </div>
     )
   }
 
-  const tier = report.overall_score !== undefined ? getMaturityTier(report.overall_score) : null
+  if (!report) return <ReportSkeleton />
+
+  const score = report.overall_score ?? 0
+  const tier = getMaturityTier(score)
+  const dimensions = report.dimensions ?? []
 
   return (
-    <div id="report-root" className="min-h-screen bg-[#0E1117] text-white">
-      {/* Sticky nav */}
-      <div className="sticky top-0 z-10 bg-[#0E1117]/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-        <a href="/dashboard" className="text-sm font-semibold text-white hover:text-teal-400 transition-colors">
-          &larr; Dashboard
-        </a>
+    <div id="report-root" className="min-h-screen bg-slate-950 text-white">
+      {/* Header bar */}
+      <div className="sticky top-0 z-20 bg-slate-950/90 backdrop-blur border-b border-white/5 px-4 py-3 flex items-center justify-between">
+        <span className="text-teal-400 font-bold text-sm">Connai</span>
         <div className="flex items-center gap-2">
-          {/* Share button */}
-          <div ref={shareRef} className="relative">
-            <button
-              type="button"
-              aria-label="Share this report"
-              aria-expanded={shareDropdown}
-              aria-haspopup="true"
-              onClick={() => setShareDropdown(p => !p)}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:text-white hover:border-white/20 transition-colors focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0E1117]"
-            >
-              <Share2 size={13} /> Share
-            </button>
-            {shareDropdown && (
-              <div className="absolute right-0 mt-1 w-44 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
-                <button type="button" onClick={handleCopyLink} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
-                  {copied ? <><Check size={13} className="text-teal-400" /> Copied!</> : 'Copy link'}
-                </button>
-                <a
-                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`We scored ${report.overall_score}/100 on digital maturity. See the full report:`)}&url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                >
-                  Share on X
-                </a>
-                <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                >
-                  Share on LinkedIn
-                </a>
-              </div>
-            )}
-          </div>
+          <CopyButton text={typeof window !== 'undefined' ? window.location.href : ''} />
           <button
-            type="button"
-            aria-label="Download report as PDF"
-            onClick={handleDownloadPDF}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:text-white hover:border-white/20 transition-colors focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0E1117]"
+            onClick={handleShare}
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/5"
           >
-            <Download size={13} /> PDF
+            <Share2 size={12} />
+            Share
           </button>
         </div>
       </div>
+      {shareMsg && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-sm px-4 py-2 rounded-full shadow-lg z-50 max-w-xs text-center">
+          {shareMsg}
+        </div>
+      )}
 
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         {/* Score card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center space-y-2">
-          <p className="text-slate-500 text-xs font-medium uppercase tracking-widest">Digital Maturity Score</p>
-          <p className="text-6xl font-bold text-white">{report.overall_score ?? '—'}</p>
-          {report.overall_score != null && (
-            <p className={`text-base font-semibold ${getMaturityTier(report.overall_score).color}`}>
-              {getMaturityTier(report.overall_score).label}
-            </p>
-          )}
-          <p className="text-slate-500 text-xs">out of 100 &middot; based on interview responses</p>
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 border border-white/10">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Digital Maturity Score</p>
+              <div className="flex items-end gap-2">
+                <span className="text-6xl font-bold font-mono">{score}</span>
+                <span className="text-slate-500 text-xl mb-1">/100</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className={`text-sm font-semibold ${tier.color}`}>{tier.label}</span>
+              <div className="mt-1">
+                <button
+                  onClick={() => fetch('/api/report/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: id }) }).then(() => window.location.reload())}
+                  className="flex items-center gap-1 text-slate-500 hover:text-slate-300 text-xs transition-colors"
+                  title="Regenerate report"
+                >
+                  <RefreshCw size={11} />
+                  Regenerate
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-teal-600 to-teal-400 rounded-full transition-all duration-1000"
+              style={{ width: `${score}%` }}
+            />
+          </div>
         </div>
 
-        {/* Executive summary */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3">
-          <h2 className="text-base font-semibold text-white">Executive Summary</h2>
+        {/* Executive Summary */}
+        <div className="bg-slate-900 rounded-2xl p-5 border border-white/5">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Executive Summary</h2>
           {execLoading ? (
             <div className="space-y-2 animate-pulse">
               <div className="h-3 bg-slate-800 rounded w-full" />
@@ -361,147 +339,141 @@ function ReportInner() {
           ) : execSummary ? (
             <p className="text-slate-300 text-sm leading-relaxed">{execSummary}</p>
           ) : (
-            <p className="text-slate-500 text-sm">Summary not available.</p>
+            <p className="text-slate-500 text-sm italic">Summary not available.</p>
           )}
         </div>
 
-        {/* Dimensions */}
-        {report.dimensions?.length > 0 && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
-            <h2 className="text-base font-semibold text-white">Dimension Scores</h2>
-            <div className="space-y-4">
-              {report.dimensions.map((dim) => {
-                const benchmark = INDUSTRY_BENCHMARKS[dim.name?.toLowerCase()] ?? 55
-                return (
-                  <div key={dim.name} className="space-y-1.5">
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-sm font-medium text-slate-200 capitalize">{dim.name}</span>
-                      <span className="text-sm font-bold text-white">{dim.score}</span>
+        {/* Dimension scores */}
+        <div className="bg-slate-900 rounded-2xl p-5 border border-white/5">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Dimension Scores</h2>
+          <div className="space-y-4">
+            {dimensions.map(dim => {
+              const benchmarkKey = dim.name.toLowerCase()
+              const benchmark = INDUSTRY_BENCHMARKS[benchmarkKey]
+              return (
+                <div key={dim.name}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-slate-300">{dim.name}</span>
+                    <div className="flex items-center gap-2">
+                      {benchmark !== undefined && (
+                        <span className="text-slate-600 text-xs">avg {benchmark}</span>
+                      )}
+                      <span className="font-mono font-bold">{Math.round(dim.score)}</span>
                     </div>
-                    <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden">
+                  </div>
+                  <div className="relative h-1.5 bg-slate-700 rounded-full overflow-visible">
+                    <div
+                      className="h-full bg-teal-500 rounded-full transition-all duration-700"
+                      style={{ width: `${dim.score}%` }}
+                    />
+                    {benchmark !== undefined && (
                       <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{
-                          width: `${dim.score}%`,
-                          background: dim.score >= 70 ? '#2dd4bf' : dim.score >= 50 ? '#38bdf8' : '#f59e0b',
-                        }}
-                      />
-                      {/* Industry benchmark marker */}
-                      <div
-                        className="absolute top-0 h-full w-0.5 bg-white/20"
+                        className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-slate-400 rounded-full"
                         style={{ left: `${benchmark}%` }}
                         title={`Industry avg: ${benchmark}`}
                       />
-                    </div>
-                    {dim.insight && (
-                      <p className="text-xs text-slate-500 leading-relaxed">{dim.insight}</p>
                     )}
                   </div>
-                )
-              })}
-            </div>
+                </div>
+              )
+            })}
           </div>
-        )}
+        </div>
 
-        {/* Action Plan -- paid gate */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <h2 className="text-base font-semibold text-white">AI Action Plan</h2>
-          {!isPaid ? (
-            <div className="text-center py-6 space-y-4">
-              <p className="text-slate-400 text-sm">Unlock your personalised AI Action Plan to see exactly what to fix, in which order, and why.</p>
-              <button
-                type="button"
-                onClick={async () => {
-                  const res = await fetch('/api/stripe/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lead_id: id }),
-                  })
-                  const data = await res.json()
-                  if (data.url) window.location.href = data.url
-                }}
-                className="bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-teal-400"
-              >
-                Unlock for $49 &rarr;
-              </button>
-            </div>
-          ) : planLoading ? (
-            <div className="space-y-3 animate-pulse">
-              {['quick_wins','six_month','long_term'].map(k => (
-                <div key={k} className="space-y-2">
-                  <div className="h-4 w-24 bg-slate-800 rounded" />
-                  {[...Array(3)].map((_,i) => <div key={i} className="h-3 bg-slate-800 rounded" />)}
-                </div>
-              ))}
-            </div>
-          ) : planError ? (
-            <p className="text-red-400 text-sm">{planError}</p>
-          ) : actionPlan ? (
-            <div className="space-y-6">
-              {actionPlan.summary && (
-                <div className="bg-teal-900/20 border border-teal-800/30 rounded-xl p-4">
-                  <p className="text-sm text-teal-100 leading-relaxed">{actionPlan.summary}</p>
-                </div>
-              )}
-              {(['quick_wins','six_month','long_term'] as const).map(cat => {
-                const items = actionPlan[cat] ?? []
-                const cfg = CATEGORY_CONFIG[cat]
-                if (!items.length) return null
-                return (
-                  <div key={cat} className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <h3 className={`text-sm font-semibold ${cfg.color}`}>{cfg.label}</h3>
-                      <span className="text-xs text-slate-500">{cfg.desc}</span>
-                    </div>
-                    <div className="space-y-2">
-                      {items.map((item, i) => (
-                        <div key={i} className="flex gap-3 p-3 bg-slate-800/50 rounded-xl">
-                          <span className="text-slate-600 text-xs mt-0.5 font-mono">{i + 1}.</span>
-                          <div className="space-y-0.5 min-w-0">
-                            <p className="text-sm text-slate-200 leading-snug">{item.action}</p>
-                            <div className="flex gap-2 flex-wrap">
-                              <span className="text-xs text-slate-500">{item.dimension}</span>
-                              <span className={`text-xs font-medium ${ item.impact === 'High' ? 'text-teal-400' : item.impact === 'Medium' ? 'text-sky-400' : 'text-slate-400' }`}>
-                                {item.impact} impact
-                              </span>
-                              <span className={`text-xs ${ item.effort === 'Low' ? 'text-green-400' : item.effort === 'Medium' ? 'text-yellow-400' : 'text-orange-400' }`}>
-                                {item.effort} effort
-                              </span>
+        {/* Action Plan (paid) */}
+        {isPaid ? (
+          <div className="bg-slate-900 rounded-2xl p-5 border border-white/5">
+            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Action Plan</h2>
+            {planLoading ? (
+              <div className="space-y-2 animate-pulse">
+                {[1,2,3].map(i => <div key={i} className="h-16 bg-slate-800 rounded-xl" />)}
+              </div>
+            ) : planError ? (
+              <p className="text-red-400 text-sm">{planError}</p>
+            ) : actionPlan ? (
+              <div className="space-y-6">
+                {(Object.entries(CATEGORY_CONFIG) as [keyof typeof CATEGORY_CONFIG, typeof CATEGORY_CONFIG[keyof typeof CATEGORY_CONFIG]][]).map(([cat, cfg]) => {
+                  const items: ActionItem[] = actionPlan[cat as keyof ActionPlan] as ActionItem[] ?? []
+                  if (!items.length) return null
+                  return (
+                    <div key={cat}>
+                      <div className="flex items-baseline gap-2 mb-3">
+                        <h3 className={`text-sm font-semibold ${cfg.color}`}>{cfg.label}</h3>
+                        <span className="text-slate-500 text-xs">{cfg.desc}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {items.map((item: ActionItem, i: number) => (
+                          <div key={i} className="bg-slate-800 rounded-xl p-4">
+                            <p className="text-slate-200 text-sm mb-2">{item.action}</p>
+                            <div className="flex gap-3 text-xs">
+                              <span className="text-slate-500">Dimension: <span className="text-slate-400">{item.dimension}</span></span>
+                              <span className="text-slate-500">Impact: <span className={item.impact === 'High' ? 'text-teal-400' : 'text-slate-400'}>{item.impact}</span></span>
+                              <span className="text-slate-500">Effort: <span className="text-slate-400">{item.effort}</span></span>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <p className="text-slate-500 text-sm">Action plan not available.</p>
-          )}
+                  )
+                })}
+                {actionPlan.summary && (
+                  <p className="text-slate-500 text-xs border-t border-white/5 pt-4">{actionPlan.summary}</p>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={loadActionPlan}
+                className="w-full py-3 bg-teal-600/20 text-teal-400 rounded-xl text-sm font-medium hover:bg-teal-600/30 transition-colors"
+              >
+                Load action plan
+              </button>
+            )}
+          </div>
+        ) : paidChecked ? (
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 border border-teal-500/20 text-center">
+            <p className="text-white font-semibold mb-2">Unlock your full action plan</p>
+            <p className="text-slate-400 text-sm mb-4">Quick wins, a 6-month roadmap, and long-term transformation steps.</p>
+            <a
+              href={`/checkout?lead_id=${id}`}
+              className="inline-block bg-teal-600 hover:bg-teal-500 text-white font-bold px-6 py-3 rounded-full text-sm transition-colors"
+            >
+              Get full report &rarr;
+            </a>
+          </div>
+        ) : null}
+
+        {/* Regenerate (force) */}
+        <div className="bg-slate-900/50 rounded-2xl p-5 border border-white/5">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Report Controls</h2>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={async () => {
+                await fetch('/api/report/generate', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ lead_id: id, force: true }),
+                })
+                window.location.reload()
+              }}
+              className="flex items-center gap-2 text-xs bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg transition-colors"
+            >
+              <RefreshCw size={12} />
+              Force regenerate
+            </button>
+            <a
+              href={`/api/report/${id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-xs bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg transition-colors"
+            >
+              <Download size={12} />
+              Download PDF
+            </a>
+          </div>
         </div>
 
-        {/* Regenerate */}
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={async () => {
-              setGenerating(true)
-              await fetch('/api/report/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lead_id: id, force: true }),
-              })
-            }}
-            className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-400 mx-auto transition-colors"
-          >
-            <RefreshCw size={11} /> Having issues? Try regenerating the report.
-          </button>
-        </div>
-
-        <div className="no-print">
-          <FeedbackBar />
-        </div>
+        {/* Feedback */}
+        <FeedbackBar reportId={report.id ?? id ?? ''} />
       </div>
     </div>
   )
@@ -510,7 +482,7 @@ function ReportInner() {
 export default function ReportPage() {
   return (
     <Suspense fallback={<ReportSkeleton />}>
-      <ReportInner />
+      <ReportPageInner />
     </Suspense>
   )
 }
