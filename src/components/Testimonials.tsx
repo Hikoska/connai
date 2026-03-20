@@ -10,9 +10,9 @@ export const Testimonials = () => (
           <div className="font-semibold text-gray-800">&mdash; The Connai Team</div>
         </div>
         <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="text-4xl font-mono font-bold text-teal-400 mb-3">4 days</div>
-          <p className="text-gray-600 mb-4">Average time from first brief to full digital maturity report, across our beta cohort.</p>
-          <div className="text-sm text-gray-500">vs. 6&ndash;12 weeks with a traditional firm</div>
+          <div className="text-4xl font-mono font-bold text-teal-400 mb-3">20 min</div>
+          <p className="text-gray-600 mb-4">Average time from first brief to a complete digital maturity report &mdash; fully automated, no waiting.</p>
+          <div className="text-sm text-gray-500">vs. 6&ndash;12 weeks with a traditional consulting firm</div>
         </div>
       </div>
     </div>
