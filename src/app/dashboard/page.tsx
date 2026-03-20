@@ -5,75 +5,88 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { FileText, PlayCircle, Users, Plus, BarChart2, Link2, Check, Copy, X } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 
 const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
+type User = { email: string }
+
 type Interview = {
   id: string
-  token: string
+  lead_id: string
   stakeholder_name: string
   stakeholder_role: string
   stakeholder_email: string | null
+  token: string
   status: string
 }
 
 type Lead = {
   id: string
   org_name: string
-  industry: string
-  captured_at: string
+  email: string
   status: string
+  captured_at: string
+  industry: string | null
   interviews: Interview[]
 }
 
+type Report = {
+  lead_id: string
+  overall_score: number
+} | null
+
 function StartInterviewButton({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <Link href="/audit/new" className={className}>
+    <a href="/audit/new" className={className}>
       {children}
-    </Link>
+    </a>
   )
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [user,    setUser]    = useState<{ email: string } | null>(null)
   const [leads,   setLeads]   = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
-  const [copiedId, setCopiedId] = useState<string | null>(null)
   const [expandedLead, setExpandedLead] = useState<string | null>(null)
-  const [resendingId, setResendingId] = useState<string | null>(null)
+  const [resendingId,   setResendingId]   = useState<string | null>(null)
+  const [resendDoneId,  setResendDoneId]  = useState<string | null>(null)
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null)
-  const supabase = createClient(SB_URL, SB_ANON)
 
   useEffect(() => {
-    const init = async () => {
+    const supabase = createClient(SB_URL, SB_ANON)
+    const load = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { setLoading(false); return }
+      if (!session?.user) {
+        router.replace('/')
+        return
+      }
       setUser({ email: session.user.email ?? '' })
 
       const res = await fetch('/api/me/audits', {
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
-      if (res.ok) {
-        const { leads: l } = await res.json()
-        setLeads(l ?? [])
-      }
+      if (!res.ok) { setLoading(false); return }
+
+      const { leads: rawLeads, interviews, reports } = await res.json()
+
+      // Join interviews + reports onto leads
+      const enriched: Lead[] = rawLeads.map((l: any) => ({
+        ...l,
+        interviews: interviews.filter((iv: any) => iv.lead_id === l.id),
+        report: reports.find((r: any) => r.lead_id === l.id) ?? null,
+      }))
+      setLeads(enriched)
       setLoading(false)
     }
-    init()
+    load()
   }, [])
 
-  const copyInterviewLink = async (token: string) => {
-    const url = `${window.location.origin}/interview/${token}`
-    await navigator.clipboard.writeText(url)
-    setCopiedId(token)
-    setTimeout(() => setCopiedId(null), 2000)
-  }
-
-  const resendInvite = async (token: string, email: string | null) => {
-    if (!email) return
+  const resendInvite = async (token: string) => {
     setResendingId(token)
     try {
       await fetch('/api/invites/resend', {
@@ -81,6 +94,8 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       })
+      setResendDoneId(token)
+      setTimeout(() => setResendDoneId(null), 3000)
     } catch { /* ignore */ }
     setResendingId(null)
   }
@@ -93,27 +108,32 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lead_id: leadId }),
       })
+      // Navigate to report page after triggering regeneration
+      router.push(`/report/${leadId}`)
     } catch { /* ignore */ }
     setRegeneratingId(null)
   }
 
   const statusLabel = (status: string) => {
     switch (status) {
-      case 'interviews_complete': return { label: 'Completed', color: 'bg-teal-900/50 text-teal-400' }
-      case 'interviews_in_progress': return { label: 'In Progress', color: 'bg-yellow-900/40 text-yellow-400' }
-      case 'pending': return { label: 'Pending', color: 'bg-slate-800 text-slate-400' }
-      default: return { label: status, color: 'bg-slate-800 text-slate-400' }
+      case 'captured':             return { label: 'Draft',       color: 'bg-slate-500/15 text-slate-400' }
+      case 'invites_sent':         return { label: 'Invited',     color: 'bg-blue-500/15 text-blue-400' }
+      case 'interviews_in_progress': return { label: 'In Progress', color: 'bg-yellow-500/15 text-yellow-400' }
+      case 'interviews_complete':  return { label: 'Complete',    color: 'bg-teal-500/15 text-teal-400' }
+      default:                     return { label: status,        color: 'bg-slate-500/15 text-slate-400' }
     }
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0E1117] text-white">
-        {/* Header skeleton */}
         <header className="border-b border-white/5 px-6 py-4">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="h-5 w-24 bg-white/5 rounded animate-pulse" />
-            <div className="h-8 w-28 bg-white/5 rounded-lg animate-pulse" />
+            <div className="h-6 w-20 bg-white/5 rounded animate-pulse" />
+            <div className="flex items-center gap-3">
+              <div className="h-5 w-24 bg-white/5 rounded animate-pulse" />
+              <div className="h-8 w-28 bg-white/5 rounded-lg animate-pulse" />
+            </div>
           </div>
         </header>
         {/* Content skeleton */}
@@ -233,46 +253,46 @@ export default function DashboardPage() {
                     </div>
 
                     {isExpanded && lead.interviews.length > 0 && (
-                      <div className="border-t border-white/5 divide-y divide-white/5">
+                      <div className="border-t border-white/5 px-5 py-4 space-y-3">
                         {lead.interviews.map(iv => (
-                          <div key={iv.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                          <div key={iv.id} className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
-                              <p className="text-sm text-white/70 truncate">
-                                {iv.stakeholder_name || 'Stakeholder'}
-                                {iv.stakeholder_role && <span className="text-white/30"> · {iv.stakeholder_role}</span>}
-                              </p>
-                              {iv.stakeholder_email && (
-                                <p className="text-xs text-white/20 truncate mt-0.5">{iv.stakeholder_email}</p>
-                              )}
+                              <p className="text-sm text-white truncate">{iv.stakeholder_name}</p>
+                              <p className="text-xs text-white/30 truncate">{iv.stakeholder_role}{iv.stakeholder_email && <> &middot; {iv.stakeholder_email}</>}</p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                iv.status === 'complete' ? 'bg-teal-900/50 text-teal-400' : 'bg-white/5 text-white/30'
-                              }`}>
-                                {iv.status === 'complete' ? 'Done' : 'Pending'}
-                              </span>
+                                iv.status === 'complete'    ? 'bg-teal-500/15 text-teal-400' :
+                                iv.status === 'in_progress' ? 'bg-yellow-500/15 text-yellow-400' :
+                                iv.status === 'opened'     ? 'bg-blue-500/15 text-blue-400' :
+                                iv.status === 'sent'       ? 'bg-slate-500/15 text-slate-400' :
+                                'bg-slate-500/15 text-slate-500'
+                              }`}>{iv.status}</span>
                               {iv.status !== 'complete' && (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => copyInterviewLink(iv.token)}
-                                    className="flex items-center gap-1 text-xs text-white/40 hover:text-white/70 transition-colors"
-                                  >
-                                    {copiedId === iv.token ? <Check size={12} className="text-teal-400" /> : <Link2 size={12} />}
-                                    {copiedId === iv.token ? 'Copied' : 'Copy link'}
-                                  </button>
-                                  {iv.stakeholder_email && (
-                                    <button
-                                      type="button"
-                                      onClick={() => resendInvite(iv.token, iv.stakeholder_email)}
-                                      disabled={resendingId === iv.token}
-                                      className="flex items-center gap-1 text-xs text-white/40 hover:text-white/70 transition-colors disabled:opacity-50"
-                                    >
-                                      <PlayCircle size={12} />
-                                      {resendingId === iv.token ? 'Sending…' : 'Resend'}
-                                    </button>
+                                <button
+                                  type="button"
+                                  disabled={resendingId === iv.token}
+                                  onClick={() => resendInvite(iv.token)}
+                                  className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60 bg-white/5 hover:bg-white/10 px-2 py-1 rounded-md transition-colors disabled:opacity-40"
+                                >
+                                  {resendDoneId === iv.token ? (
+                                    <><Check size={11} className="text-teal-400" /> Sent</>
+                                  ) : resendingId === iv.token ? (
+                                    'Sending…'
+                                  ) : (
+                                    <><PlayCircle size={11} /> Resend</>
                                   )}
-                                </>
+                                </button>
+                              )}
+                              {iv.status !== 'complete' && (
+                                <a
+                                  href={`/interview/${iv.token}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60 bg-white/5 hover:bg-white/10 px-2 py-1 rounded-md transition-colors"
+                                >
+                                  <Link2 size={11} /> Link
+                                </a>
                               )}
                             </div>
                           </div>
