@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { rateLimit } from '@/lib/rate-limit'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: Request) {
+  const ip = (req.headers as Headers).get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+  if (!rateLimit(ip, 'invites-generate', 3)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
   try {
     const { lead_id, stakeholders } = await req.json() as {
       lead_id: string
@@ -27,7 +32,7 @@ export async function POST(req: Request) {
         const leads = await leadRes.json()
         if (leads?.[0]?.org_name) orgName = leads[0].org_name
       }
-    } catch { /* non-fatal — fall back to default */ }
+    } catch { /* non-fatal -- fall back to default */ }
 
     for (const s of stakeholders) {
       if (!s.name?.trim() || !s.role?.trim()) continue
