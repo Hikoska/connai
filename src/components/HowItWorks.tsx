@@ -30,7 +30,7 @@ const steps = [
     ),
     step: '03',
     title: 'Receive Your Report',
-    description: 'Within days, not months: a quantifiable score, industry benchmarks, gap analysis, and a prioritised roadmap &mdash; all ready to act on.',
+    description: 'Within minutes: a quantifiable score, industry benchmarks, gap analysis, and a prioritised roadmap &mdash; all ready to act on.',
   },
 ]
 
@@ -50,7 +50,7 @@ export const HowItWorks = () => {
               <div className="text-teal-600 mb-4">{step.icon}</div>
               <div className="text-xs font-bold text-teal-500 uppercase tracking-widest mb-2">{step.step}</div>
               <h3 className="text-lg font-bold text-gray-900 mb-3">{step.title}</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">{step.description}</p>
+              <p className="text-gray-500 text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: step.description }} />
             </div>
           ))}
         </div>
