@@ -30,6 +30,7 @@ export default function InterviewPage() {
   const [interviewId, setInterviewId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const redirected = useRef(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [error, setError] = useState('')
 
@@ -40,6 +41,13 @@ export default function InterviewPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, thinking])
+
+  // Reset textarea height when input is cleared (e.g. after send)
+  useEffect(() => {
+    if (!input && textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+    }
+  }, [input])
 
   // Load interview
   useEffect(() => {
@@ -285,16 +293,23 @@ export default function InterviewPage() {
         <div className="bg-[#0E1117] border-t border-slate-800 px-4 py-3 flex-shrink-0">
           <div className="max-w-2xl mx-auto flex gap-3 items-end">
             <textarea
+              ref={textareaRef}
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={e => { setInput(e.target.value) }}
+              onInput={e => {
+                const el = e.currentTarget
+                el.style.height = 'auto'
+                el.style.height = Math.min(el.scrollHeight, 128) + 'px'
+              }}
               onKeyDown={onKeyDown}
               placeholder="Type your answer..."
-              rows={2}
+              rows={1}
               disabled={thinking}
               enterKeyHint="send"
               autoComplete="off"
               spellCheck={false}
-              className="flex-1 resize-none bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 max-h-32 overflow-y-auto disabled:bg-slate-800"
+              className="flex-1 resize-none bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 overflow-y-auto disabled:bg-slate-800"
+              style={{ minHeight: '2.5rem', maxHeight: '8rem' }}
             />
             <button
               type="button"
