@@ -71,6 +71,7 @@ function CopyButton({ text }: { text: string }) {
       onClick={() => { navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) }) }}
       className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/5"
       title="Copy link"
+      aria-label="Copy report link"
     >
       {copied ? <Check size={12} className="text-teal-400" /> : <Share2 size={12} />}
       {copied ? 'Copied' : 'Copy link'}
@@ -246,7 +247,7 @@ function ReportPageInner() {
       <div id="report-root" className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-4">
         <div className="text-center max-w-md">
           <p className="text-red-400 font-semibold mb-4">{error}</p>
-          <button onClick={() => window.location.reload()} className="text-teal-400 underline text-sm">Refresh</button>
+          <button onClick={() => window.location.reload()} aria-label="Reload page" className="text-teal-400 underline text-sm">Refresh</button>
         </div>
       </div>
     )
@@ -279,6 +280,7 @@ function ReportPageInner() {
           <CopyButton text={typeof window !== 'undefined' ? window.location.href : ''} />
           <button
             onClick={handleShare}
+            aria-label="Share report"
             className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/5"
           >
             <Share2 size={12} />
@@ -309,6 +311,7 @@ function ReportPageInner() {
                 <button
                   onClick={() => fetch('/api/report/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: id }) }).then(() => window.location.reload())}
                   className="flex items-center gap-1 text-slate-500 hover:text-slate-300 text-xs transition-colors"
+                  aria-label="Regenerate report"
                   title="Regenerate report"
                 >
                   <RefreshCw size={11} />
