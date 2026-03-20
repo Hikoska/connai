@@ -72,15 +72,14 @@ export default function DashboardPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const resendInvite = async (interviewId: string, email: string | null) => {
+  const resendInvite = async (token: string, email: string | null) => {
     if (!email) return
-    setResendingId(interviewId)
+    setResendingId(token)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      await fetch('/api/interviews/resend-invite', {
+      await fetch('/api/invites/resend', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-        body: JSON.stringify({ interviewId }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
       })
     } catch { /* ignore */ }
     setResendingId(null)
@@ -265,12 +264,12 @@ export default function DashboardPage() {
                                   {iv.stakeholder_email && (
                                     <button
                                       type="button"
-                                      onClick={() => resendInvite(iv.id, iv.stakeholder_email)}
-                                      disabled={resendingId === iv.id}
+                                      onClick={() => resendInvite(iv.token, iv.stakeholder_email)}
+                                      disabled={resendingId === iv.token}
                                       className="flex items-center gap-1 text-xs text-white/40 hover:text-white/70 transition-colors disabled:opacity-50"
                                     >
                                       <PlayCircle size={12} />
-                                      {resendingId === iv.id ? 'Sending…' : 'Resend'}
+                                      {resendingId === iv.token ? 'Sending…' : 'Resend'}
                                     </button>
                                   )}
                                 </>
