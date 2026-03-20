@@ -10,9 +10,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { reportId } = await req.json();
-    if (!reportId) {
-      return NextResponse.json({ error: 'reportId required' }, { status: 400 });
+    const body = await req.json();
+    // Accept both lead_id (primary) and legacy reportId for backward compatibility
+    const leadId: string | undefined = body.lead_id ?? body.reportId;
+    if (!leadId) {
+      return NextResponse.json({ error: 'lead_id required' }, { status: 400 });
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://connai.linkgrow.io';
@@ -23,9 +25,9 @@ export async function POST(req: NextRequest) {
 
     // success_url: redirects to /checkout with session_id param so the
     // dedicated success screen is shown before forwarding to the report.
-    // The success screen then redirects to /report/{id}?force=1 which
+    // The success screen then redirects to /report/{leadId}?force=1 which
     // bypasses the paid-status check (avoiding webhook race conditions).
-    const body = new URLSearchParams({
+    const params = new URLSearchParams({
       'payment_method_types[]': 'card',
       'line_items[0][price_data][currency]': 'usd',
       'line_items[0][price_data][unit_amount]': '4900',
@@ -33,9 +35,9 @@ export async function POST(req: NextRequest) {
       'line_items[0][price_data][product_data][description]': 'Full AI-generated action plan for your Digital Maturity Report',
       'line_items[0][quantity]': '1',
       'mode': 'payment',
-      'success_url': `${baseUrl}/checkout?reportId=${reportId}&session_id={CHECKOUT_SESSION_ID}`,
-      'cancel_url': `${baseUrl}/report/${reportId}`,
-      'metadata[report_id]': reportId,
+      'success_url': `${baseUrl}/checkout?lead_id=${leadId}&session_id={CHECKOUT_SESSION_ID}`,
+      'cancel_url': `${baseUrl}/report/${leadId}`,
+      'metadata[lead_id]': leadId,
     });
 
     const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest) {
         Authorization: `Bearer ${stripeKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: body.toString(),
+      body: params.toString(),
     });
 
     if (!res.ok) {
