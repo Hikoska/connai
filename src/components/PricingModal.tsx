@@ -1,16 +1,23 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 export function PricingModal({ isOpen, onClose, auditId }: { isOpen: boolean; onClose: () => void; auditId?: string }) {
-  // Close on Escape key (WCAG 2.1 — no keyboard trap)
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  // Close on Escape key (WCAG 2.1 §2.1.2 — no keyboard trap)
   useEffect(() => {
     if (!isOpen) return
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [isOpen, onClose])
+
+  // Move focus to close button when modal opens (WCAG 2.4.3 — focus order)
+  useEffect(() => {
+    if (isOpen) closeRef.current?.focus()
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -29,6 +36,7 @@ export function PricingModal({ isOpen, onClose, auditId }: { isOpen: boolean; on
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-xl font-bold">Add More Stakeholders</h2>
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
             aria-label="Close pricing modal"
