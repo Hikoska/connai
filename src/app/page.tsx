@@ -38,14 +38,14 @@ const jsonLd = {
 const Hero = () => (
   <section className="relative pt-24 pb-16 overflow-hidden bg-[#0D2738]">
     <div className="absolute inset-0 bg-gradient-to-b from-[#0D5C63]/10 to-transparent pointer-events-none" />
-    <div className="absolute inset-0 pointer-events-none opacity-40" style={{ backgroundImage: 'radial-gradient(#0D5C6330 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+    <div className="absolute inset-0 pointer-events-inside opacity-40" style={{ backgroundImage: 'radial-gradient(#0D5C6330 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
     <div className="relative max-w-4xl mx-auto px-6 text-center">
       <div className="inline-flex items-center gap-2 bg-teal-900/30 text-teal-300 text-sm font-medium px-3 py-1 rounded-full mb-8 border border-teal-700/50">
         <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
         Beta &middot; Free
       </div>
       <h1 className={`${instrumentSerif.variable} font-serif text-5xl md:text-7xl font-bold leading-[1.1] mb-6 text-white`}>
-        Know exactly where your organization stands &mdash; within a concise 20-minute audit.
+        Know exactly where your organisation stands &mdash; in under 20 minutes.
       </h1>
       <p className="text-xl text-white/70 mb-10 leading-relaxed max-w-2xl mx-auto">
         Connai runs an AI-powered digital maturity audit and delivers a scored report your leadership team can act on.
