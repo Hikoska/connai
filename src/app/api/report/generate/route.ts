@@ -30,7 +30,7 @@ const DIMENSIONS = [
 interface InterviewRow {
   id: string
   lead_id: string
-  messages: Array<{ role: string; content: string }>
+  transcript: Array<{ role: string; content: string }>
   stakeholder_role?: string
   leads: { org_name: string; industry?: string; role?: string } | null
 }
@@ -144,7 +144,7 @@ export async function POST(req: Request) {
     }
 
     const interviewsRes = await fetch(
-      `${SB_URL}/rest/v1/interviews?lead_id=eq.${lead_id}&select=id,lead_id,messages,stakeholder_role,leads(org_name,industry,role)`,
+      `${SB_URL}/rest/v1/interviews?lead_id=eq.${lead_id}&select=id,lead_id,transcript,stakeholder_role,leads(org_name,industry,role)`,
       { headers }
     )
     const interviews: InterviewRow[] = await interviewsRes.json()
@@ -153,12 +153,12 @@ export async function POST(req: Request) {
     }
 
     const primary = interviews[0]
-    const allMessages = interviews.flatMap(i => i.messages || [])
+    const allMessages = interviews.flatMap(i => i.transcript || [])
     const orgName = primary.leads?.org_name || 'the organisation'
     const industry = primary.leads?.industry || 'their industry'
     const transcript = allMessages.map(m => `${m.role === 'user' ? 'Stakeholder' : 'Interviewer'}: ${m.content}`).join('\n\n')
 
-    if (timedOut()) return NextResponse.json({ error: 'Timeout before scoring — retry', partial: true }, { status: 504 })
+    if (timedOut()) return NextResponse.json({ error: 'Timeout before scoring \u2014 retry', partial: true }, { status: 504 })
 
     const dimensionScores = await scoreDimensions(transcript, orgName, industry)
 
@@ -169,7 +169,7 @@ export async function POST(req: Request) {
         headers: { ...headers, Prefer: 'return=minimal' },
         body: JSON.stringify({ lead_id, overall_score: partialScore, dimension_scores: dimensionScores, status: 'partial' }),
       })
-      return NextResponse.json({ error: 'Timeout after scoring — partial saved, retry for full report', partial: true }, { status: 504 })
+      return NextResponse.json({ error: 'Timeout after scoring \u2014 partial saved, retry for full report', partial: true }, { status: 504 })
     }
 
     const scoreValues = Object.values(dimensionScores) as number[]
@@ -222,14 +222,14 @@ Format: numbered list. Each: one action sentence + one business impact sentence.
         resend.emails.send({
           from: 'Connai <noreply@connai.linkgrow.io>',
           to: lead.email,
-          subject: `Your Digital Maturity Report — ${lead.org_name || orgName} scored ${overallScore}/100`,
+          subject: `Your Digital Maturity Report \u2014 ${lead.org_name || orgName} scored ${overallScore}/100`,
           html: buildReportEmail(lead.org_name || orgName, overallScore, tier, reportUrl),
         }).catch(() => {})
       }
       resend.emails.send({
         from: 'Connai <noreply@connai.linkgrow.io>',
         to: ADMIN_EMAIL,
-        subject: `[Connai] New report ready — ${orgName} (${overallScore}/100)`,
+        subject: `[Connai] New report ready \u2014 ${orgName} (${overallScore}/100)`,
         html: `<p>New Connai report generated.</p><ul><li><strong>Org:</strong> ${orgName}</li><li><strong>Industry:</strong> ${industry}</li><li><strong>Score:</strong> ${overallScore}/100 (${tier})</li><li><strong>Lead ID:</strong> ${lead_id}</li></ul><p><a href="${reportUrl}">View report</a></p>`,
       }).catch(() => {})
     }
