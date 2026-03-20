@@ -77,7 +77,7 @@ export async function GET(_req: NextRequest) {
             lineHeight: 1.5,
           }}
         >
-          Days, not months. AI-powered interviews, structured reports, actionable insights.
+          Minutes, not months. AI-powered interviews, structured reports, actionable insights.
         </div>
 
         {/* Score badge */}
