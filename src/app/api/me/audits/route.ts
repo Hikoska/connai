@@ -1,7 +1,16 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { rateLimit } from '@/lib/rate-limit'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(req: Request) {
+  // Rate limit: 30 req/60s per IP — generous, it's just a dashboard load
+  const ip = (req as Request & { headers: Headers }).headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+  if (!rateLimit(ip, 'me-audits', 30)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   // Get the auth token from the request
   const authHeader = req.headers.get('authorization')
   const token = authHeader?.replace('Bearer ', '')
@@ -23,9 +32,9 @@ export async function GET(req: Request) {
 
   const userEmail = user.email.toLowerCase()
 
-  // Fetch leads for this user
+  // Fetch leads for this user — include industry so dashboard card shows it
   const leadsRes = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/leads?email=eq.${encodeURIComponent(userEmail)}&select=id,org_name,email,status,captured_at&order=captured_at.desc`,
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/leads?email=eq.${encodeURIComponent(userEmail)}&select=id,org_name,email,status,captured_at,industry&order=captured_at.desc`,
     {
       headers: {
         apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
