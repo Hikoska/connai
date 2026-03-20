@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 async function sbInsert(
   table: string,
@@ -23,7 +24,12 @@ async function sbInsert(
   return { data: Array.isArray(rows) ? rows[0] : rows, error: null }
 }
 
+
 export async function POST(req: Request) {
+  const ip = (req.headers as Headers).get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+  if (!rateLimit(ip, 'leads-create', 5)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
   try {
     const { org_name, industry, role, email } = await req.json() as {
       org_name: string
