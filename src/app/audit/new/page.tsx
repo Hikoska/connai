@@ -18,11 +18,14 @@ export const dynamic = 'force-dynamic'
 export default function AuditNewPage() {
   const router = useRouter()
   const [orgName, setOrgName] = useState('')
+  const [orgNameTouched, setOrgNameTouched] = useState(false)
   const [industry, setIndustry] = useState('')
   const [role, setRole] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
+
+  const orgNameError = orgNameTouched && !orgName.trim()
 
   useEffect(() => {
     const check = async () => {
@@ -40,6 +43,7 @@ export default function AuditNewPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setOrgNameTouched(true)
     if (!orgName.trim()) return
     setLoading(true)
     setError('')
@@ -97,10 +101,22 @@ export default function AuditNewPage() {
                 required
                 value={orgName}
                 id="audit-org-name"
-                onChange={e => setOrgName(e.target.value)}
+                onChange={e => { setOrgName(e.target.value); if (orgNameTouched && e.target.value.trim()) setOrgNameTouched(false) }}
+                onBlur={() => setOrgNameTouched(true)}
                 placeholder="Company name"
-                className="w-full bg-white/5 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 placeholder:text-white/30 transition-colors"
+                aria-describedby={orgNameError ? 'org-name-error' : undefined}
+                aria-invalid={orgNameError}
+                className={`w-full bg-white/5 border text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 placeholder:text-white/30 transition-colors ${
+                  orgNameError
+                    ? 'border-red-500/70 focus:border-red-500'
+                    : 'border-white/20 focus:border-teal-500/50'
+                }`}
               />
+              {orgNameError && (
+                <p id="org-name-error" className="mt-1 text-xs text-red-400">
+                  Organisation name is required
+                </p>
+              )}
             </div>
             <div>
               <label htmlFor="audit-industry" className="block text-sm font-medium text-white/70 mb-1">
@@ -133,7 +149,7 @@ export default function AuditNewPage() {
             {error && <p className="text-red-400 text-sm">{error}</p>}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !orgName.trim()}
               className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
             >
               {loading ? 'Creating...' : 'Start audit →'}
