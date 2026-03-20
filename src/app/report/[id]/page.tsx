@@ -494,11 +494,7 @@ function ReportInner() {
 
 export default function ReportPage() {
   return (
-    <Suspense fallback={
-      <div id="report-root" className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin" />
-      </div>
-    }>
+    <Suspense fallback={<ReportSkeleton />}>
       <ReportInner />
     </Suspense>
   )
