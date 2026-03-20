@@ -32,13 +32,17 @@ export async function GET(
     },
   )
 
-  if (!res.ok) return NextResponse.json({ ready: false })
+  if (!res.ok) return NextResponse.json({ ready: false }, {
+    headers: { 'Cache-Control': 'no-store' },
+  })
 
   const rows = await res.json()
   const rep = Array.isArray(rows) ? rows[0] : null
 
   if (!rep || rep.overall_score === undefined) {
-    return NextResponse.json({ ready: false })
+    return NextResponse.json({ ready: false }, {
+      headers: { 'Cache-Control': 'no-store' },
+    })
   }
 
   return NextResponse.json({
@@ -54,5 +58,7 @@ export async function GET(
           : []
       ),
     },
+  }, {
+    headers: { 'Cache-Control': 'no-store' }, // Polling route — never cache; client polls every 5s
   })
 }
