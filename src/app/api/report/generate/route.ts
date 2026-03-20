@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -114,7 +114,10 @@ function buildEmailHtml(orgName: string, overallScore: number, tier: string, rep
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
   if (!rateLimit(ip, 'report-generate', 5)) {
-    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+    return NextResponse.json(
+      { error: 'Rate limit exceeded' },
+      { status: 429, headers: getRateLimitHeaders(ip, 'report-generate', 5) }
+    )
   }
 
   ;(global as Record<string, unknown>).__reportStart = Date.now()
