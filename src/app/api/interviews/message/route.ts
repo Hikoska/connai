@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
         await fetch(`${SB_URL}/rest/v1/interviews?token=eq.${token}`, {
           method: 'PATCH',
           headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-          body: JSON.stringify({ status: 'complete', transcript: messages }),
+          body: JSON.stringify({ status: 'complete', completed_at: new Date().toISOString(), transcript: messages }),
         })
 
         // Send thank-you email to stakeholder [PRD-A]
@@ -245,10 +245,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ reply: null, isDone: true })
     }
 
+    // Track first message: update status to in_progress + timestamp (fire-and-forget)
+    if (isFirstMessage) {
+      fetch(`${SB_URL}/rest/v1/interviews?token=eq.${token}`, {
+        method: 'PATCH',
+        headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ status: 'in_progress', first_message_at: new Date().toISOString() }),
+      }).catch(() => { /* non-fatal */ })
+    }
+
     const systemPrompt = buildSystemPrompt(ctx, messages ?? [], isFirstMessage)
     const msgs = messages as Array<{ role: 'user' | 'assistant'; content: string }>
 
-    // \u2500\u2500 [AI-02] Streaming path \u2500\u2500
+    // ── [AI-02] Streaming path ──
     if (wantStream) {
       try {
         const result = streamText({
@@ -264,7 +273,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // \u2500\u2500 Non-streaming path (fallback + legacy clients) \u2500\u2500
+    // ── Non-streaming path (fallback + legacy clients) ──
     const models = [groq('qwen-qwq-32b'), groq('llama-3.3-70b-versatile'), cerebras('llama3.1-8b')]
     let reply = 'Thank you for sharing that. Could you tell me more about your current technology challenges?'
     for (const model of models) {
