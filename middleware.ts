@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
 
 const PROTECTED_PREFIXES = ['/dashboard', '/admin', '/audit', '/account']
 const PUBLIC_EXCEPTIONS = ['/audit/new']
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+// Supabase auth cookies — supabase-js v2 sets 'sb-<project-ref>-auth-token'
+// Project ref: mhuofnkbjbanrdvvktps
+// It also sets chunked variants: sb-...-auth-token.0, sb-...-auth-token.1 etc.
+const SB_COOKIE_PREFIX = 'sb-mhuofnkbjbanrdvvktps-auth-token'
 
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
   if (
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
@@ -21,38 +24,18 @@ export async function middleware(request: NextRequest) {
 
   if (!needsAuth || isException) return NextResponse.next()
 
-  // Use @supabase/ssr to read AND refresh the session cookie transparently
-  let response = NextResponse.next({ request })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          response = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
+  // Check for Supabase session cookie (base or any chunk)
+  const hasSession = request.cookies.getAll().some(
+    c => c.name === SB_COOKIE_PREFIX || c.name.startsWith(SB_COOKIE_PREFIX + '.')
   )
 
-  // getUser() validates token server-side (not just cookie presence check)
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
+  if (!hasSession) {
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  return response
+  return NextResponse.next()
 }
 
 export const config = {
