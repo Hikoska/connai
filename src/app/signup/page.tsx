@@ -1,7 +1,6 @@
-'use client'
 import { redirect } from 'next/navigation'
-import { useEffect } from 'react'
+
+// /signup → redirect to homepage (server component, no client needed)
 export default function SignupRedirect() {
-  useEffect(() => { redirect('/') }, [])
-  return <p>Redirecting...</p>
+  redirect('/')
 }
