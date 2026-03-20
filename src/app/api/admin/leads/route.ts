@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +14,11 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
  */
 export async function GET(req: NextRequest) {
   // Rate limiting: simple IP check (admin route — 10 req/min is generous)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (!rateLimit(ip, 'admin-leads', 10)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const auth = req.headers.get('authorization')
   const pw = auth?.startsWith('Bearer ') ? auth.slice(7) : null
 
