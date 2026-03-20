@@ -19,12 +19,12 @@ const instrumentSerif = Instrument_Serif({
 
 export const metadata: Metadata = {
   title: 'Connai | AI Digital Maturity Audit',
-  description: 'Get a $10,000 digital maturity audit in days, not months. AI-powered interviews, structured reports, actionable insights.',
+  description: 'Get a $10,000 digital maturity audit in minutes, not months. AI-powered interviews, structured reports, actionable insights.',
   robots: { index: true, follow: true },
   alternates: { canonical: 'https://connai.linkgrow.io' },
   openGraph: {
     title: 'Connai | AI Digital Maturity Audit',
-    description: 'Get a $10,000 digital maturity audit in days, not months. AI-powered interviews, structured reports, actionable insights.',
+    description: 'Get a $10,000 digital maturity audit in minutes, not months. AI-powered interviews, structured reports, actionable insights.',
     url: 'https://connai.linkgrow.io',
     siteName: 'Connai',
     images: [{ url: 'https://connai.linkgrow.io/api/og', width: 1200, height: 630, alt: 'Connai | AI Digital Maturity Audit' }],
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Connai | AI Digital Maturity Audit',
-    description: 'Get a $10,000 digital maturity audit in days, not months. AI-powered interviews, structured reports, actionable insights.',
+    description: 'Get a $10,000 digital maturity audit in minutes, not months. AI-powered interviews, structured reports, actionable insights.',
     images: ['https://connai.linkgrow.io/api/og'],
   },
 }
