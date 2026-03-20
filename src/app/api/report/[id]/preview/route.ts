@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 
@@ -73,10 +74,15 @@ ${transcript.slice(0, 6000)}`
   try { return JSON.parse(match[0]) } catch { return Object.fromEntries(DIMENSIONS.map(d => [d, 35])) }
 }
 
+
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+  if (!rateLimit(ip, 'report-preview', 3)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
   const { id } = await params
 
   if (!SB_SVC) {
@@ -107,11 +113,11 @@ export async function GET(
     })
   }
 
-  // 2. Read canonical scores from reports table (service key — not leads cache)
+  // 2. Read canonical scores from reports table (service key -- not leads cache)
   //    This is the single source of truth; leads.dimension_scores is not reliable.
   const reportRows = await sbGet(
     `/reports?lead_id=eq.${id}&select=overall_score,dimension_scores&order=created_at.desc&limit=1`,
-    true  // service key — bypasses RLS
+    true  // service key -- bypasses RLS
   )
   const report = Array.isArray(reportRows) ? reportRows[0] : null
 
@@ -123,7 +129,7 @@ export async function GET(
     })
   }
 
-  // 3. No report row yet — compute on-the-fly from transcript (AI fallback)
+  // 3. No report row yet -- compute on-the-fly from transcript (AI fallback)
   const latestId = completed[0].id
   const ivRows = await sbGet(`/interviews?id=eq.${latestId}&select=transcript&limit=1`, true)
   const ivData  = Array.isArray(ivRows) ? ivRows[0] : null
@@ -142,7 +148,7 @@ export async function GET(
     })
   }
 
-  // Compute scores — NOTE: do NOT write back to leads table.
+  // Compute scores -- NOTE: do NOT write back to leads table.
   // Trigger /api/report/generate instead to create a proper report row.
   const raw = await scoreTranscript(transcript)
   const dimensions = DIMENSIONS.map(name => ({
