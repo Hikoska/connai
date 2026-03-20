@@ -38,29 +38,44 @@ export const FAQ = () => {
           <h2 className="text-4xl font-bold font-serif">Frequently Asked Questions</h2>
         </div>
         <div className="space-y-4">
-          {(faqItems ?? []).map((item, index) => (
-            <div key={index} className="border-b border-gray-200 pb-4">
-              <button type="button"
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full flex justify-between items-center text-lg font-semibold text-gray-800 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
-                aria-expanded={openIndex === index}
-              >
-                <span>{item.q}</span>
-                <span className="text-2xl text-teal-500">{openIndex === index ? '\u2212' : '+'}</span>
-              </button>
-              <div className={`overflow-hidden transition-all duration-300 ${openIndex === index ? 'max-h-40 mt-4' : 'max-h-0'}`}>
-                <p className="text-gray-600">{item.a}</p>
+          {(faqItems ?? []).map((item, index) => {
+            const panelId = `faq-panel-${index}`
+            const buttonId = `faq-btn-${index}`
+            const isOpen = openIndex === index
+            return (
+              <div key={index} className="border-b border-gray-200 pb-4">
+                <button
+                  type="button"
+                  id={buttonId}
+                  aria-controls={panelId}
+                  aria-expanded={isOpen}
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
+                  className="w-full flex justify-between items-center text-lg font-semibold text-gray-800 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
+                >
+                  <span>{item.q}</span>
+                  <span className="text-2xl text-teal-500">{isOpen ? '\u2212' : '+'}</span>
+                </button>
+                <div
+                  id={panelId}
+                  role="region"
+                  aria-labelledby={buttonId}
+                  hidden={!isOpen}
+                  className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-40 mt-4' : 'max-h-0'}`}
+                >
+                  <p className="text-gray-600">{item.a}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
         <p className="text-center mt-8 text-gray-500">
           Have a different question?{' '}
-          <button type="button"
+          <button
+            type="button"
             onClick={openChat}
             className="font-semibold text-teal-600 hover:text-teal-500 underline underline-offset-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
           >
-            Ask Connai →
+            Ask Connai &rarr;
           </button>
         </p>
       </div>
