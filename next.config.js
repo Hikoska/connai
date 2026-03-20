@@ -1,5 +1,3 @@
-const path = require('path')
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -35,20 +33,9 @@ const nextConfig = {
       },
     ]
   },
-  webpack: (config) => {
-    const stub = path.resolve(__dirname, 'src/lib/phase1-stub.js')
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      // @supabase/ssr is NOT installed — keep stubbed to avoid module-not-found
-      '@supabase/ssr': stub,
-      // stripe and stripe-js are stubbed client-side; server routes use raw fetch
-      'stripe': stub,
-      '@stripe/stripe-js': stub,
-      '@google/generative-ai': stub,
-      // Note: jsPDF is used server-side in PDF route — NOT stubbed
-    }
-    return config
-  },
+  // Note: jsPDF is used server-side in the PDF route — not aliased/stubbed.
+  // @supabase/ssr, stripe, @stripe/stripe-js, @google/generative-ai are not
+  // installed and not imported anywhere — no webpack aliases needed.
 }
 
 module.exports = nextConfig
