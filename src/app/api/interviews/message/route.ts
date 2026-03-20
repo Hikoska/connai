@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText, streamText } from 'ai'
 import { Resend } from 'resend'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -156,7 +156,12 @@ export async function POST(req: NextRequest) {
   try {
     // Rate limiting [SEC-B] — rateLimit returns TRUE = allowed, FALSE = blocked
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-    if (!rateLimit(ip, 'interviews-message', 20, 60_000)) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    if (!rateLimit(ip, 'interviews-message', 20, 60_000)) {
+      return NextResponse.json(
+        { error: 'Too many requests' },
+        { status: 429, headers: getRateLimitHeaders(ip, 'interviews-message', 20) }
+      )
+    }
 
     const { token, messages, stream } = await req.json()
     const wantStream = stream === true
