@@ -35,6 +35,7 @@ export async function POST(req: Request) {
             lead_id,
             stakeholder_name: s.name.trim(),
             stakeholder_role: s.role.trim(),
+            stakeholder_email: s.email?.trim().toLowerCase() ?? null,
             status: 'pending',
             token: tokenValue,
           }),

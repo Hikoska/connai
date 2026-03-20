@@ -103,13 +103,10 @@ export default function AuditDetailPage() {
   const resendInvite = async (interview: Interview) => {
     setResending(interview.id)
     try {
-      await fetch('/api/invites/generate', {
+      await fetch('/api/invites/resend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lead_id: id,
-          stakeholders: [{ name: interview.stakeholder_name, role: interview.stakeholder_role }],
-        }),
+        body: JSON.stringify({ token: interview.token }),
       })
       setResendDone(interview.id)
       setTimeout(() => setResendDone(null), 3000)
@@ -142,7 +139,7 @@ export default function AuditDetailPage() {
       <div className="min-h-screen bg-[#0E1117] text-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-white/60 mb-4">Audit not found.</p>
-          <Link href="/dashboard" className="text-teal-400 hover:text-teal-300 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">← Back to dashboard</Link>
+          <Link href="/dashboard" className="text-teal-400 hover:text-teal-300 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">&#8592; Back to dashboard</Link>
         </div>
       </div>
     )
@@ -158,8 +155,8 @@ export default function AuditDetailPage() {
       <header className="border-b border-white/20 px-4 sm:px-6 py-4 sticky top-0 bg-[#0E1117]/90 backdrop-blur z-10">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="text-white/60 hover:text-white/90 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">← Dashboard</Link>
-            <span className="text-white/20 hidden sm:inline">·</span>
+            <Link href="/dashboard" className="text-white/60 hover:text-white/90 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded">&#8592; Dashboard</Link>
+            <span className="text-white/20 hidden sm:inline">&middot;</span>
             <span className="text-teal-400 font-semibold text-sm hidden sm:inline">{lead.org_name}</span>
           </div>
           <div className="flex items-center gap-2">
