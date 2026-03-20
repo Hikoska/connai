@@ -1,15 +1,13 @@
-'use client';
+'use client'
 import { Share2, Check, Download, RefreshCw } from 'lucide-react';
 
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client'
 import { FeedbackBar } from '@/components/FeedbackBar';
 
 export const dynamic = 'force-dynamic'
 
-const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 const POLL_INTERVAL_MS = 5_000
 const POLL_MAX_ATTEMPTS = 12 // 60 seconds
@@ -90,7 +88,7 @@ function ReportPageInner() {
   const searchParams = useSearchParams()
   const forceUnlock = searchParams.get('force') === '1'
 
-  const supabase = createClient(SB_URL, SB_ANON)
+  const supabase = createClient()
 
   const [report,       setReport]       = useState<ReportData | null>(null)
   const [loading,      setLoading]      = useState(true)
