@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
       report: repByLead[l.id] ?? null,
     }))
 
-    return NextResponse.json(result)
+    return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } })
   } catch (e) {
     console.error('[admin/leads] error:', e)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
