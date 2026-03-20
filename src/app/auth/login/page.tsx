@@ -34,7 +34,7 @@ export default function LoginPage() {
     if (error) {
       setError(error.message)
     } else {
-      setMessage('Check your email for a magic link to sign in.')
+      setMessage(`Magic link sent to ${email}. Check your inbox (and spam folder) \u2014 it arrives in under a minute.`)
       setCooldown(60)
     }
     setLoading(false)
@@ -120,7 +120,11 @@ export default function LoginPage() {
           </div>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
-          {message && <p className="text-teal-400 text-sm">{message}</p>}
+          {message && (
+            <div className="bg-teal-900/30 border border-teal-700/50 rounded-lg px-4 py-3">
+              <p className="text-teal-300 text-sm leading-relaxed">{message}</p>
+            </div>
+          )}
 
           <button
             type="submit"
