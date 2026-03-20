@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,6 +16,10 @@ function isAuthorized(req: NextRequest): boolean {
 }
 
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (!rateLimit(ip, 'admin-reports', 10)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
   if (!isAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!SERVICE_KEY) return NextResponse.json({ error: 'Not configured' }, { status: 500 })
   const res = await fetch(
@@ -22,5 +27,5 @@ export async function GET(req: NextRequest) {
     { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } }
   )
   if (!res.ok) return NextResponse.json({ error: 'Supabase error' }, { status: 500 })
-  return NextResponse.json(await res.json())
+  return NextResponse.json(await res.json(), { headers: { 'Cache-Control': 'no-store' } })
 }
