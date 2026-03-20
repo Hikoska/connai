@@ -4,16 +4,13 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
-
-const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+import { createClient } from '@/lib/supabase/client'
 
 export default function AuthCallbackPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const supabase = createClient(SB_URL, SB_ANON)
+    const supabase = createClient()
 
     async function handleCallback() {
       try {
@@ -22,7 +19,7 @@ export default function AuthCallbackPage() {
         const next = new URL(url).searchParams.get('next')
 
         if (code) {
-          // PKCE flow: exchange code for session (full URL required by supabase-js)
+          // PKCE flow: exchange code for session — createBrowserClient writes cookie automatically
           const { error } = await supabase.auth.exchangeCodeForSession(url)
           if (error) {
             console.error('Auth callback error:', error.message)
@@ -30,8 +27,8 @@ export default function AuthCallbackPage() {
             return
           }
         } else {
-          // Implicit flow: session already set from hash fragment on client init
-          await new Promise(resolve => setTimeout(resolve, 100))
+          // Implicit flow: give supabase-js time to parse hash fragment into cookies
+          await new Promise(resolve => setTimeout(resolve, 200))
         }
 
         const { data: { session } } = await supabase.auth.getSession()
