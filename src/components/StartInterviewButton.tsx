@@ -1,5 +1,7 @@
 'use client'
 
+import { createClient } from '@/lib/supabase/client'
+
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -42,8 +44,7 @@ export function StartInterviewButton({ className, children }: StartInterviewButt
   useEffect(() => {
     const prefillEmail = async () => {
       try {
-        const { createClient } = await import('@supabase/supabase-js')
-        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const sb = createClient()
         const { data: { session } } = await sb.auth.getSession()
         if (session?.user?.email) setEmail(session.user.email)
       } catch {}
