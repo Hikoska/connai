@@ -44,6 +44,23 @@ function setCached(id: string, data: ActionPlanResult): void {
   }
 }
 
+/** Persist the generated action_plan back to the reports row (fire-and-forget).
+ *  Only writes if the action_plan column exists (migration-safe).
+ */
+function persistActionPlan(reportId: string, data: ActionPlanResult): void {
+  const key = SB_SVC
+  fetch(`${SB_URL}/rest/v1/reports?id=eq.${reportId}`, {
+    method: 'PATCH',
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({ action_plan: data }),
+  }).catch(() => { /* non-fatal — column may not exist yet */ })
+}
+
 async function sbGet(path: string, useService = false) {
   const key = useService ? SB_SVC : SB_ANON
   const res = await fetch(`${SB_URL}/rest/v1${path}`, {
@@ -92,7 +109,7 @@ function flattenItems(items: unknown[]): string[] {
   }).filter(Boolean)
 }
 
-/** All action-plan content is freshly generated and personalised \u2014 never cache publicly. */
+/** All action-plan content is freshly generated and personalised — never cache publicly. */
 function noCacheJson(body: unknown): NextResponse {
   const res = NextResponse.json(body)
   res.headers.set('Cache-Control', 'private, no-cache, no-store')
@@ -115,7 +132,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const lead = Array.isArray(leadRows) ? leadRows[0] : null
   if (!lead) return NextResponse.json({ error: 'Lead not found.' }, { status: 404 })
 
-  const repRows = await sbGet(`/reports?lead_id=eq.${id}&select=overall_score,dimension_scores&order=created_at.desc&limit=1`, true)
+  const repRows = await sbGet(`/reports?lead_id=eq.${id}&select=id,overall_score,dimension_scores&order=created_at.desc&limit=1`, true)
   const rep = Array.isArray(repRows) ? repRows[0] : null
   if (!rep?.dimension_scores) return NextResponse.json({ error: 'Scores not yet generated.' }, { status: 404 })
 
@@ -127,7 +144,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const strongest = [...sortedDims].reverse().slice(0, 2).map(([n, s]) => `${n} (${s}/100)`).join(', ')
   const dimensionList = sortedDims.map(([n, s]) => `  ${n}: ${s}/100`).join('\n')
 
-  const prompt = `You are a senior digital transformation consultant building a prioritised action plan for ${orgName} in ${industry}.\n\nOverall score: ${rep.overall_score ?? '?'}/100\nDimension scores (lowest = highest priority):\n${dimensionList}\n\nTop 3 gaps: ${weakest}\nStrongest areas: ${strongest}\n\nReturn ONLY valid JSON, no markdown fences, no explanation:\n{"quick_wins":[{"action":"<30-day specific action>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"six_month":[{"action":"<6-month initiative>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"long_term":[{"action":"<12-24 month strategic programme>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"summary":"<2 sentences: most important insight and what success looks like in 12 months>"}`
+  const prompt = `You are a senior digital transformation consultant building a prioritised action plan for ${orgName} in ${industry}.\n\nOverall score: ${rep.overall_score ?? '?'}/100\nDimension scores (lowest = highest priority):\n${dimensionList}\n\nTop 3 gaps: ${weakest}\nStrongest areas: ${strongest}\n\nReturn ONLY valid JSON, no markdown fences, no explanation:\n{"quick_wins":[{"action":"<30-day specific action>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"six_month":[{"action":"<6-month initiative>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"long_term":[{"action":"<12-24 month strategic programme>","dimension":"<name>","impact":"High|Medium|Low","effort":"Low|Medium|High"},{"action":"...","dimension":"...","impact":"...","effort":"..."},{"action":"...","dimension":"...","impact":"...","effort":"..."}],"summary":"<2 sentences: most important insight and what success looks like in 12 months>"`
 
   let raw: string
   try { raw = await generateWithFallback(prompt, 1500) }
@@ -143,6 +160,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       summary:    parsed.summary ?? '',
     }
     setCached(id, result)
+    // Persist to DB for durability across serverless instances (fire-and-forget)
+    if (rep.id) persistActionPlan(rep.id, result)
     return noCacheJson(result)
   } catch {
     const match = raw.match(/\{[\s\S]*\}/)
@@ -156,6 +175,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           summary:    parsed.summary ?? '',
         }
         setCached(id, result)
+        if (rep.id) persistActionPlan(rep.id, result)
         return noCacheJson(result)
       } catch { /* fall through */ }
     }
