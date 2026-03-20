@@ -59,10 +59,10 @@ export const FAQ = () => {
                   id={panelId}
                   role="region"
                   aria-labelledby={buttonId}
-                  hidden={!isOpen}
-                  className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-40 mt-4' : 'max-h-0'}`}
+                  aria-hidden={!isOpen}
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}
                 >
-                  <p className="text-gray-600">{item.a}</p>
+                  <p className="text-gray-600 pb-2">{item.a}</p>
                 </div>
               </div>
             )
