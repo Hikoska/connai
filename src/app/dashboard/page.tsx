@@ -7,10 +7,8 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FileText, PlayCircle, Users, Plus, BarChart2, Link2, Check, Copy, X } from 'lucide-react'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/client'
 
-const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 type User = { email: string }
 
@@ -58,7 +56,7 @@ export default function DashboardPage() {
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null)
 
   useEffect(() => {
-    const supabase = createClient(SB_URL, SB_ANON)
+    const supabase = createClient()
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) {
