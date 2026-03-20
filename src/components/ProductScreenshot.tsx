@@ -13,10 +13,10 @@ const actions = [
 ]
 
 export const ProductScreenshot = () => (
-  <section className="py-20 bg-white">
+  <section className="py-20 bg-[#F0F5FA] border-y border-slate-200">
     <div className="max-w-4xl mx-auto px-4 text-center">
-      <h2 className="text-4xl font-bold font-serif mb-4">Your report, ready in days</h2>
-      <p className="text-gray-500 mb-8">Score, benchmarks, and a prioritised action plan — all from a 30-minute conversation.</p>
+      <h2 className="text-4xl font-bold font-serif mb-4 text-slate-800">Your report, ready in days</h2>
+      <p className="text-slate-500 mb-8">Score, benchmarks, and a prioritised action plan &mdash; all from a 30-minute conversation.</p>
 
       {/* Browser chrome */}
       <div className="bg-gray-800 rounded-t-lg p-2 flex items-center gap-2">
