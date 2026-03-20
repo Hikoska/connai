@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +21,10 @@ function csvEscape(val: unknown): string {
 }
 
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (!rateLimit(ip, 'admin-leads-export', 10)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
   if (!isAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!SERVICE_KEY) return NextResponse.json({ error: 'Not configured' }, { status: 500 })
   try {
