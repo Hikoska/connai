@@ -175,7 +175,7 @@ export default function AuditDetailPage() {
                 disabled={generatingReport}
                 className="flex items-center gap-1.5 text-xs bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-md px-3 py-1.5 transition-colors disabled:opacity-50"
               >
-                <FileText size={13} /> Generate report
+                {generatingReport ? <><Loader2 size={13} className="animate-spin" /> Generating…</> : <><FileText size={13} /> Generate report</>}
               </button>
             )}
           </div>
@@ -318,7 +318,7 @@ export default function AuditDetailPage() {
               disabled={generatingReport}
               className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm px-4 py-3 rounded-lg transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
             >
-              <FileText size={15} /> Generate report
+              {generatingReport ? <><Loader2 size={15} className="animate-spin" /> Generating report…</> : <><FileText size={15} /> Generate report</>}
             </button>
           </div>
         )}
