@@ -1,14 +1,26 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect } from 'react'
 
 export function PricingModal({ isOpen, onClose, auditId }: { isOpen: boolean; onClose: () => void; auditId?: string }) {
+  // Close on Escape key (WCAG 2.1 — no keyboard trap)
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Add stakeholders pricing"
     >
       <div
         className="bg-[#131920] border border-white/10 text-white rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl"
@@ -39,7 +51,7 @@ export function PricingModal({ isOpen, onClose, auditId }: { isOpen: boolean; on
         </div>
 
         <div className="bg-yellow-900/30 border border-yellow-500/20 text-yellow-300 text-xs p-3 rounded-lg mb-6">
-          <span className="font-bold">Beta offer:</span> You are in our free beta — all interviews are complimentary until launch.
+          <span className="font-bold">Beta offer:</span> You are in our free beta &mdash; all interviews are complimentary until launch.
         </div>
 
         {auditId ? (
@@ -48,14 +60,14 @@ export function PricingModal({ isOpen, onClose, auditId }: { isOpen: boolean; on
             className="block w-full text-center bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#131920]"
             onClick={onClose}
           >
-            Add Stakeholder (Beta — Free)
+            Add Stakeholder (Beta &mdash; Free)
           </Link>
         ) : (
           <button type="button"
             onClick={onClose}
             className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#131920]"
           >
-            Add Stakeholder (Beta — Free)
+            Add Stakeholder (Beta &mdash; Free)
           </button>
         )}
       </div>
