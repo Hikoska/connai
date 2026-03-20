@@ -1,7 +1,7 @@
-'use client';
+'use client'
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,7 +54,7 @@ export default function InterviewPage() {
     if (!token) return
     const load = async () => {
       try {
-        const supabase = createClient(SB_URL, SB_ANON)
+        const supabase = createClient()
         supabase.from('interviews').update({ status: 'in_progress' }).eq('token', token).then(() => {})
         const [ivRows, msgRows] = await Promise.all([
           sbFetch('interviews', `token=eq.${token}&select=id,status,lead_id`),
