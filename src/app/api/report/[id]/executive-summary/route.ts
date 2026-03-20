@@ -33,6 +33,21 @@ async function withFallback(prompt: string, maxTokens = 1400): Promise<string> {
   throw new Error('All AI providers failed')
 }
 
+/** Persist the generated executive_summary back to the reports row (fire-and-forget). */
+function persistSummary(reportId: string, summary: string): void {
+  const key = SB_SVC
+  fetch(`${SB_URL}/rest/v1/reports?id=eq.${reportId}`, {
+    method: 'PATCH',
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({ executive_summary: summary }),
+  }).catch(() => { /* non-fatal — next visit will regenerate if needed */ })
+}
+
 /** Cache-Control helpers.
  *  cached=true  → content already stored in DB → short private cache (5 min)
  *  cached=false → freshly generated → private, no-store (personalised AI output)
@@ -66,8 +81,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const lead = Array.isArray(leadRows) ? leadRows[0] : null
   if (!lead) return NextResponse.json({ error: 'Lead not found' }, { status: 404 })
 
+  // Fetch report — include `id` so we can persist the summary back after generation
   const repRes = await fetch(
-    `${SB_URL}/rest/v1/reports?lead_id=eq.${id}&select=overall_score,dimension_scores,executive_summary&order=created_at.desc&limit=1`,
+    `${SB_URL}/rest/v1/reports?lead_id=eq.${id}&select=id,overall_score,dimension_scores,executive_summary&order=created_at.desc&limit=1`,
     { headers: { apikey: SB_SVC, Authorization: `Bearer ${SB_SVC}`, Accept: 'application/json' }, cache: 'no-store' }
   )
   if (!repRes.ok) return NextResponse.json({ error: 'Scores not ready' }, { status: 404 })
@@ -81,7 +97,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     )
   }
 
-  // Already stored in DB — return immediately with short cache
+  // Already stored in DB — return immediately with short cache (no AI call needed)
   if (rep.executive_summary && rep.executive_summary.length > 100) {
     return jsonWithCache(
       { summary: rep.executive_summary, tier: getMaturityTier(rep.overall_score ?? 50) },
@@ -100,10 +116,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const topStrengths = [...sortedDims].reverse().slice(0, 2).map(([n, s]) => `${n} (${s}/100)`).join(', ')
   const dimensionBreakdown = sortedDims.map(([n, s]) => `  ${n}: ${s}/100`).join('\n')
 
-  const prompt = `You are a senior digital transformation partner writing an executive summary for a board-level presentation.\n\nClient: ${orgName}\nIndustry: ${industry}\nOverall Digital Maturity Score: ${overall}/100 \u2014 ${tier}\n\nDimension breakdown (sorted lowest to highest):\n${dimensionBreakdown}\n\nTop 3 capability gaps: ${topGaps}\nTop 2 strengths: ${topStrengths}\n\nWrite a crisp, insightful executive summary (220-260 words) for a C-suite / board audience.\n\nParagraph 1 (Current State, ~120 words): Open with the overall score and tier in context. Name ${orgName}'s 2 genuine strengths backed by their scores. Then identify the 2-3 most critical structural gaps limiting digital performance. Be precise about why these gaps matter for their industry.\n\nParagraph 2 (Strategic Imperatives, ~120 words): Recommend 3 high-leverage interventions in priority order, each tied to a specific gap. State the expected business outcome. Close with one sentence on the competitive window \u2014 what happens if they delay 12 months.\n\nTone: Write like McKinsey. No bullets. No platitudes like "digital transformation journey". Direct, specific, slightly provocative where warranted.`
+  const prompt = `You are a senior digital transformation partner writing an executive summary for a board-level presentation.\n\nClient: ${orgName}\nIndustry: ${industry}\nOverall Digital Maturity Score: ${overall}/100 \u2014 ${tier}\n\nDimension breakdown (sorted lowest to highest):\n${dimensionBreakdown}\n\nTop 3 capability gaps: ${topGaps}\nTop 2 strengths: ${topStrengths}\n\nWrite a crisp, insightful executive summary (220-260 words) for a C-suite / board audience.\n\nParagraph 1 (Current State, ~120 words): Open with the overall score and tier in context. Name ${orgName}'s 2 genuine strengths backed by their scores. Then identify the 2-3 most critical structural gaps limiting digital performance. Be precise about why these gaps matter for their industry.\n\nParagraph 2 (Strategic Imperatives, ~120 words): Recommend 3 high-leverage interventions in priority order, each tied to a specific gap. State the expected business outcome. Close with one sentence on the competitive window \u2014 what happens if they delay 12 months.\n\nTone: Write like McKinsey. No bullets. No platitudes like \"digital transformation journey\". Direct, specific, slightly provocative where warranted.`
 
   try {
     const summary = await withFallback(prompt, 1400)
+    // Persist to DB so future visits are served from cache (fire-and-forget)
+    if (rep.id) persistSummary(rep.id, summary)
     return jsonWithCache({ summary, tier }, false)
   } catch {
     return jsonWithCache(
