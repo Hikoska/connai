@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
-import { createOpenAI } from '@anthropic-ai/sdk'
+import { createOpenAI } from '@ai-sdk/openai'
 import { rateLimit } from '@/lib/rate-limit'
 
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -39,7 +39,7 @@ function getClient(): AIClient {
     _client = createOpenAI({
       apiKey: process.env.ANTHROPIC_API_KEY ?? process.env.OPENAI_API_KEY ?? '',
       baseURL: process.env.AI_BASE_URL,
-    }) as unknown as AIClient
+    })
   }
   return _client
 }
@@ -195,7 +195,7 @@ ${transcript.slice(0, 4500)}
 
 Write a boardroom-quality executive summary (220-260 words) for a C-suite audience.
 Paragraph 1: Frame the organisation's current digital position with 2 specific strengths drawn from the transcript, then 2 critical gaps that represent the highest risk to growth.
-Paragraph 2: 3 high-leverage actions in priority order — each tied to a specific dimension score. Close with the competitive risk of inaction (be direct, not generic).
+Paragraph 2: 3 high-leverage actions in priority order \u2014 each tied to a specific dimension score. Close with the competitive risk of inaction (be direct, not generic).
 Tone: direct, analytical, no hedging. No bullets, no headers, no corporate filler. Use ${orgName} by name.`
 
   const recommendationsPrompt = `Write 5 specific, actionable recommendations for ${orgName}.
@@ -240,7 +240,7 @@ Format: numbered 1-5.`
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: lead.email,
-          subject: `Your Connai Digital Maturity Report is ready — ${overallScore}/100`,
+          subject: `Your Connai Digital Maturity Report is ready \u2014 ${overallScore}/100`,
           html,
         }),
       }).catch(() => {})
