@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useScrollReveal } from '@/lib/useScrollReveal'
 
 const personas = [
@@ -32,11 +33,16 @@ export const WhoItsFor = () => {
         </div>
         <div ref={gridRef} className="scroll-stagger grid md:grid-cols-3 gap-8">
           {personas.map((item, index) => (
-            <div key={index} className="bg-white p-8 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer">
+            <Link
+              key={index}
+              href="/audit/new"
+              className="block bg-white p-8 rounded-lg border border-gray-200 hover:border-teal-400 hover:shadow-lg transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2"
+              aria-label={`${item.title} — start free audit`}
+            >
               <h3 className="font-bold text-xl mb-3">{item.title}</h3>
               <p className="text-gray-600 mb-4">{item.description}</p>
               <p className="text-sm text-teal-700 italic">"{item.painPoint}"</p>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
