@@ -8,34 +8,34 @@ import Link from 'next/link'
 function CheckoutContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const reportId = searchParams.get('reportId')
+  const leadId = searchParams.get('lead_id')
   const sessionId = searchParams.get('session_id')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Redirect to dashboard if no reportId param
+  // Redirect to dashboard if no lead_id param
   useEffect(() => {
-    if (!reportId) { router.replace('/dashboard') }
-  }, [reportId, router])
+    if (!leadId) { router.replace('/dashboard') }
+  }, [leadId, router])
 
   // Auto-redirect to report after successful payment
   useEffect(() => {
-    if (!sessionId || !reportId) return
+    if (!sessionId || !leadId) return
     const timer = setTimeout(() => {
-      router.replace(`/report/${reportId}?force=1`)
+      router.replace(`/report/${leadId}?force=1`)
     }, 3000)
     return () => clearTimeout(timer)
-  }, [sessionId, reportId, router])
+  }, [sessionId, leadId, router])
 
   const handleCheckout = async () => {
-    if (!reportId) { setError('Missing report ID. Please return to your report.'); return }
+    if (!leadId) { setError('Missing report ID. Please return to your report.'); return }
     setLoading(true)
     setError('')
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportId }),
+        body: JSON.stringify({ lead_id: leadId }),
       })
       const data = await res.json()
       if (!res.ok || !data.url) {
@@ -50,7 +50,7 @@ function CheckoutContent() {
     }
   }
 
-  if (sessionId && reportId) {
+  if (sessionId && leadId) {
     return (
       <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
@@ -68,7 +68,7 @@ function CheckoutContent() {
             Loading your report
           </div>
           <p className="mt-6">
-            <a href={`/report/${reportId}?force=1`} className="text-white/40 hover:text-white/70 text-xs underline underline-offset-4 transition-colors">
+            <a href={`/report/${leadId}?force=1`} className="text-white/40 hover:text-white/70 text-xs underline underline-offset-4 transition-colors">
               Click here if not redirected automatically
             </a>
           </p>
@@ -77,7 +77,7 @@ function CheckoutContent() {
     )
   }
 
-  if (!reportId) {
+  if (!leadId) {
     return (
       <div className="min-h-screen bg-[#0E1117] flex items-center justify-center">
         <div className="w-5 h-5 border-2 border-teal-400/30 border-t-teal-400 rounded-full animate-spin" />
@@ -105,7 +105,7 @@ function CheckoutContent() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-white font-bold text-2xl">$49</p>
-              <p className="text-white/50 text-xs mt-0.5">one-time \u00b7 per report</p>
+              <p className="text-white/50 text-xs mt-0.5">one-time &middot; per report</p>
             </div>
             <div className="bg-teal-900/40 border border-teal-500/30 text-teal-300 text-xs font-semibold px-3 py-1.5 rounded-full">
               Full Access
@@ -122,7 +122,7 @@ function CheckoutContent() {
               'All 8 dimension scores + industry benchmarks',
             ].map((item) => (
               <li key={item} className="flex items-start gap-2.5 text-sm text-white/80">
-                <span className="text-teal-400 mt-0.5 flex-shrink-0">\u2714</span>
+                <span className="text-teal-400 mt-0.5 flex-shrink-0">&#x2714;</span>
                 {item}
               </li>
             ))}
@@ -143,15 +143,15 @@ function CheckoutContent() {
             {loading ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Redirecting to payment\u2026
+                Redirecting to payment&hellip;
               </>
             ) : (
-              'Pay $49 \u00b7 Secure checkout'
+              'Pay $49 &middot; Secure checkout'
             )}
           </button>
 
           <p className="text-center text-white/30 text-xs mt-3">
-            Powered by Stripe \u00b7 Secure \u00b7 Instant access after payment
+            Powered by Stripe &middot; Secure &middot; Instant access after payment
           </p>
         </div>
 
@@ -163,10 +163,10 @@ function CheckoutContent() {
 
         <p className="text-center mt-5">
           <Link
-            href={`/report/${reportId}`}
+            href={`/report/${leadId}`}
             className="text-white/40 hover:text-white/70 text-xs underline underline-offset-4 transition-colors"
           >
-            \u2190 Back to report
+            &larr; Back to report
           </Link>
         </p>
       </div>
