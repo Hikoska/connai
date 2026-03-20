@@ -13,50 +13,44 @@ const ROLES = [
   'C-Suite / Executive', 'Director / VP', 'Manager', 'Consultant / Advisor', 'Other',
 ]
 
-export default function NewAuditPage() {
+export const dynamic = 'force-dynamic'
+
+export default function AuditNewPage() {
   const router = useRouter()
   const [orgName, setOrgName] = useState('')
   const [industry, setIndustry] = useState('')
   const [role, setRole] = useState('')
-  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
 
   useEffect(() => {
-    const init = async () => {
+    const check = async () => {
       try {
-        const { createClient } = await import('@supabase/supabase-js')
-        const sb = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
-        const { data: { session } } = await sb.auth.getSession()
-        if (!session) { router.push('/auth/login'); return }
-        setEmail(session.user.email ?? '')
-      } catch {} finally { setCheckingAuth(false) }
+        const res = await fetch('/api/auth/me')
+        if (!res.ok) router.push('/auth/login')
+      } catch {
+        router.push('/auth/login')
+      } finally {
+        setCheckingAuth(false)
+      }
     }
-    init()
+    check()
   }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const trimmedOrg = orgName.trim()
-    if (!trimmedOrg || trimmedOrg.length < 2) {
-      setError('Please enter a valid organisation name (at least 2 characters).')
-      return
-    }
+    if (!orgName.trim()) return
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/leads/create', {
+      const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          org_name: trimmedOrg,
+          org_name: orgName.trim(),
           industry: industry || undefined,
           role: role || undefined,
-          email,
         }),
       })
       const data = await res.json()
@@ -79,65 +73,74 @@ export default function NewAuditPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <h1 className="text-2xl font-bold text-white mb-2">Start a new audit</h1>
-        <p className="text-white/60 text-sm mb-8">
-          Enter the organisation you want to assess.
-        </p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="audit-org-name" className="block text-sm font-medium text-white/70 mb-1">
-              Organisation name
-            </label>
-            <input
-              type="text"
-              required
-              value={orgName}
-              id="audit-org-name"
-              onChange={e => setOrgName(e.target.value)}
-              placeholder="Company name"
-              className="w-full bg-white/5 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 placeholder:text-white/30 transition-colors"
-            />
-          </div>
-          <div>
-            <label htmlFor="audit-industry" className="block text-sm font-medium text-white/70 mb-1">
-              Industry <span className="text-white/40 font-normal">(optional)</span>
-            </label>
-            <select
-              id="audit-industry"
-              value={industry}
-              onChange={e => setIndustry(e.target.value)}
-              className="w-full bg-[#0E1117] border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 transition-colors"
+    <>
+      {/* WCAG 2.4.1 skip-link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 bg-teal-600 text-white text-sm font-semibold px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
+      >
+        Skip to main content
+      </a>
+      <div className="min-h-screen bg-[#0E1117] flex items-center justify-center px-4">
+        <div id="main-content" className="w-full max-w-md">
+          <h1 className="text-2xl font-bold text-white mb-2">Start a new audit</h1>
+          <p className="text-white/60 text-sm mb-8">
+            Enter the organisation you want to assess.
+          </p>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="audit-org-name" className="block text-sm font-medium text-white/70 mb-1">
+                Organisation name
+              </label>
+              <input
+                type="text"
+                required
+                value={orgName}
+                id="audit-org-name"
+                onChange={e => setOrgName(e.target.value)}
+                placeholder="Company name"
+                className="w-full bg-white/5 border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 placeholder:text-white/30 transition-colors"
+              />
+            </div>
+            <div>
+              <label htmlFor="audit-industry" className="block text-sm font-medium text-white/70 mb-1">
+                Industry <span className="text-white/40 font-normal">(optional)</span>
+              </label>
+              <select
+                id="audit-industry"
+                value={industry}
+                onChange={e => setIndustry(e.target.value)}
+                className="w-full bg-[#0E1117] border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 transition-colors"
+              >
+                <option value="">Select industry</option>
+                {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="audit-role" className="block text-sm font-medium text-white/70 mb-1">
+                Your role <span className="text-white/40 font-normal">(optional)</span>
+              </label>
+              <select
+                id="audit-role"
+                value={role}
+                onChange={e => setRole(e.target.value)}
+                className="w-full bg-[#0E1117] border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 transition-colors"
+              >
+                <option value="">Select role</option>
+                {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+            {error && <p className="text-red-400 text-sm">{error}</p>}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
             >
-              <option value="">Select industry</option>
-              {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="audit-role" className="block text-sm font-medium text-white/70 mb-1">
-              Your role <span className="text-white/40 font-normal">(optional)</span>
-            </label>
-            <select
-              id="audit-role"
-              value={role}
-              onChange={e => setRole(e.target.value)}
-              className="w-full bg-[#0E1117] border border-white/20 text-white rounded-lg px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus:border-teal-500/50 transition-colors"
-            >
-              <option value="">Select role</option>
-              {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
-          {error && <p className="text-red-400 text-sm">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1117]"
-          >
-            {loading ? 'Creating...' : 'Start audit →'}
-          </button>
-        </form>
+              {loading ? 'Creating...' : 'Start audit →'}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
